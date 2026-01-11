@@ -1,0 +1,105 @@
+/* Fondo general */
+.login-container {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f4f4f4, #eaeaea);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Barras laterales */
+.sidebar-left {
+  position: absolute;
+  top: 0;
+  height: 100%;
+}
+
+.sidebar-left.orange { background: #ff6600; width: 60px; left: 40px; }
+.sidebar-left.blue   { background: #003366; width: 60px; left: 100px; }
+.sidebar-left.gray   { background: #d0d0d0; width: 60px; left: 160px; }
+
+/* Card principal */
+.login-card {
+  background: #ffffff;
+  width: 100%;
+  max-width: 420px;
+  padding: 40px 50px 45px;
+  border-radius: 16px;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.12);
+  text-align: center;
+  z-index: 10;
+}
+
+/* Logo */
+.logo-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-top: 0px;
+}
+
+.logo-image {
+  max-width: 180px;
+  height: auto;
+  display: block;
+}
+
+/* Inputs */
+.form-group {
+  margin-bottom: 22px;
+  text-align: left;
+}
+
+.form-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #444;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid #dcdcdc;
+  font-size: 14px;
+  transition: 0.3s;
+}
+
+.form-group input:focus {
+  border-color: #003366;
+  box-shadow: 0 0 0 3px rgba(0, 51, 102, 0.15);
+  outline: none;
+}
+
+/* Botón */
+.login-button {
+  width: 100%;
+  padding: 14px;
+  margin-top: 10px;
+  background: #003366;
+  color: #fff;
+  border: none;
+  border-radius: 30px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+.login-button:hover {
+  background: #004b8a;
+  transform: translateY(-1px);
+}
+
+/* Versión */
+.version-info {
+  margin-top: 25px;
+  font-size: 11px;
+  color: #888;
+}

@@ -1,0 +1,189 @@
+<div class="modal-container">
+  <div class="modal-header">
+    <h2 mat-dialog-title>
+      <mat-icon>{{ modoEdicion ? 'edit' : 'person_add' }}</mat-icon>
+      {{ modoEdicion ? 'Editar Cliente' : 'Registrar Nuevo Cliente' }}
+    </h2>
+    <button mat-icon-button (click)="cancelar()" class="close-button">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <mat-dialog-content class="modal-content">
+    <form [formGroup]="clienteForm" class="cliente-form">
+      
+      <!-- Error Message -->
+      <div *ngIf="errorMessage" class="error-banner">
+        <mat-icon>error</mat-icon>
+        <span>{{ errorMessage }}</span>
+      </div>
+
+      <!-- TIPO DE CLIENTE -->
+      <section class="form-section">
+        <h3>Tipo de Cliente</h3>
+        <mat-radio-group formControlName="tipoCliente" class="tipo-cliente-radio">
+          <mat-radio-button value="PERSONA">
+            <mat-icon>person</mat-icon>
+            Persona Natural
+          </mat-radio-button>
+          <mat-radio-button value="EMPRESA">
+            <mat-icon>business</mat-icon>
+            Empresa
+          </mat-radio-button>
+        </mat-radio-group>
+      </section>
+
+      <mat-divider></mat-divider>
+
+      <!-- DATOS BÁSICOS - PERSONA -->
+      <section class="form-section" *ngIf="esPersona()">
+        <h3>Datos Personales</h3>
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Nombre Completo</mat-label>
+            <mat-icon matPrefix>person</mat-icon>
+            <input matInput formControlName="nombreCompleto" placeholder="Ej: Juan Pérez García">
+            <mat-error *ngIf="clienteForm.get('nombreCompleto')?.hasError('required')">
+              El nombre es obligatorio
+            </mat-error>
+          </mat-form-field>
+        </div>
+      </section>
+
+      <!-- DATOS BÁSICOS - EMPRESA -->
+      <section class="form-section" *ngIf="esEmpresa()">
+        <h3>Datos de la Empresa</h3>
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Razón Social</mat-label>
+            <mat-icon matPrefix>business</mat-icon>
+            <input matInput formControlName="razonSocial" placeholder="Ej: Empresa SAC">
+            <mat-error *ngIf="clienteForm.get('razonSocial')?.hasError('required')">
+              La razón social es obligatoria
+            </mat-error>
+          </mat-form-field>
+        </div>
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Nombre de Contacto (Opcional)</mat-label>
+            <mat-icon matPrefix>contact_page</mat-icon>
+            <input matInput formControlName="nombreContacto" placeholder="Persona de contacto">
+          </mat-form-field>
+        </div>
+      </section>
+
+      <mat-divider></mat-divider>
+
+      <!-- DOCUMENTO DE IDENTIDAD -->
+      <section class="form-section">
+        <h3>Documento de Identidad</h3>
+        <div class="form-row two-columns">
+          <mat-form-field appearance="outline" *ngIf="esPersona()">
+            <mat-label>Tipo de Documento</mat-label>
+            <mat-select formControlName="tipoDocumento">
+              <mat-option *ngFor="let tipo of tiposDocumentoPersona" [value]="tipo.value">
+                {{ tipo.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" *ngIf="esEmpresa()">
+            <mat-label>Tipo de Documento</mat-label>
+            <input matInput value="RUC" readonly>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Número de Documento</mat-label>
+            <mat-icon matPrefix>badge</mat-icon>
+            <input matInput formControlName="numeroDocumento" 
+                   [placeholder]="esPersona() ? 'Ej: 12345678' : 'Ej: 20123456789'">
+            <mat-error>{{ getErrorDocumento() }}</mat-error>
+          </mat-form-field>
+        </div>
+      </section>
+
+      <mat-divider></mat-divider>
+
+      <!-- DATOS DE CONTACTO -->
+      <section class="form-section">
+        <h3>Datos de Contacto</h3>
+        <div class="form-row two-columns">
+          <mat-form-field appearance="outline">
+            <mat-label>Teléfono</mat-label>
+            <mat-icon matPrefix>phone</mat-icon>
+            <input matInput formControlName="telefono" placeholder="Ej: 987654321">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Email</mat-label>
+            <mat-icon matPrefix>email</mat-icon>
+            <input matInput type="email" formControlName="email" placeholder="ejemplo@mail.com">
+            <mat-error *ngIf="clienteForm.get('email')?.hasError('email')">
+              Email inválido
+            </mat-error>
+          </mat-form-field>
+        </div>
+      </section>
+
+      <mat-divider></mat-divider>
+
+      <!-- DIRECCIÓN -->
+      <section class="form-section">
+        <h3>Dirección</h3>
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Dirección</mat-label>
+            <mat-icon matPrefix>home</mat-icon>
+            <input matInput formControlName="direccion" placeholder="Calle, número, referencia">
+          </mat-form-field>
+        </div>
+        <div class="form-row three-columns">
+          <mat-form-field appearance="outline">
+            <mat-label>Distrito</mat-label>
+            <input matInput formControlName="distrito" placeholder="Ej: San Isidro">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Provincia</mat-label>
+            <input matInput formControlName="provincia" placeholder="Ej: Lima">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Departamento</mat-label>
+            <mat-select formControlName="departamento">
+              <mat-option value="">Seleccionar</mat-option>
+              <mat-option *ngFor="let dept of departamentos" [value]="dept">
+                {{ dept }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </section>
+
+      <mat-divider></mat-divider>
+
+      <!-- NOTAS -->
+      <section class="form-section">
+        <h3>Notas Adicionales</h3>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Notas (Opcional)</mat-label>
+          <textarea matInput formControlName="notas" rows="3" 
+                    placeholder="Información adicional sobre el cliente"></textarea>
+        </mat-form-field>
+      </section>
+
+    </form>
+  </mat-dialog-content>
+
+  <mat-dialog-actions class="modal-actions">
+    <button mat-stroked-button (click)="cancelar()" [disabled]="isLoading">
+      <mat-icon>close</mat-icon>
+      Cancelar
+    </button>
+    <button mat-raised-button color="primary" (click)="guardar()" [disabled]="isLoading">
+      <mat-spinner *ngIf="isLoading" diameter="20"></mat-spinner>
+      <mat-icon *ngIf="!isLoading">save</mat-icon>
+      {{ modoEdicion ? 'Actualizar' : 'Registrar' }}
+    </button>
+  </mat-dialog-actions>
+</div>

@@ -1,0 +1,163 @@
+/* ===== CONTENEDOR PRINCIPAL ===== */
+.grafico-container {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* ===== HEADER ===== */
+.grafico-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.grafico-titulo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.grafico-icono {
+  font-size: 24px;
+}
+
+.grafico-titulo h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.ver-detalles {
+  color: #3b82f6;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.ver-detalles:hover {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+/* ===== LOADING ===== */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 16px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-container p {
+  color: #6b7280;
+  font-size: 14px;
+  margin: 0;
+}
+
+/* ===== ERROR ===== */
+.error-message {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+}
+
+.error-message p {
+  color: #dc2626;
+  margin: 0 0 16px 0;
+  font-size: 14px;
+}
+
+.btn-retry {
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.btn-retry:hover {
+  background-color: #2563eb;
+}
+
+/* ===== CANVAS ===== */
+.grafico-canvas {
+  height: 320px;
+  position: relative;
+  margin-bottom: 20px;
+}
+
+/* ===== RESUMEN ===== */
+.grafico-resumen {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+  padding-top: 20px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.resumen-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.resumen-label {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.resumen-valor {
+  font-size: 18px;
+  color: #1a1a1a;
+  font-weight: 700;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .grafico-container {
+    padding: 16px;
+  }
+
+  .grafico-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .grafico-canvas {
+    height: 250px;
+  }
+
+  .grafico-resumen {
+    grid-template-columns: 1fr;
+  }
+}

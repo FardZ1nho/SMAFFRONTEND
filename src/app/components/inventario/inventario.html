@@ -1,0 +1,142 @@
+<div class="inventario-container">
+  <div class="page-header">
+    <div class="header-content">
+      <div class="icon-box">
+        <mat-icon>inventory_2</mat-icon>
+      </div>
+      <div>
+        <h1>Inventario</h1>
+        <p class="subtitle">Control total de stock, SKU y ubicaciones de productos</p>
+      </div>
+    </div>
+    <button mat-raised-button color="primary" class="btn-nuevo" (click)="abrirModalNuevoProducto()">
+      <mat-icon>add</mat-icon>
+      Nuevo Producto
+    </button>
+  </div>
+
+  <div class="toolbar">
+    <div class="filter-group search-container">
+      <label class="search-label">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        Buscar:
+      </label>
+      <div class="input-wrapper">
+        <input 
+          type="text" 
+          class="filter-input"
+          placeholder="Nombre del producto o SKU..." 
+          [(ngModel)]="terminoBusqueda"
+          (input)="buscarProductos()"
+        >
+        <button 
+          class="btn-clear"
+          *ngIf="terminoBusqueda"
+          (click)="limpiarBusqueda()"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button mat-stroked-button class="btn-tool" (click)="abrirFiltros()">
+        <mat-icon>filter_list</mat-icon>
+        Filtros
+      </button>
+      <button mat-stroked-button class="btn-tool" (click)="exportarDatos()">
+        <mat-icon>file_download</mat-icon>
+        Exportar
+      </button>
+    </div>
+  </div>
+
+  <div class="main-card">
+    <div *ngIf="isLoading" class="state-container">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Actualizando existencias...</p>
+    </div>
+
+    <div class="table-responsive" *ngIf="!isLoading">
+      <table mat-table [dataSource]="productosFiltrados">
+        
+        <ng-container matColumnDef="codigo">
+          <th mat-header-cell *matHeaderCellDef>SKU</th>
+          <td mat-cell *matCellDef="let producto">
+            <span class="sku-badge">{{ producto.codigo }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="nombre">
+          <th mat-header-cell *matHeaderCellDef>PRODUCTO</th>
+          <td mat-cell *matCellDef="let producto">
+            <div class="product-cell">
+              <div class="product-avatar">
+                <mat-icon>package_2</mat-icon>
+              </div>
+              <div class="product-info">
+                <span class="name">{{ producto.nombre }}</span>
+                <span class="desc" *ngIf="producto.descripcion">{{ producto.descripcion }}</span>
+              </div>
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="categoria">
+          <th mat-header-cell *matHeaderCellDef>CATEGORÍA</th>
+          <td mat-cell *matCellDef="let producto">
+            <span class="category-text">{{ producto.nombreCategoria }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="stock">
+          <th mat-header-cell *matHeaderCellDef>STOCK ACTUAL</th>
+          <td mat-cell *matCellDef="let producto">
+            <div class="stock-badge" [ngClass]="getStockClass(producto)">
+              <mat-icon *ngIf="producto.necesitaReorden">notification_important</mat-icon>
+              {{ producto.stockActual }}
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="ubicacion">
+          <th mat-header-cell *matHeaderCellDef>UBICACIÓN</th>
+          <td mat-cell *matCellDef="let producto">
+            <div class="location-cell">
+              <mat-icon>place</mat-icon>
+              <span>{{ producto.ubicacion || 'Sin asignar' }}</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="acciones">
+          <th mat-header-cell *matHeaderCellDef class="text-center">ACCIONES</th>
+          <td mat-cell *matCellDef="let producto">
+            <div class="action-buttons">
+              <button mat-icon-button class="btn-view-blue" (click)="verDetalle(producto)" matTooltip="Ver detalle">
+                <mat-icon>chevron_right</mat-icon>
+              </button>
+              <button mat-icon-button class="btn-edit-green" (click)="editarProducto(producto)" matTooltip="Editar">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button color="warn" class="delete-btn" (click)="eliminarProducto(producto)" matTooltip="Eliminar">
+                <mat-icon>delete_outline</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="row-hover"></tr>
+      </table>
+    </div>
+
+    <div *ngIf="!isLoading && productosFiltrados.data.length === 0" class="state-container">
+      <mat-icon class="empty-icon">inventory_2</mat-icon>
+      <p>No se encontraron productos en el inventario</p>
+    </div>
+  </div>
+</div>

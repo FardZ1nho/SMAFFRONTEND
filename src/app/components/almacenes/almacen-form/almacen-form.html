@@ -1,0 +1,131 @@
+<!-- src/app/components/almacenes/almacen-form/almacen-form.component.html -->
+
+<div class="form-container">
+  
+  <!-- Header -->
+  <div class="form-header">
+    <div class="header-content">
+      <h1>
+        <span class="header-icon">{{ modoEdicion ? '✏️' : '➕' }}</span>
+        {{ modoEdicion ? 'Editar Almacén' : 'Nuevo Almacén' }}
+      </h1>
+      <p class="subtitle">{{ modoEdicion ? 'Actualiza la información del almacén' : 'Completa los datos del nuevo almacén' }}</p>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="cargando" class="loading-container">
+    <div class="spinner"></div>
+    <p>Cargando almacén...</p>
+  </div>
+
+  <!-- Formulario -->
+  <div *ngIf="!cargando" class="form-content">
+    
+    <!-- Error Alert -->
+    <div *ngIf="errorMensaje" class="error-alert">
+      <span class="error-icon">⚠️</span>
+      <span class="error-text">{{ errorMensaje }}</span>
+      <button class="error-close" (click)="limpiarError()">✕</button>
+    </div>
+
+    <form class="almacen-form">
+      
+      <!-- Código -->
+      <div class="form-group">
+        <label for="codigo" class="form-label">
+          Código <span class="required">*</span>
+        </label>
+        <input
+          type="text"
+          id="codigo"
+          class="form-input"
+          placeholder="Ej: ALM-001"
+          [(ngModel)]="codigo"
+          name="codigo"
+          [disabled]="modoEdicion"
+          maxlength="50"
+          required
+        >
+        <small class="form-help">
+          {{ modoEdicion ? 'El código no se puede modificar' : 'Código único para identificar el almacén' }}
+        </small>
+      </div>
+
+      <!-- Nombre -->
+      <div class="form-group">
+        <label for="nombre" class="form-label">
+          Nombre <span class="required">*</span>
+        </label>
+        <input
+          type="text"
+          id="nombre"
+          class="form-input"
+          placeholder="Ej: Almacén Principal"
+          [(ngModel)]="nombre"
+          name="nombre"
+          maxlength="100"
+          required
+        >
+        <small class="form-help">Nombre descriptivo del almacén</small>
+      </div>
+
+      <!-- Dirección -->
+      <div class="form-group">
+        <label for="direccion" class="form-label">
+          Dirección
+        </label>
+        <textarea
+          id="direccion"
+          class="form-input form-textarea"
+          placeholder="Ej: Av. Los Pinos 123, Lima"
+          [(ngModel)]="direccion"
+          name="direccion"
+          rows="3"
+          maxlength="255"
+        ></textarea>
+        <small class="form-help">Dirección física del almacén (opcional)</small>
+      </div>
+
+      <!-- Estado (solo en modo edición) -->
+      <div class="form-group" *ngIf="modoEdicion">
+        <div class="checkbox-container">
+          <label class="checkbox-label">
+            <input
+              type="checkbox"
+              [(ngModel)]="activo"
+              name="activo"
+              class="form-checkbox"
+            >
+            <span class="checkbox-text">Almacén activo</span>
+          </label>
+        </div>
+        <small class="form-help">Los almacenes inactivos no podrán ser usados en movimientos</small>
+      </div>
+
+    </form>
+
+    <!-- Botones de acción -->
+    <div class="form-actions">
+      <button 
+        class="btn btn-secondary" 
+        (click)="cancelar()"
+        [disabled]="guardando"
+      >
+        <span class="btn-icon">✕</span>
+        Cancelar
+      </button>
+      <button 
+        class="btn btn-primary" 
+        (click)="guardar()"
+        [disabled]="guardando"
+      >
+        <span *ngIf="guardando" class="btn-spinner"></span>
+        <span *ngIf="!guardando" class="btn-icon">{{ modoEdicion ? '💾' : '➕' }}</span>
+        <span *ngIf="!guardando">{{ modoEdicion ? 'Actualizar' : 'Crear Almacén' }}</span>
+      </button>
+    </div>
+
+  </div>
+
+</div>

@@ -1,0 +1,169 @@
+:host {
+  --modal-primary: #1e293b;
+  --modal-accent: #2563eb;
+  --modal-bg: #f8fafc;
+  --modal-border: #e2e8f0;
+}
+
+/* Modal Container */
+.modal-container {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 95%;
+  max-width: 1200px; /* Ajustado para mejor visibilidad */
+  height: 85vh; /* Altura fija para controlar el scroll */
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Header */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background: var(--modal-primary);
+  color: white;
+}
+
+.header-left { display: flex; align-items: center; gap: 12px; }
+.header-left h2 { margin: 0; font-size: 18px; font-weight: 600; }
+
+/* Body con scroll independiente */
+.modal-body {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+  background: var(--modal-bg);
+}
+
+/* Buscador Profesional */
+.search-container-modal {
+  margin-bottom: 24px;
+  position: relative;
+}
+
+.search-label {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 800; color: #64748b;
+  margin-bottom: 8px;
+}
+
+.filter-input {
+  width: 100%; padding: 12px 16px;
+  border: 1.5px solid var(--modal-border);
+  border-radius: 10px; font-size: 14px;
+}
+
+/* Resultados overlay */
+.search-results-overlay {
+  position: absolute; top: 100%; left: 0; right: 0;
+  background: white; border-radius: 10px;
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+  z-index: 2000; border: 1px solid var(--modal-border);
+  max-height: 250px; overflow-y: auto;
+}
+
+.result-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; cursor: pointer; border-bottom: 1px solid var(--modal-bg);
+}
+.result-item:hover { background: #eff6ff; }
+
+/* Cuadrícula de Productos */
+.productos-agregados-container {
+  background: white; border-radius: 12px;
+  border: 1px solid var(--modal-border); overflow: hidden;
+}
+
+.lista-header-modern {
+  display: grid;
+  grid-template-columns: 2.5fr 2fr 1.2fr 1.8fr 0.5fr;
+  padding: 12px 16px;
+  background: #f1f5f9;
+  font-size: 11px; font-weight: 700; color: #475569;
+  text-transform: uppercase;
+}
+
+.producto-row-modern {
+  display: grid;
+  grid-template-columns: 2.5fr 2fr 1.2fr 1.8fr 0.5fr;
+  padding: 12px 16px;
+  align-items: center;
+  border-bottom: 1px solid var(--modal-bg);
+}
+
+.p-avatar {
+  width: 36px; height: 36px; background: #f1f5f9;
+  border-radius: 8px; display: flex; align-items: center; justify-content: center;
+  color: #64748b; margin-right: 12px;
+}
+
+.p-cell { display: flex; align-items: center; overflow: hidden; }
+.p-text { display: flex; flex-direction: column; overflow: hidden; }
+.p-name { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.p-sku { font-size: 12px; color: #64748b; }
+
+/* Controles Modernos */
+.modern-select {
+  width: 90%; padding: 8px; border-radius: 8px;
+  border: 1px solid var(--modal-border); font-size: 13px;
+}
+
+.qty-control {
+  display: flex; align-items: center; background: #f1f5f9;
+  border-radius: 8px; padding: 2px;
+}
+.qty-control button {
+  border: none; background: white; width: 28px; height: 28px;
+  border-radius: 6px; cursor: pointer; font-weight: bold;
+}
+.qty-control input {
+  width: 40px; border: none; background: transparent;
+  text-align: center; font-weight: 700;
+}
+
+.btn-delete-row {
+  color: #ef4444; background: transparent; border: none;
+  cursor: pointer; padding: 4px; border-radius: 6px;
+}
+.btn-delete-row:hover { background: #fee2e2; }
+
+/* Footer */
+.modal-footer-modern {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 16px 24px; border-top: 1px solid var(--modal-border); background: white;
+}
+
+.stat-tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: #f1f5f9; padding: 6px 12px; border-radius: 20px;
+  font-size: 13px; font-weight: 600; color: var(--modal-primary);
+}
+
+.footer-btns { display: flex; gap: 12px; }
+.btn-cancel {
+  background: white; border: 1px solid var(--modal-border);
+  padding: 10px 20px; border-radius: 8px; cursor: pointer;
+}
+.btn-confirm {
+  background: var(--modal-accent); color: white; border: none;
+  padding: 10px 24px; border-radius: 8px; cursor: pointer; font-weight: 600;
+}
+.btn-confirm:disabled { background: #93c5fd; }
+
+/* Empty State */
+.empty-state-modal {
+  text-align: center; padding: 40px; color: #94a3b8;
+}
+.empty-icon-circle {
+  width: 64px; height: 64px; background: #f1f5f9;
+  border-radius: 50%; display: inline-flex; align-items: center;
+  justify-content: center; margin-bottom: 16px;
+}

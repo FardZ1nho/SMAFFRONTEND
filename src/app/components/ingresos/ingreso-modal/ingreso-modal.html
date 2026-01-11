@@ -1,0 +1,122 @@
+<div class="modal-overlay" (click)="cerrar()"></div>
+
+<div class="modal-container" (click)="$event.stopPropagation()">
+  
+  <div class="modal-header">
+    <div class="header-left">
+      <mat-icon>add_shopping_cart</mat-icon>
+      <h2>Registrar Ingreso de Stock</h2>
+    </div>
+    <button mat-icon-button (click)="cerrar()" class="close-btn-header">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <div class="modal-body">
+    
+    <div class="search-section">
+      <div class="filter-group search-container-modal">
+        <label class="search-label">
+          <mat-icon>search</mat-icon>
+          BUSCAR PRODUCTO:
+        </label>
+        <div class="input-wrapper">
+          <input 
+            type="text" 
+            class="filter-input"
+            placeholder="Escribe el nombre o SKU del producto..."
+            [(ngModel)]="busqueda"
+            (input)="buscarProducto()"
+            autocomplete="off"
+          >
+          <button class="btn-clear" *ngIf="busqueda" (click)="limpiarBusqueda()">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+      </div>
+
+      <div class="search-results-overlay" *ngIf="productosFiltrados.length > 0">
+        <div class="result-item" *ngFor="let producto of productosFiltrados" (click)="agregarProducto(producto)">
+          <div class="result-main">
+            <mat-icon class="res-icon">package_2</mat-icon>
+            <div class="res-info">
+              <span class="res-name">{{ producto.nombre }}</span>
+              <span class="res-sku">SKU: {{ producto.codigo }} • Stock: {{ producto.stockActual }}</span>
+            </div>
+          </div>
+          <mat-icon class="res-add">add_circle</mat-icon>
+        </div>
+      </div>
+    </div>
+
+    <div class="productos-agregados-container" *ngIf="productosAgregados.length > 0">
+      <div class="lista-header-modern">
+        <span class="h-col col-prod">Producto</span>
+        <span class="h-col col-alm">Almacén destino</span>
+        <span class="h-col col-qty">Cantidad</span>
+        <span class="h-col col-prov">Proveedor</span>
+        <span class="h-col col-act"></span>
+      </div>
+
+      <div class="producto-row-modern" *ngFor="let item of productosAgregados; let i = index">
+        <div class="p-cell col-prod">
+          <div class="p-avatar"><mat-icon>inventory_2</mat-icon></div>
+          <div class="p-text">
+            <span class="p-name">{{ item.producto.nombre }}</span>
+            <span class="p-sku">{{ item.producto.codigo }}</span>
+          </div>
+        </div>
+
+        <div class="p-cell col-alm">
+          <select [value]="item.almacenId" (change)="onAlmacenChange(i, $any($event.target).value)" class="modern-select">
+            <option [value]="null" disabled selected>Seleccionar almacén...</option>
+            <option *ngFor="let almacen of almacenes" [value]="almacen.id">
+              {{ almacen.codigo }} - {{ almacen.nombre }}
+            </option>
+          </select>
+        </div>
+
+        <div class="p-cell col-qty">
+          <div class="qty-control">
+            <button (click)="decrementarCantidad(i)">-</button>
+            <input type="number" [(ngModel)]="item.cantidad" min="1">
+            <button (click)="incrementarCantidad(i)">+</button>
+          </div>
+        </div>
+
+        <div class="p-cell col-prov">
+          <select [value]="getProveedorIdByNombre(item.proveedorNombre)" (change)="onProveedorChange(i, $any($event.target).value)" class="modern-select">
+            <option [value]="null">Sin proveedor</option>
+            <option *ngFor="let prov of proveedores" [value]="prov.id">{{ prov.nombre }}</option>
+          </select>
+        </div>
+
+        <div class="p-cell col-act">
+          <button class="btn-delete-row" (click)="eliminarProducto(i)" matTooltip="Quitar">
+            <mat-icon>delete_outline</mat-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="empty-state-modal" *ngIf="productosAgregados.length === 0">
+      <div class="empty-icon-circle"><mat-icon>inventory</mat-icon></div>
+      <p>No has añadido productos todavía</p>
+      <span>Busca un producto arriba para iniciar el registro de ingreso</span>
+    </div>
+  </div>
+
+  <div class="modal-footer-modern">
+    <div class="footer-stats">
+      <div class="stat-tag"><mat-icon>layers</mat-icon> {{ productosAgregados.length }} Ingresos</div>
+      <div class="stat-tag"><mat-icon>shopping_bag</mat-icon> {{ calcularTotalUnidades() }} Unidades</div>
+    </div>
+    <div class="footer-btns">
+      <button class="btn-cancel" (click)="cerrar()">Cancelar</button>
+      <button class="btn-confirm" [disabled]="productosAgregados.length === 0 || guardando" (click)="guardarTodos()">
+        <mat-spinner *ngIf="guardando" diameter="20"></mat-spinner>
+        <span *ngIf="!guardando">Confirmar Ingreso</span>
+      </button>
+    </div>
+  </div>
+</div>

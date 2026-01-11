@@ -1,0 +1,141 @@
+<div class="movimientos-container">
+  
+  <div class="page-header">
+    <div class="header-left">
+      <div class="title-section">
+        <h1>
+          <mat-icon class="header-icon">history</mat-icon> 
+          Historial de Movimientos
+        </h1>
+        <p class="subtitle">Registro completo de entradas, salidas y traslados</p>
+      </div>
+    </div>
+    <button class="btn-primary-top" routerLink="/movimientos/traslado">
+      <mat-icon>sync_alt</mat-icon>
+      Nuevo Traslado
+    </button>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon-wrapper total">
+        <mat-icon>analytics</mat-icon>
+      </div>
+      <div class="stat-content">
+        <span class="stat-label">Total</span>
+        <span class="stat-value">{{ totalMovimientos }}</span>
+      </div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-icon-wrapper entrada">
+        <mat-icon>login</mat-icon>
+      </div>
+      <div class="stat-content">
+        <span class="stat-label">Entradas</span>
+        <span class="stat-value">{{ totalEntradas }}</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon-wrapper salida">
+        <mat-icon>logout</mat-icon>
+      </div>
+      <div class="stat-content">
+        <span class="stat-label">Salidas</span>
+        <span class="stat-value">{{ totalSalidas }}</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon-wrapper traslado">
+        <mat-icon>swap_horiz</mat-icon>
+      </div>
+      <div class="stat-content">
+        <span class="stat-label">Traslados</span>
+        <span class="stat-value">{{ totalTraslados }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="filters-card">
+    <div class="filter-row">
+      <div class="search-group">
+        <label class="label-style">
+          <mat-icon>search</mat-icon> Buscar:
+        </label>
+        <input 
+          type="text" 
+          class="input-clean"
+          placeholder="Código, producto o motivo..."
+          [(ngModel)]="filtroTexto"
+          (ngModelChange)="onFiltroTextoChange($event)">
+      </div>
+      
+      <div class="type-group">
+        <label class="label-style">Tipo de Movimiento:</label>
+        <div class="button-toggle-group">
+          <button class="toggle-btn" [class.active]="filtroTipo === 'TODOS'" (click)="onFiltroTipoChange('TODOS')">Todos</button>
+          <button class="toggle-btn" [class.active]="filtroTipo === TipoMovimiento.ENTRADA" (click)="onFiltroTipoChange(TipoMovimiento.ENTRADA)">Entradas</button>
+          <button class="toggle-btn" [class.active]="filtroTipo === TipoMovimiento.SALIDA" (click)="onFiltroTipoChange(TipoMovimiento.SALIDA)">Salidas</button>
+          <button class="toggle-btn" [class.active]="filtroTipo === TipoMovimiento.TRASLADO" (click)="onFiltroTipoChange(TipoMovimiento.TRASLADO)">Traslados</button>
+          <button class="toggle-btn" [class.active]="filtroTipo === TipoMovimiento.AJUSTE" (click)="onFiltroTipoChange(TipoMovimiento.AJUSTE)">Ajustes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <div *ngIf="cargando" class="loading-state">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Cargando movimientos...</p>
+    </div>
+
+    <div class="table-responsive" *ngIf="!cargando && movimientosFiltrados.length > 0">
+      <table class="clean-table">
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Tipo</th>
+            <th>Producto</th>
+            <th>Origen / Destino</th>
+            <th>Cant.</th>
+            <th>Motivo</th>
+            <th>Fecha</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let mov of movimientosFiltrados">
+            <td><span class="code-badge">#{{ mov.codigo }}</span></td>
+            <td>
+              <span class="pill-status" [ngClass]="obtenerClaseTipo(mov.tipoMovimiento)">
+                {{ mov.tipoMovimientoLabel }}
+              </span>
+            </td>
+            <td>
+              <div class="product-info-cell">
+                <span class="p-name">{{ mov.productoNombre }}</span>
+                <span class="p-sku">{{ mov.productoCodigo }}</span>
+              </div>
+            </td>
+            <td>
+              <div class="route-cell">
+                <span class="wh-name">{{ mov.almacenOrigenNombre || '—' }}</span>
+                <mat-icon *ngIf="mov.almacenDestinoNombre">arrow_right_alt</mat-icon>
+                <span class="wh-name highlight" *ngIf="mov.almacenDestinoNombre">{{ mov.almacenDestinoNombre }}</span>
+              </div>
+            </td>
+            <td><span class="qty-bold">{{ mov.cantidad }}</span></td>
+            <td><span class="reason-text">{{ mov.motivo || '—' }}</span></td>
+            <td><span class="date-text">{{ mov.fechaMovimiento | date:'dd/MM/yyyy HH:mm' }}</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div *ngIf="!cargando && movimientosFiltrados.length === 0" class="empty-state">
+      <mat-icon>history_toggle_off</mat-icon>
+      <p>No se encontraron movimientos registrados</p>
+    </div>
+  </div>
+</div>

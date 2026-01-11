@@ -1,0 +1,57 @@
+<div class="productos-vendidos-card">
+  <div class="card-header">
+    <div class="header-left">
+      <span class="icono">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+          <polyline points="17 6 23 6 23 12"></polyline>
+        </svg>
+      </span>
+      <h3>Productos Más Vendidos</h3>
+    </div>
+    <button class="btn-ver-todo" (click)="verTodos()">
+      Ver todo 
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 4px; vertical-align: middle;">
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+        <polyline points="12 5 19 12 12 19"></polyline>
+      </svg>
+    </button>
+  </div>
+
+  <div *ngIf="cargando" class="loading-estado">
+    <div class="spinner-small"></div>
+    <p>Cargando...</p>
+  </div>
+
+  <div *ngIf="error && !cargando" class="error-estado">
+    <p>{{ error }}</p>
+  </div>
+
+  <div *ngIf="!cargando && !error" class="productos-lista">
+    <div *ngIf="productos.length === 0" class="empty-estado">
+      <span class="icono-vacio">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path>
+          <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+          <line x1="12" y1="22.08" x2="12" y2="12"></line>
+        </svg>
+      </span>
+      <p>No hay productos vendidos aún</p>
+    </div>
+
+    <div *ngIf="productos.length > 0">
+      <div *ngFor="let producto of productos; let i = index" class="producto-item">
+        <div class="ranking">
+          <span class="numero-ranking">{{ i + 1 }}</span>
+        </div>
+        <div class="producto-info">
+          <h4 class="producto-nombre">{{ producto.nombre }}</h4>
+          <p class="producto-meta">{{ producto.cantidadVendida }} unidades vendidas</p>
+        </div>
+        <div class="producto-valor">
+          <span class="total-ventas">{{ formatearMoneda(producto.totalVentas) }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

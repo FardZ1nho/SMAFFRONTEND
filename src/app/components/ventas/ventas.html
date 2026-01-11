@@ -1,0 +1,306 @@
+<div class="ventas-container">
+  <!-- Header -->
+  <div class="header">
+    <h1>Agregar Productos</h1>
+  </div>
+
+  <div class="content-wrapper">
+    <!-- COLUMNA IZQUIERDA: Búsqueda y Productos en Venta -->
+    <div class="left-column">
+      
+      <!-- Búsqueda de Productos -->
+      <div class="search-section">
+        <mat-form-field class="search-field" appearance="outline">
+          <mat-icon matPrefix>search</mat-icon>
+          <input 
+            matInput 
+            placeholder="Buscar por nombre o SKU..."
+            [(ngModel)]="terminoBusqueda"
+            (input)="buscarProductos()"
+          >
+        </mat-form-field>
+
+        <!-- Lista de productos filtrados -->
+        <div class="productos-list" *ngIf="terminoBusqueda && productosFiltrados.length > 0">
+          <div 
+            class="producto-item"
+            *ngFor="let producto of productosFiltrados"
+            (click)="agregarProducto(producto)"
+          >
+            <div class="producto-info">
+              <span class="producto-nombre">{{ producto.nombre }}</span>
+              <span class="producto-codigo">{{ producto.codigo }}</span>
+            </div>
+            <div class="producto-precio">
+              <span>S/ {{ producto.precioVenta?.toFixed(2) || '0.00' }}</span>
+              <span class="stock-badge">Stock: {{ producto.stockActual }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Productos en la Venta -->
+      <div class="productos-venta-section">
+        <h3>Productos en la Venta</h3>
+        
+        <div class="productos-venta-container" *ngIf="productosEnVenta.length > 0">
+          <div class="producto-venta-item" *ngFor="let item of productosEnVenta; let i = index">
+            <div class="producto-venta-header">
+              <div class="producto-venta-info">
+                <mat-icon class="producto-icon">inventory_2</mat-icon>
+                <div>
+                  <div class="producto-venta-nombre">{{ item.producto.nombre }}</div>
+                  <div class="producto-venta-codigo">{{ item.producto.codigo }}</div>
+                </div>
+              </div>
+              <button 
+                mat-icon-button 
+                color="warn"
+                (click)="eliminarProducto(i)"
+                matTooltip="Eliminar"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+
+            <div class="producto-venta-details">
+              <mat-form-field appearance="outline" class="small-field">
+                <mat-label>Cantidad</mat-label>
+                <input 
+                  matInput 
+                  type="number"
+                  [(ngModel)]="item.cantidad"
+                  (ngModelChange)="onCantidadChange(item)"
+                  min="1"
+                  [max]="item.producto.stockActual"
+                >
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="small-field">
+                <mat-label>Precio Unit.</mat-label>
+                <input 
+                  matInput 
+                  type="number"
+                  [(ngModel)]="item.precioUnitario"
+                  (ngModelChange)="onPrecioChange(item)"
+                  min="0"
+                  step="0.01"
+                >
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="small-field">
+                <mat-label>Desc. %</mat-label>
+                <input 
+                  matInput 
+                  type="number"
+                  [(ngModel)]="item.descuento"
+                  (ngModelChange)="onDescuentoChange(item)"
+                  min="0"
+                  max="100"
+                >
+              </mat-form-field>
+
+              <div class="subtotal-display">
+                <span>Subtotal:</span>
+                <strong>S/ {{ item.subtotal.toFixed(2) }}</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mensaje cuando no hay productos -->
+        <div class="empty-cart" *ngIf="productosEnVenta.length === 0">
+          <mat-icon>shopping_cart</mat-icon>
+          <p>No hay Productos Seleccionados</p>
+          <p class="subtitle">Busca y agrega un producto para continuar</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- COLUMNA DERECHA: Información del Cliente y Resumen -->
+    <div class="right-column">
+      
+      <!-- Información del Cliente -->
+<div class="cliente-section card">
+  <h3>Información del Cliente</h3>
+
+  <!-- ⭐ BUSCADOR DE CLIENTES ⭐ -->
+  <div class="cliente-search-container">
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Buscar Cliente *</mat-label>
+      <mat-icon matPrefix>search</mat-icon>
+      <input 
+        matInput 
+        [(ngModel)]="busquedaCliente"
+        (input)="buscarClientes()"
+        placeholder="Buscar por nombre o documento..."
+      >
+      <button 
+        mat-icon-button 
+        matSuffix 
+        *ngIf="clienteSeleccionado"
+        (click)="limpiarCliente()"
+        matTooltip="Limpiar selección"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+    </mat-form-field>
+
+    <!-- Lista de clientes encontrados -->
+    <div class="clientes-dropdown" *ngIf="mostrarListaClientes && clientesFiltrados.length > 0">
+      <div 
+        class="cliente-item"
+        *ngFor="let cliente of clientesFiltrados"
+        (click)="seleccionarCliente(cliente)"
+      >
+        <div class="cliente-item-info">
+          <mat-icon>{{ cliente.tipoCliente === 'PERSONA' ? 'person' : 'business' }}</mat-icon>
+          <div>
+            <div class="cliente-nombre">{{ cliente.nombreCompleto }}</div>
+            <div class="cliente-documento">{{ cliente.tipoDocumento }}: {{ cliente.numeroDocumento }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cliente seleccionado -->
+    <div class="cliente-seleccionado" *ngIf="clienteSeleccionado">
+      <mat-icon>check_circle</mat-icon>
+      <div>
+        <strong>{{ clienteSeleccionado.nombreCompleto }}</strong>
+        <p>{{ clienteSeleccionado.tipoDocumento }}: {{ clienteSeleccionado.numeroDocumento }}</p>
+      </div>
+    </div>
+
+    <!-- ⭐ ALERTA SI NO HAY CLIENTE -->
+    <div class="alerta-cliente" *ngIf="!clienteSeleccionado">
+      <mat-icon>info</mat-icon>
+      <span>Debes seleccionar un cliente para completar la venta</span>
+    </div>
+  </div>
+
+  <!-- Fecha -->
+  <mat-form-field appearance="outline" class="full-width">
+    <mat-label>Fecha</mat-label>
+    <mat-icon matPrefix>calendar_today</mat-icon>
+    <input matInput [matDatepicker]="picker" [(ngModel)]="fechaVenta">
+    <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+    <mat-datepicker #picker></mat-datepicker>
+  </mat-form-field>
+
+  <!-- Método de Pago -->
+  <mat-form-field appearance="outline" class="full-width">
+    <mat-label>Método de Pago</mat-label>
+    <mat-select [(ngModel)]="metodoPago">
+      <mat-option *ngFor="let metodo of metodosPago" [value]="metodo.value">
+        {{ metodo.label }}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <!-- ⭐ PAGO MIXTO: CAMPOS ADICIONALES ⭐ -->
+  <div *ngIf="esPagoMixto()" class="pago-mixto-container">
+    <div class="pago-mixto-header">
+      <mat-icon>payments</mat-icon>
+      <span>Desglose de Pago Mixto</span>
+    </div>
+    
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Monto en Efectivo</mat-label>
+      <mat-icon matPrefix>attach_money</mat-icon>
+      <input 
+        matInput 
+        type="number"
+        [(ngModel)]="pagoEfectivo"
+        min="0"
+        step="0.01"
+        placeholder="0.00"
+      >
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Monto por Transferencia</mat-label>
+      <mat-icon matPrefix>account_balance</mat-icon>
+      <input 
+        matInput 
+        type="number"
+        [(ngModel)]="pagoTransferencia"
+        min="0"
+        step="0.01"
+        placeholder="0.00"
+      >
+    </mat-form-field>
+
+    <!-- Resumen del pago mixto -->
+    <div class="pago-mixto-resumen">
+      <div class="resumen-item">
+        <span>Total pagado:</span>
+        <strong>S/ {{ (pagoEfectivo + pagoTransferencia).toFixed(2) }}</strong>
+      </div>
+      <div class="resumen-item">
+        <span>Total a pagar:</span>
+        <strong class="total-objetivo">S/ {{ total.toFixed(2) }}</strong>
+      </div>
+    
+    </div>
+  </div>
+
+  <!-- Notas -->
+  <mat-form-field appearance="outline" class="full-width">
+    <mat-label>Notas (Opcional)</mat-label>
+    <mat-icon matPrefix>note</mat-icon>
+    <textarea 
+      matInput 
+      [(ngModel)]="notas"
+      rows="3"
+      placeholder="Agregar notas adicionales..."
+    ></textarea>
+  </mat-form-field>
+</div>
+
+      <!-- Resumen de Venta -->
+      <div class="resumen-section card">
+        <h3>Resumen de Venta</h3>
+
+        <div class="resumen-row">
+          <span>Subtotal:</span>
+          <strong>S/ {{ subtotal.toFixed(2) }}</strong>
+        </div>
+
+        <div class="resumen-row">
+          <span>IGV (18%):</span>
+          <strong>S/ {{ igv.toFixed(2) }}</strong>
+        </div>
+
+        <div class="resumen-row total">
+          <span>Total:</span>
+          <strong>S/ {{ total.toFixed(2) }}</strong>
+        </div>
+
+        <!-- Botones de acción -->
+        <div class="action-buttons">
+          <button 
+            mat-raised-button 
+            color="primary"
+            (click)="completarVenta()"
+            [disabled]="productosEnVenta.length === 0 || isSaving"
+            class="btn-completar"
+          >
+            <mat-spinner *ngIf="isSaving" diameter="20"></mat-spinner>
+            <span *ngIf="!isSaving">Completar Venta</span>
+          </button>
+
+          <button 
+            mat-stroked-button
+            (click)="guardarComoBorrador()"
+            [disabled]="productosEnVenta.length === 0 || isSaving"
+            class="btn-borrador"
+          >
+            Guardar como borrador
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

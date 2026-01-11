@@ -1,0 +1,32 @@
+<div class="login-container">
+  <div class="sidebar-left orange"></div>
+  <div class="sidebar-left blue"></div>
+  <div class="sidebar-left gray"></div>
+
+  <div class="login-card">
+    <div class="logo-container">
+      <!-- ⭐ CORREGIDO: Agregar el nombre del archivo -->
+      <img src="assets/logo-smaf.png" alt="SMAF Logo" class="logo-image">
+    </div>
+
+    <form class="login-form" (ngSubmit)="login()">
+      <div class="form-group">
+        <label>Usuario</label>
+        <input type="text" [(ngModel)]="username" name="username" required>
+      </div>
+
+      <div class="form-group">
+        <label>Contraseña</label>
+        <input type="password" [(ngModel)]="password" name="password" required>
+      </div>
+
+      <button type="submit" class="login-button">
+        INGRESAR
+      </button>
+    </form>
+
+    <div class="version-info">
+      Versión Beta 1.0
+    </div>
+  </div>
+</div>

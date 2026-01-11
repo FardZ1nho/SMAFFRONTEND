@@ -1,0 +1,141 @@
+.top-bar {
+  height: 60px;
+  background: white;
+  box-shadow: none; /* ⭐ Sin sombra */
+  border-bottom: none; /* ⭐ Sin borde */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 24px;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  margin: 0;
+}
+
+.menu-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.menu-toggle:hover {
+  background: #f1f5f9;
+}
+
+.icon-menu {
+  font-size: 24px;
+  color: #334155;
+}
+
+.user-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: none;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #334155;
+}
+
+.user-button:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.user-icon {
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+  color: #64748b;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.user-label {
+  font-size: 11px;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.user-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.dropdown-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  color: #94a3b8;
+}
+
+/* Estilos del menú desplegable */
+.user-menu-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+}
+
+.user-menu-header mat-icon {
+  font-size: 32px;
+  width: 32px;
+  height: 32px;
+  color: #64748b;
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.menu-username {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.menu-role {
+  font-size: 12px;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .user-label {
+    display: none;
+  }
+
+  .user-info {
+    flex-direction: row;
+  }
+
+  .user-button {
+    padding: 8px 12px;
+  }
+}

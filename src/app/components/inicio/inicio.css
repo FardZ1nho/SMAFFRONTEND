@@ -1,0 +1,272 @@
+/* ===== CONTENEDOR PRINCIPAL ===== */
+.inicio-container {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* ===== HEADER ===== */
+.inicio-header {
+  margin-bottom: 32px;
+}
+
+.inicio-header h1 {
+  color: #1a1a1a;
+  font-size: 28px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+}
+
+.inicio-header .subtitle {
+  color: #666;
+  font-size: 14px;
+  margin: 0;
+}
+
+/* ===== LOADING Y ERROR ===== */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 16px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-container {
+  background-color: #fee;
+  border: 1px solid #fcc;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+}
+
+.error-container p {
+  color: #c33;
+  margin: 0 0 16px 0;
+}
+
+.btn-retry {
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.btn-retry:hover {
+  background-color: #2563eb;
+}
+
+/* ===== GRID DE MÉTRICAS ===== */
+.metricas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+/* ===== CARD DE MÉTRICA ===== */
+.metrica-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.metrica-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+/* ===== ICONO ===== */
+.icono-container {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.icono {
+  font-size: 28px;
+  font-weight: 500;
+  display: flex; /* Añadido para centrar el SVG */
+  align-items: center;
+}
+
+/* ===== BADGE PORCENTAJE ===== */
+.badge-porcentaje {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.badge-porcentaje.positivo {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.badge-porcentaje.negativo {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.badge-porcentaje.neutral {
+  background-color: #e5e7eb;
+  color: #4b5563;
+}
+
+.icono-flecha {
+  font-size: 10px;
+  display: flex; /* Añadido para centrar el SVG */
+  align-items: center;
+}
+
+/* ===== VALOR ===== */
+.valor-container {
+  margin-top: auto;
+}
+
+.valor {
+  font-size: 32px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 4px 0;
+  line-height: 1.2;
+}
+
+.titulo {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* ===== INFORMACIÓN ADICIONAL ===== */
+.info-adicional {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.info-card {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.info-label {
+  font-size: 14px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.info-valor {
+  font-size: 18px;
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+.info-valor.alerta {
+  color: #dc2626;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .inicio-container {
+    padding: 16px;
+  }
+
+  .inicio-header h1 {
+    font-size: 24px;
+  }
+
+  .metricas-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .metrica-card {
+    padding: 20px;
+  }
+
+  .valor {
+    font-size: 28px;
+  }
+
+  .info-adicional {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===== GRID DASHBOARD (GRÁFICO + PRODUCTOS) ===== */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+  margin: 24px 0;
+  align-items: stretch;
+}
+.grafico-section {
+  min-height: 400px;
+}
+
+.productos-section {
+  min-height: 400px;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1024px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (min-width: 769px) and (max-width: 1024px) {
+  .metricas-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1025px) {
+  .metricas-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}

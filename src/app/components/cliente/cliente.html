@@ -1,0 +1,176 @@
+<div class="clientes-container">
+  <div class="header">
+    <div class="header-left">
+      <div class="title-with-icon">
+        <div class="icon-wrapper">
+          <mat-icon>people</mat-icon>
+        </div>
+        <div>
+          <h1>Gestión de Clientes</h1>
+          <p class="subtitle">Administra la base de datos y perfiles de tus clientes</p>
+        </div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button mat-raised-button color="primary" class="btn-nuevo" (click)="abrirModalNuevoCliente()">
+        <mat-icon>person_add</mat-icon>
+        Nuevo Cliente
+      </button>
+    </div>
+  </div>
+
+  <div class="search-bar-section">
+    <div class="filter-group search-main">
+      <label class="search-label">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        Buscar cliente:
+      </label>
+      <div class="input-wrapper">
+        <input 
+          type="text" 
+          class="filter-input"
+          placeholder="Nombre, documento, email o teléfono..."
+          [(ngModel)]="terminoBusqueda" 
+          (keyup)="buscarClientes()">
+        <button class="btn-clear" *ngIf="terminoBusqueda" (click)="limpiarBusqueda()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <div class="secondary-actions">
+      <button mat-stroked-button class="btn-secondary" (click)="abrirFiltros()">
+        <mat-icon>filter_list</mat-icon>
+        Filtros
+      </button>
+
+      <button mat-stroked-button class="btn-secondary" (click)="exportarDatos()">
+        <mat-icon>file_download</mat-icon>
+        Exportar
+      </button>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <div *ngIf="isLoading" class="state-container">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Actualizando lista...</p>
+    </div>
+
+    <div *ngIf="errorMessage && !isLoading" class="state-container error">
+      <mat-icon>error_outline</mat-icon>
+      <p>{{ errorMessage }}</p>
+      <button mat-flat-button color="warn" (click)="cargarClientes()">Reintentar</button>
+    </div>
+
+    <div *ngIf="!isLoading && !errorMessage && clientesFiltrados.data.length === 0" class="state-container empty">
+      <mat-icon>group_off</mat-icon>
+      <h3>No se encontraron resultados</h3>
+      <p>Intenta con otro término o registra un nuevo cliente</p>
+    </div>
+
+    <div class="table-responsive" *ngIf="!isLoading && !errorMessage && clientesFiltrados.data.length > 0">
+      <table mat-table [dataSource]="clientesFiltrados">
+
+        <ng-container matColumnDef="tipoCliente">
+          <th mat-header-cell *matHeaderCellDef>Tipo</th>
+          <td mat-cell *matCellDef="let cliente">
+            <span class="badge" [ngClass]="cliente.tipoCliente === 'PERSONA' ? 'badge-blue' : 'badge-purple'">
+              {{ cliente.tipoCliente }}
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="nombreCompleto">
+          <th mat-header-cell *matHeaderCellDef>Cliente / Razón Social</th>
+          <td mat-cell *matCellDef="let cliente">
+            <div class="client-cell">
+              <span class="client-name">{{ cliente.nombreCompleto }}</span>
+              <span class="client-sub" *ngIf="cliente.razonSocial">{{ cliente.razonSocial }}</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="documento">
+          <th mat-header-cell *matHeaderCellDef>Identificación</th>
+          <td mat-cell *matCellDef="let cliente">
+            <div class="doc-cell">
+              <span class="doc-type">{{ cliente.tipoDocumento }}</span>
+              <span class="doc-num">{{ cliente.numeroDocumento }}</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="contacto">
+          <th mat-header-cell *matHeaderCellDef>Contacto</th>
+          <td mat-cell *matCellDef="let cliente">
+            <div class="contact-cell">
+              <div class="contact-item" *ngIf="cliente.telefono">
+                <mat-icon>phone</mat-icon> {{ cliente.telefono }}
+              </div>
+              <div class="contact-item" *ngIf="cliente.email">
+                <mat-icon>mail_outline</mat-icon> {{ cliente.email }}
+              </div>
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="direccion">
+          <th mat-header-cell *matHeaderCellDef>Ubicación</th>
+          <td mat-cell *matCellDef="let cliente">
+            <span class="address-text" [matTooltip]="cliente.direccionCompleta">
+              {{ (cliente.direccionCompleta | slice:0:40) || 'Sin dirección' }}{{ cliente.direccionCompleta?.length > 40 ? '...' : '' }}
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="acciones">
+          <th mat-header-cell *matHeaderCellDef class="text-center">Acciones</th>
+          <td mat-cell *matCellDef="let cliente" class="text-center">
+            <div class="action-buttons">
+              <button mat-icon-button class="btn-view" (click)="verDetalle(cliente)" matTooltip="Ver detalle">
+                <mat-icon>visibility</mat-icon>
+              </button>
+              <button mat-icon-button class="btn-edit" (click)="editarCliente(cliente)" matTooltip="Editar">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button class="btn-delete" (click)="eliminarCliente(cliente)" matTooltip="Eliminar">
+                <mat-icon>delete_outline</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="row-hover"></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="footer-summary" *ngIf="!isLoading && clientesFiltrados.data.length > 0">
+    <div class="summary-card">
+      <mat-icon>groups</mat-icon>
+      <div class="summary-info">
+        <span class="label">Total Clientes</span>
+        <span class="value">{{ clientesFiltrados.data.length }}</span>
+      </div>
+    </div>
+    <div class="summary-card">
+      <mat-icon>person</mat-icon>
+      <div class="summary-info">
+        <span class="label">Personas Naturales</span>
+        <span class="value">{{ (clientesFiltrados.data | json).split('"tipoCliente":"PERSONA"').length - 1 }}</span>
+      </div>
+    </div>
+    <div class="summary-card">
+      <mat-icon>business</mat-icon>
+      <div class="summary-info">
+        <span class="label">Empresas / Jurídicos</span>
+        <span class="value">{{ (clientesFiltrados.data | json).split('"tipoCliente":"EMPRESA"').length - 1 }}</span>
+      </div>
+    </div>
+  </div>
+</div>

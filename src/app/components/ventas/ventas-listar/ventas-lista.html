@@ -1,0 +1,187 @@
+<div class="ventas-lista-container">
+    <div class="header">
+        <div class="header-left">
+            <div class="title-with-icon">
+                <div class="icon-header">
+                    <mat-icon>receipt_long</mat-icon>
+                </div>
+                <div>
+                    <h1>Lista de Ventas</h1>
+                    <p class="subtitle">Gestiona y consulta todas las transacciones de tu negocio</p>
+                </div>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button mat-raised-button color="primary" class="btn-nuevo" (click)="nuevaVenta()">
+                <mat-icon>add</mat-icon>
+                Nueva Venta
+            </button>
+        </div>
+    </div>
+
+    <div class="search-bar-section">
+        <div class="filter-group search-main">
+            <label class="search-label">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                Buscar Venta:
+            </label>
+            <div class="input-wrapper">
+                <input type="text" class="filter-input" placeholder="Buscar por código de ticket o nombre de cliente..."
+                    [(ngModel)]="terminoBusqueda" (keyup)="buscarVentas()">
+                <button class="btn-clear" *ngIf="terminoBusqueda" (click)="limpiarBusqueda()">
+                    <mat-icon>close</mat-icon>
+                </button>
+            </div>
+        </div>
+
+        <div class="secondary-filters">
+            <div class="filter-item">
+                <label class="search-label">Estado:</label>
+                <select class="filter-select" [(ngModel)]="estadoFiltro" (change)="onEstadoChange()">
+                    <option *ngFor="let estado of estadosVenta" [value]="estado.value">
+                        {{ estado.label }}
+                    </option>
+                </select>
+            </div>
+
+            <button mat-stroked-button class="btn-export" (click)="exportarDatos()">
+                <mat-icon>download</mat-icon>
+                Exportar
+            </button>
+        </div>
+    </div>
+
+    <div class="table-card">
+        <div *ngIf="isLoading" class="state-container">
+            <mat-spinner diameter="40"></mat-spinner>
+            <p>Sincronizando ventas...</p>
+        </div>
+
+        <div *ngIf="errorMessage && !isLoading" class="state-container error">
+            <mat-icon>error_outline</mat-icon>
+            <p>{{ errorMessage }}</p>
+            <button mat-flat-button color="warn" (click)="cargarVentas()">Reintentar</button>
+        </div>
+
+        <div *ngIf="!isLoading && !errorMessage && ventasFiltradas.data.length === 0" class="state-container empty">
+            <mat-icon>receipt</mat-icon>
+            <h3>No se encontraron ventas</h3>
+            <p>Ajusta los filtros o crea una nueva transacción</p>
+            <button mat-raised-button color="primary" class="btn-nuevo" (click)="nuevaVenta()">Registrar Primera Venta</button>
+        </div>
+
+        <div class="table-responsive" *ngIf="!isLoading && !errorMessage && ventasFiltradas.data.length > 0">
+            <table mat-table [dataSource]="ventasFiltradas">
+
+                <ng-container matColumnDef="codigo">
+                    <th mat-header-cell *matHeaderCellDef>Comprobante</th>
+                    <td mat-cell *matCellDef="let venta">
+                        <div class="comprobante-cell">
+                            <span class="ticket-code">#{{ venta.codigo }}</span>
+                        </div>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="fechaVenta">
+                    <th mat-header-cell *matHeaderCellDef>Fecha y Hora</th>
+                    <td mat-cell *matCellDef="let venta">
+                        <div class="datetime-cell">
+                            <span class="date-val">{{ formatearFecha(venta.fechaVenta) }}</span>
+                        </div>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="cliente">
+                    <th mat-header-cell *matHeaderCellDef>Cliente</th>
+                    <td mat-cell *matCellDef="let venta">
+                        <div class="client-table-cell">
+                            <mat-icon>account_circle</mat-icon>
+                            <span>{{ venta.nombreCliente || 'Cliente General' }}</span>
+                        </div>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="metodoPago">
+                    <th mat-header-cell *matHeaderCellDef>Pago</th>
+                    <td mat-cell *matCellDef="let venta">
+                        <div class="payment-method-tag">
+                            <mat-icon>{{ getMetodoPagoIcon(venta.metodoPago) }}</mat-icon>
+                            <span>{{ venta.metodoPago }}</span>
+                        </div>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="total">
+                    <th mat-header-cell *matHeaderCellDef>Monto</th>
+                    <td mat-cell *matCellDef="let venta">
+                        <span class="amount-val">S/ {{ venta.total.toFixed(2) }}</span>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="estado">
+                    <th mat-header-cell *matHeaderCellDef>Estado</th>
+                    <td mat-cell *matCellDef="let venta">
+                        <span class="status-pill" [ngClass]="getEstadoClass(venta.estado)">
+                            {{ getEstadoLabel(venta.estado) }}
+                        </span>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="acciones">
+                    <th mat-header-cell *matHeaderCellDef class="text-center">Acciones</th>
+                    <td mat-cell *matCellDef="let venta" class="text-center">
+                        <button mat-icon-button [matMenuTriggerFor]="menu" class="btn-more">
+                            <mat-icon>more_horiz</mat-icon>
+                        </button>
+                        <mat-menu #menu="matMenu" class="modern-menu">
+                            <button mat-menu-item (click)="verDetalle(venta)">
+                                <mat-icon color="primary">visibility</mat-icon>
+                                <span>Ver Factura</span>
+                            </button>
+                            <button mat-menu-item (click)="completarVenta(venta)" *ngIf="venta.estado === 'BORRADOR'">
+                                <mat-icon style="color: #059669;">check_circle</mat-icon>
+                                <span>Emitir Venta</span>
+                            </button>
+                            <button mat-menu-item (click)="cancelarVenta(venta)" *ngIf="venta.estado !== 'CANCELADA'">
+                                <mat-icon color="warn">cancel</mat-icon>
+                                <span>Anular Comprobante</span>
+                            </button>
+                            <div mat-divider></div>
+                            <button mat-menu-item (click)="eliminarVenta(venta)" class="delete-item">
+                                <mat-icon>delete_forever</mat-icon>
+                                <span>Eliminar Registro</span>
+                            </button>
+                        </mat-menu>
+                    </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="row-hover"></tr>
+            </table>
+        </div>
+    </div>
+
+    <div *ngIf="!isLoading && ventasFiltradas.data.length > 0" class="footer-stats">
+        <div class="stat-card">
+            <div class="stat-icon blue">
+                <mat-icon>receipt_long</mat-icon>
+            </div>
+            <div class="stat-data">
+                <span class="stat-label">Total Documentos</span>
+                <span class="stat-value">{{ ventasFiltradas.data.length }}</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon green">
+                <mat-icon>payments</mat-icon>
+            </div>
+            <div class="stat-data">
+                <span class="stat-label">Ingreso Acumulado</span>
+                <span class="stat-value">S/ {{ calcularMontoTotal().toFixed(2) }}</span>
+            </div>
+        </div>
+    </div>
+</div>

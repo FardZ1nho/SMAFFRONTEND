@@ -15,7 +15,7 @@ import { environment } from '../../environments/environment';
 })
 export class ProductoAlmacenService {
   
-  private baseUrl = '${environment.base}/producto-almacen';
+  private baseUrl = `${environment.base}/producto-almacen`;
 
   constructor(private http: HttpClient) { }
 

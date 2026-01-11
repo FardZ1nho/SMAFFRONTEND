@@ -12,7 +12,7 @@ import { environment } from '../../environments/environment';
 })
 export class IngresoService {
   // Cambia esto por la URL de tu backend, igual que en VentaService
-  private apiUrl = '${environment.base}/api/ingresos'; 
+  private apiUrl = `${environment.base}/api/ingresos`; 
 
   constructor(private http: HttpClient) { }
 

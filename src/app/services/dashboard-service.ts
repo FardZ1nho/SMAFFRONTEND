@@ -10,7 +10,7 @@ import { environment } from '../../environments/environment';
 })
 export class DashboardService {
   
-  private baseUrl = '${environment.base}/dashboard';
+  private baseUrl = `${environment.base}/dashboard`;
 
   constructor(private http: HttpClient) { }
 

@@ -12,7 +12,7 @@ import { environment } from '../../environments/environment';
 })
 export class MovimientoService {
 
-  private baseUrl = '${environment.base}/movimientos';
+  private baseUrl = `${environment.base}/movimientos`;
 
   constructor(private http: HttpClient) { }
 

@@ -5,6 +5,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { JwtHelperService } from '@auth0/angular-jwt';
 import { JwtRequestDTO } from '../models/jwtRequestDTO';
 import { Observable, BehaviorSubject, tap } from 'rxjs';
+import { environment } from '../../environments/environment'; // ⭐ AGREGAR
 
 interface JwtResponse {
   jwttoken: string;
@@ -20,8 +21,6 @@ interface UserInfo {
 })
 export class LoginService {
   private jwtHelper = new JwtHelperService();
-  
-  // BehaviorSubject para compartir el estado del usuario
   private currentUserSubject: BehaviorSubject<UserInfo | null>;
   public currentUser$: Observable<UserInfo | null>;
 
@@ -30,11 +29,9 @@ export class LoginService {
     private router: Router,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {
-    // ⭐ Inicializar con el usuario del token al crear el servicio
     this.currentUserSubject = new BehaviorSubject<UserInfo | null>(this.getUserFromToken());
     this.currentUser$ = this.currentUserSubject.asObservable();
     
-    // Log para debug
     const currentUser = this.currentUserSubject.value;
     console.log('🔐 LoginService inicializado con usuario:', currentUser);
   }
@@ -43,24 +40,20 @@ export class LoginService {
     return isPlatformBrowser(this.platformId);
   }
 
-  // Login (mejorado)
+  // ⭐ CAMBIAR URL
   login(request: JwtRequestDTO): Observable<JwtResponse> {
-    return this.http.post<JwtResponse>('http://localhost:8080/login', request).pipe(
+    return this.http.post<JwtResponse>(`${environment.base}/login`, request).pipe(
       tap(response => {
         if (this.isBrowser() && response.jwttoken) {
           sessionStorage.setItem('token', response.jwttoken);
-          
-          // Actualizar usuario actual
           const userInfo = this.getUserFromToken();
           this.currentUserSubject.next(userInfo);
-          
           console.log('✅ Login exitoso:', userInfo);
         }
       })
     );
   }
 
-  // Logout
   logout(): void {
     if (this.isBrowser()) {
       sessionStorage.removeItem('token');
@@ -70,7 +63,6 @@ export class LoginService {
     }
   }
 
-  // Verificar si está autenticado
   verificar(): boolean {
     if (!this.isBrowser()) return false;
     
@@ -78,15 +70,12 @@ export class LoginService {
     if (!token) return false;
 
     try {
-      // Verificar si el token ha expirado
       const isExpired = this.jwtHelper.isTokenExpired(token);
-      
       if (isExpired) {
         console.log('⚠️ Token expirado');
         this.logout();
         return false;
       }
-      
       return true;
     } catch (error) {
       console.error('❌ Error al verificar token:', error);
@@ -94,18 +83,15 @@ export class LoginService {
     }
   }
 
-  // Alias para verificar (para compatibilidad)
   isAuthenticated(): boolean {
     return this.verificar();
   }
 
-  // Obtener token
   getToken(): string | null {
     if (!this.isBrowser()) return null;
     return sessionStorage.getItem('token');
   }
 
-  // Obtener información del usuario desde el token
   private getUserFromToken(): UserInfo | null {
     if (!this.isBrowser()) return null;
     
@@ -132,26 +118,22 @@ export class LoginService {
     }
   }
 
-  // Forzar recarga del usuario (útil después de recargar página)
   refreshUser(): void {
     const userInfo = this.getUserFromToken();
     this.currentUserSubject.next(userInfo);
     console.log('🔄 Usuario refrescado:', userInfo);
   }
 
-  // Mostrar rol
   showRole(): string {
     const user = this.currentUserSubject.value;
     return user?.role || '';
   }
 
-  // Mostrar nombre de usuario
   showUsername(): string {
     const user = this.currentUserSubject.value;
     return user?.username || '';
   }
 
-  // Verificar si tiene un rol específico
   hasRole(role: string): boolean {
     return this.showRole() === role;
   }

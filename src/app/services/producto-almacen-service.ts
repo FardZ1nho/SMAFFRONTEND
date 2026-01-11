@@ -7,13 +7,15 @@ import {
   TransferenciaStockRequest,
   AjusteStockRequest 
 } from '../models/producto-almacen';
+import { environment } from '../../environments/environment';
+
 
 @Injectable({
   providedIn: 'root'
 })
 export class ProductoAlmacenService {
   
-  private baseUrl = 'http://localhost:8080/producto-almacen';
+  private baseUrl = '${environment.base}/producto-almacen';
 
   constructor(private http: HttpClient) { }
 

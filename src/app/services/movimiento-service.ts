@@ -4,13 +4,15 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError, timeout, catchError } from 'rxjs';
 import { Movimiento, TipoMovimiento, TrasladoRequest } from '../models/movimiento';
+import { environment } from '../../environments/environment';
+
 
 @Injectable({
   providedIn: 'root'
 })
 export class MovimientoService {
 
-  private baseUrl = 'http://localhost:8080/movimientos';
+  private baseUrl = '${environment.base}/movimientos';
 
   constructor(private http: HttpClient) { }
 

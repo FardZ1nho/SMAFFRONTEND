@@ -4,12 +4,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Venta, VentaRequest, EstadoVenta } from '../models/venta';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class VentaService {
-  private apiUrl = 'http://localhost:8080/ventas';
+  private apiUrl = '${environment.base}/ventas';
 
   constructor(private http: HttpClient) { }
 

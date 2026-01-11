@@ -3,13 +3,14 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { DashboardResponseDTO, VentasSemanaDTO } from '../models/dashboard';
 import { ProductoVendidoDTO } from '../models/dashboard';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class DashboardService {
   
-  private baseUrl = 'http://localhost:8080/dashboard';
+  private baseUrl = '${environment.base}/dashboard';
 
   constructor(private http: HttpClient) { }
 

@@ -4,13 +4,15 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { IngresoRequest, IngresoResponse } from '../models/ingreso';
+import { environment } from '../../environments/environment';
+
 
 @Injectable({
   providedIn: 'root'
 })
 export class IngresoService {
   // Cambia esto por la URL de tu backend, igual que en VentaService
-  private apiUrl = 'http://localhost:8080/api/ingresos'; 
+  private apiUrl = '${environment.base}/api/ingresos'; 
 
   constructor(private http: HttpClient) { }
 

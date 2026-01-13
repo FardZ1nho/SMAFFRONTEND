@@ -10,15 +10,17 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { ActivatedRoute, Router } from '@angular/router'; // ← Agregar Router
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { ActivatedRoute, Router } from '@angular/router';
+import { forkJoin } from 'rxjs';
+
 import { VentaService } from '../../services/venta-service';
 import { ProductoService } from '../../services/producto-service';
 import { ClienteService } from '../../services/cliente-service';
 import { Producto } from '../../models/producto';
 import { Cliente } from '../../models/cliente';
 import { VentaRequest, TipoCliente, MetodoPago } from '../../models/venta';
-import { forkJoin } from 'rxjs'; // 👈 IMPORTANTE
-
+import { ClienteModalComponent } from '../cliente/cliente-modal/cliente-modal';
 
 interface ProductoEnVenta {
   producto: Producto;
@@ -34,13 +36,13 @@ interface ProductoEnVenta {
   imports: [
     CommonModule, FormsModule, MatButtonModule, MatIconModule, MatFormFieldModule,
     MatInputModule, MatSelectModule, MatDatepickerModule, MatNativeDateModule,
-    MatTooltipModule, MatProgressSpinnerModule
+    MatTooltipModule, MatProgressSpinnerModule, MatDialogModule
   ],
   templateUrl: './ventas.html',
   styleUrls: ['./ventas.css']
 })
 export class VentasComponent implements OnInit {
-  // Búsqueda y Listas
+  // --- Búsqueda y Listas ---
   terminoBusqueda: string = '';
   productos: Producto[] = [];
   productosFiltrados: Producto[] = [];
@@ -54,7 +56,7 @@ export class VentasComponent implements OnInit {
   mostrarListaClientes: boolean = false;
   isLoadingClientes: boolean = false;
 
-  // Formulario de Venta
+  // --- Formulario de Venta ---
   nombreCliente: string = '';
   tipoCliente: TipoCliente = TipoCliente.COMUN;
   fechaVenta: Date = new Date();
@@ -68,15 +70,15 @@ export class VentasComponent implements OnInit {
     { value: 'FACTURA', label: 'Factura' }
   ];
 
-  // ⭐ CONFIGURACIÓN DE MONEDA Y TIPO DE CAMBIO
+  // --- Configuración de Moneda ---
   moneda: string = 'PEN';
   tipoCambio: number = 3.80;
 
-  // Pago Mixto
+  // --- Pago Mixto ---
   pagoEfectivo: number = 0;
   pagoTransferencia: number = 0;
 
-  // Totales
+  // --- Totales ---
   subtotal: number = 0;
   igv: number = 0;
   total: number = 0;
@@ -91,198 +93,120 @@ export class VentasComponent implements OnInit {
     { value: MetodoPago.MIXTO, label: 'Mixto (Efectivo + Transferencia)' }
   ];
 
+  // --- Edición de Borrador ---
   esEdicion: boolean = false;
   ventaId: number | null = null;
-  titulo: string = 'Nueva Venta'; // Para cambiar el título en el HTML dinámicamente
 
   constructor(
     private ventaService: VentaService,
     private productoService: ProductoService,
     private clienteService: ClienteService,
     private router: Router,
-    private route: ActivatedRoute, // ✅ AGREGAR ESTO para leer la URL
-    private cdr: ChangeDetectorRef // 👈 AGREGAR ESTO
+    private route: ActivatedRoute,
+    private cdr: ChangeDetectorRef,
+    private dialog: MatDialog
   ) { }
 
   ngOnInit(): void {
-  this.isLoadingProductos = true; // Bloqueamos la UI mientras carga todo
-
-  // 1. Preparamos las peticiones base (Productos y Clientes)
-  const cargaProductos$ = this.productoService.listarProductosActivos();
-  const cargaClientes$ = this.clienteService.listarClientesActivos();
-
-  // 2. Usamos forkJoin para esperar a ambas
-  forkJoin([cargaProductos$, cargaClientes$]).subscribe({
-    next: ([listaProductos, listaClientes]) => {
-      
-      // Guardamos los datos en las variables del componente
-      this.productos = listaProductos;
-      this.productosFiltrados = listaProductos;
-      
-      this.clientes = listaClientes;
-      // No filtramos clientes aún
-
-      console.log('✅ Base de datos (Productos y Clientes) cargada correctamente');
-
-      // 3. AHORA SÍ es seguro verificar si hay una ID en la URL
-      const idParam = this.route.snapshot.paramMap.get('id');
-      if (idParam) {
-        this.ventaId = +idParam;
-        this.esEdicion = true;
-        this.titulo = `Editando Venta #${this.ventaId}`;
-        
-        // Llamamos a cargar la venta, sabiendo que los productos YA existen
-        this.cargarDatosVenta(this.ventaId);
-      } else {
-        this.isLoadingProductos = false; // Si es venta nueva, terminamos de cargar aquí
-      }
-    },
-    error: (err) => {
-      console.error('Error cargando datos base:', err);
-      this.isLoadingProductos = false;
-    }
-  });
-}
-
-  // --- MÉTODOS DE CARGA DE DATOS ---
-  cargarProductos(): void {
     this.isLoadingProductos = true;
-    this.productoService.listarProductosActivos().subscribe({
-      next: (data) => {
-        this.productos = data;
-        this.productosFiltrados = data;
-        this.isLoadingProductos = false;
+
+    // 1. Carga optimizada: Productos y Clientes en paralelo
+    const cargaProductos$ = this.productoService.listarProductosActivos();
+    const cargaClientes$ = this.clienteService.listarClientesActivos();
+
+    forkJoin([cargaProductos$, cargaClientes$]).subscribe({
+      next: ([listaProductos, listaClientes]) => {
+        this.productos = listaProductos;
+        this.productosFiltrados = listaProductos;
+        this.clientes = listaClientes;
+
+        // 2. Verificar si estamos editando un borrador (ID en URL)
+        const idParam = this.route.snapshot.paramMap.get('id');
+        if (idParam) {
+          this.ventaId = +idParam;
+          this.esEdicion = true;
+          this.cargarDatosVenta(this.ventaId);
+        } else {
+          this.isLoadingProductos = false;
+        }
       },
-      error: (error) => {
-        console.error('Error al cargar productos', error);
+      error: (err) => {
+        console.error('Error cargando datos base:', err);
         this.isLoadingProductos = false;
       }
     });
   }
+
+  // --- MÉTODOS DE CARGA ---
   cargarDatosVenta(id: number): void {
-  // Nota: isLoadingProductos suele venir en true desde el ngOnInit, 
-  // pero lo forzamos aquí por si acaso se llama desde otro lado.
-  this.isLoadingProductos = true;
+    this.isLoadingProductos = true;
+    this.ventaService.obtenerVenta(id).subscribe({
+      next: (venta: any) => {
+        // Recuperar Cliente
+        let idCliente = venta.clienteId || (venta.cliente ? venta.cliente.id : null);
+        const clienteEncontrado = this.clientes.find(c => String(c.id) === String(idCliente));
+        
+        if (clienteEncontrado) {
+          this.seleccionarCliente(clienteEncontrado);
+        } else if (venta.nombreCliente) {
+          this.nombreCliente = venta.nombreCliente;
+          this.busquedaCliente = venta.nombreCliente;
+          this.clienteSeleccionado = { id: idCliente || 0, nombreCompleto: venta.nombreCliente, numeroDocumento: '---' } as any;
+        }
 
-  this.ventaService.obtenerVenta(id).subscribe({
-    next: (venta: any) => {
-      console.log('📦 DATOS VENTA RECIBIDOS:', venta);
+        // Datos Generales
+        this.fechaVenta = new Date(venta.fechaVenta);
+        this.metodoPago = venta.metodoPago;
+        this.notas = venta.notas || '';
+        this.moneda = venta.moneda || 'PEN';
+        this.tipoCambio = venta.tipoCambio || 3.80;
+        if (venta.tipoDocumento) this.tipoDocumento = venta.tipoDocumento;
 
-      // =========================================================
-      // 1. RECUPERACIÓN INTELIGENTE DEL CLIENTE (Plan A, B, C)
-      // =========================================================
-      let idClienteBusqueda = venta.clienteId;
-      
-      // Si el ID no viene suelto, búscalo dentro del objeto cliente
-      if (!idClienteBusqueda && venta.cliente) {
-        idClienteBusqueda = venta.cliente.id;
-      }
-
-      console.log(`🔎 Buscando Cliente ID: ${idClienteBusqueda} en lista de ${this.clientes.length} clientes`);
-
-      // PLAN A: Buscar en lista local (Comparando como String para evitar error "5" vs 5)
-      const clienteEncontrado = this.clientes.find(c => String(c.id) === String(idClienteBusqueda));
-
-      if (clienteEncontrado) {
-        console.log('✅ PLAN A: Cliente encontrado en lista local');
-        // Esto rellena busquedaCliente, nombreCliente y clienteSeleccionado automáticamente
-        this.seleccionarCliente(clienteEncontrado); 
-      } 
-      else if (venta.cliente) {
-        console.log('⚠️ PLAN B: Usando objeto cliente de la venta (posiblemente inactivo)');
-        this.clienteSeleccionado = venta.cliente;
-        this.nombreCliente = venta.cliente.nombreCompleto || venta.nombreCliente;
-        // IMPORTANTE: Rellenar el input visual manualmente
-        this.busquedaCliente = `${this.nombreCliente} (Histórico)`;
-      } 
-      else if (venta.nombreCliente) {
-         console.log('⚠️ PLAN C: Solo nombre disponible');
-         this.nombreCliente = venta.nombreCliente;
-         this.busquedaCliente = venta.nombreCliente;
-         // Crear dummy para evitar errores de validación
-         this.clienteSeleccionado = { 
-            id: idClienteBusqueda || 0, 
-            nombreCompleto: venta.nombreCliente, 
-            numeroDocumento: '---' 
-         } as any;
-      }
-
-      // =========================================================
-      // 2. DATOS GENERALES
-      // =========================================================
-      this.fechaVenta = new Date(venta.fechaVenta);
-      this.metodoPago = venta.metodoPago;
-      this.notas = venta.notas || '';
-      this.moneda = venta.moneda || 'PEN'; // Si tu backend guarda la moneda, úsala aquí
-      this.tipoCambio = venta.tipoCambio || 3.80; // Igual con el TC
-      
-      if (venta.tipoDocumento) {
-        this.tipoDocumento = venta.tipoDocumento;
-      }
-
-      // =========================================================
-      // 3. RECUPERACIÓN DE PRODUCTOS
-      // =========================================================
-      if (venta.detalles) {
-        this.productosEnVenta = venta.detalles.map((detalle: any) => {
-          // Buscar en catálogo local (seguro contra string/number)
-          const productoCatalogo = this.productos.find(p => String(p.id) === String(detalle.productoId));
-          
-          // Prioridad: 1. Catálogo Local -> 2. Objeto en Detalle -> 3. Dummy
-          const productoReal = productoCatalogo || detalle.producto || {
-             id: detalle.productoId, 
-             nombre: 'Producto No Disponible', 
-             codigo: '???', 
-             precioVenta: 0, 
-             stockActual: 0,
-             moneda: 'PEN'
-          };
-
-          return {
-            producto: productoReal,
-            cantidad: detalle.cantidad,
-            precioUnitario: detalle.precioUnitario,
-            descuento: detalle.descuento || 0,
-            subtotal: 0 // Se recalcula abajo
-          };
-        });
-
-        // Recalcular montos matemáticos
-        this.productosEnVenta.forEach(item => this.calcularSubtotalProducto(item));
-        this.calcularTotales();
-      }
-
-      // =========================================================
-      // 4. FINALIZACIÓN Y REFRESCO DE PANTALLA (CRÍTICO)
-      // =========================================================
-      this.isLoadingProductos = false;
-      
-      // 🔥 ESTO SOLUCIONA QUE TENGAS QUE DAR CLIC PARA VER LOS DATOS
-      this.cdr.detectChanges();
-    },
-    error: (err) => {
-      console.error('❌ Error cargando venta:', err);
-      this.isLoadingProductos = false;
-      this.cdr.detectChanges(); // Refrescar para quitar el spinner
-      // Opcional: Mostrar alerta
-    }
-  });
-}
-  cargarClientes(): void {
-    this.isLoadingClientes = true;
-    this.clienteService.listarClientesActivos().subscribe({
-      next: (data) => {
-        this.clientes = data;
-        this.isLoadingClientes = false;
+        // Recuperar Productos
+        if (venta.detalles) {
+          this.productosEnVenta = venta.detalles.map((detalle: any) => {
+            const productoCatalogo = this.productos.find(p => String(p.id) === String(detalle.productoId));
+            const productoReal = productoCatalogo || detalle.producto || {
+               id: detalle.productoId, nombre: 'No Disponible', codigo: '???', precioVenta: 0, stockActual: 0, moneda: 'PEN'
+            };
+            return {
+              producto: productoReal,
+              cantidad: detalle.cantidad,
+              precioUnitario: detalle.precioUnitario,
+              descuento: detalle.descuento || 0,
+              subtotal: 0
+            };
+          });
+          this.productosEnVenta.forEach(item => this.calcularSubtotalProducto(item));
+          this.calcularTotales();
+        }
+        this.isLoadingProductos = false;
+        this.cdr.detectChanges();
       },
-      error: (error) => {
-        console.error('Error al cargar clientes', error);
-        this.isLoadingClientes = false;
+      error: () => this.isLoadingProductos = false
+    });
+  }
+
+  // --- MODAL NUEVO CLIENTE (Tu nueva función) ---
+  abrirNuevoCliente(): void {
+    const dialogRef = this.dialog.open(ClienteModalComponent, {
+      width: '700px',
+      disableClose: true,
+      data: { cliente: null } // null para modo creación
+    });
+
+    dialogRef.afterClosed().subscribe(nuevoCliente => {
+      if (nuevoCliente) {
+        // 1. Agregamos a la lista
+        this.clientes.push(nuevoCliente);
+        // 2. Lo seleccionamos automáticamente
+        this.seleccionarCliente(nuevoCliente);
+        this.cdr.detectChanges();
       }
     });
   }
 
-  // --- LÓGICA DE MONEDA Y TIPO DE CAMBIO ---
+  // --- LÓGICA MONEDA ---
   onTipoCambioChange() {
     if (this.tipoCambio <= 0) this.tipoCambio = 1;
     this.recalcularTodoElCarrito();
@@ -303,18 +227,15 @@ export class VentasComponent implements OnInit {
 
   private convertirPrecio(producto: Producto): number {
     let precioOriginal = producto.precioVenta ?? 0;
-    // Si el producto está en USD y la venta en PEN
     if (producto.moneda === 'USD' && this.moneda === 'PEN') {
       return Number((precioOriginal * this.tipoCambio).toFixed(2));
-    }
-    // Si el producto está en PEN y la venta en USD
-    else if (producto.moneda === 'PEN' && this.moneda === 'USD') {
+    } else if (producto.moneda === 'PEN' && this.moneda === 'USD') {
       return Number((precioOriginal / this.tipoCambio).toFixed(2));
     }
     return precioOriginal;
   }
 
-  // --- GESTIÓN DEL CARRITO ---
+  // --- GESTIÓN CARRITO ---
   agregarProducto(producto: Producto): void {
     const existe = this.productosEnVenta.find(p => p.producto.id === producto.id);
     if (existe) {
@@ -339,7 +260,7 @@ export class VentasComponent implements OnInit {
     this.calcularTotales();
   }
 
-  // --- BÚSQUEDAS FILTRADAS ---
+  // --- BÚSQUEDAS ---
   buscarProductos(): void {
     if (!this.terminoBusqueda.trim()) {
       this.productosFiltrados = this.productos;
@@ -408,7 +329,6 @@ export class VentasComponent implements OnInit {
     if (this.esPagoMixto()) this.validarMontoMixto('T');
   }
 
-  // --- PAGO MIXTO ---
   validarMontoMixto(campo: 'E' | 'T') {
     if (campo === 'T') {
       if (this.pagoTransferencia > this.total) this.pagoTransferencia = this.total;
@@ -421,112 +341,85 @@ export class VentasComponent implements OnInit {
 
   esPagoMixto(): boolean { return this.metodoPago === MetodoPago.MIXTO; }
 
+  // --- PREPARAR DATOS (DRY) ---
+  private prepararRequest(): any {
+    const esMixto = this.metodoPago === 'MIXTO';
+    return {
+      fechaVenta: this.fechaVenta,
+      clienteId: this.clienteSeleccionado?.id,
+      nombreCliente: this.nombreCliente,
+      tipoCliente: this.tipoCliente,
+      metodoPago: this.metodoPago,
+      pagoEfectivo: esMixto ? this.pagoEfectivo : 0,
+      pagoTransferencia: esMixto ? this.pagoTransferencia : 0,
+      moneda: this.moneda,
+      tipoCambio: this.tipoCambio,
+      notas: this.notas,
+      tipoDocumento: this.tipoDocumento,
+      detalles: this.productosEnVenta.map(p => ({
+        productoId: p.producto.id,
+        cantidad: p.cantidad,
+        precioUnitario: p.precioUnitario,
+        descuento: p.descuento
+      }))
+    };
+  }
+
   // --- ACCIONES FINALES ---
   completarVenta(): void {
-  if (this.productosEnVenta.length === 0 || !this.clienteSeleccionado) return;
-  
-  // Confirmación opcional (puedes quitarla si quieres que sea directo)
-  if (!confirm('¿Estás seguro de emitir esta venta?')) return;
+    if (this.productosEnVenta.length === 0 || !this.clienteSeleccionado) return;
+    if (!confirm('¿Estás seguro de emitir esta venta?')) return;
 
-  this.isSaving = true;
-  const request = this.prepararRequest();
+    this.isSaving = true;
+    const request = this.prepararRequest();
 
-  // Lógica para Venta NUEVA o EDICIÓN de borrador
-  if (this.esEdicion && this.ventaId) {
-      // CASO A: Estamos editando un borrador para completarlo
+    if (this.esEdicion && this.ventaId) {
+      // Editar Borrador -> Completar
       this.ventaService.actualizarVenta(this.ventaId, request).subscribe({
-          next: () => {
-              // Una vez guardados los datos, completamos
-              this.ventaService.completarVenta(this.ventaId!).subscribe({
-                  next: () => {
-                      alert('✅ Venta completada exitosamente');
-                      this.isSaving = false;
-                      // 👇 REDIRECCIÓN AQUÍ
-                      this.router.navigate(['/ventas/lista']); 
-                  },
-                  error: (err) => {
-                      this.isSaving = false; 
-                      console.error(err);
-                      alert('Error al completar la venta');
-                  }
-              });
-          },
-          error: () => {
+        next: () => {
+          this.ventaService.completarVenta(this.ventaId!).subscribe({
+            next: () => {
+              alert('✅ Venta completada exitosamente');
               this.isSaving = false;
-              alert('Error al actualizar datos previos a completar');
-          }
+              this.router.navigate(['/ventas/lista']);
+            },
+            error: () => { this.isSaving = false; alert('Error al completar'); }
+          });
+        },
+        error: () => { this.isSaving = false; alert('Error al actualizar'); }
       });
-  } else {
-      // CASO B: Es una venta nueva directa
+    } else {
+      // Venta Nueva
       this.ventaService.crearVenta(request).subscribe({
         next: () => {
           alert('✅ Venta registrada exitosamente');
           this.isSaving = false;
-          // 👇 REDIRECCIÓN AQUÍ
-          this.router.navigate(['/ventas/lista']); 
+          this.router.navigate(['/ventas/lista']);
         },
-        error: (err) => {
-            console.error(err);
-            this.isSaving = false;
-            alert('Error al registrar la venta. Revisa los datos.');
-        }
+        error: () => { this.isSaving = false; alert('Error al registrar venta'); }
       });
-  }
-}
-
-  // 👇 HELPER PARA NO REPETIR CÓDIGO
- private prepararRequest(): any {
-      // Validamos si es mixto para enviar los datos, sino enviamos null o 0
-      const esMixto = this.metodoPago === 'MIXTO';
-
-      return {
-        fechaVenta: this.fechaVenta,
-        clienteId: this.clienteSeleccionado?.id,
-        nombreCliente: this.nombreCliente,
-        tipoCliente: this.tipoCliente, // Asegúrate de tener esta variable o quítala si no la usas
-        
-        // ✅ AQUÍ ESTÁ EL CAMBIO IMPORTANTE:
-        metodoPago: this.metodoPago,
-        pagoEfectivo: esMixto ? this.pagoEfectivo : 0,
-        pagoTransferencia: esMixto ? this.pagoTransferencia : 0,
-        
-        moneda: this.moneda,
-        tipoCambio: this.tipoCambio,
-        notas: this.notas,
-        
-        detalles: this.productosEnVenta.map(p => ({
-            productoId: p.producto.id,
-            cantidad: p.cantidad,
-            precioUnitario: p.precioUnitario,
-            descuento: p.descuento
-        }))
-      };
+    }
   }
 
   guardarComoBorrador(): void {
     if (this.productosEnVenta.length === 0) return;
     this.isSaving = true;
-
-    // Preparamos el objeto Request (reutilizable)
     const request = this.prepararRequest();
 
     if (this.esEdicion && this.ventaId) {
-      // 🔵 MODO EDICIÓN: ACTUALIZAR (PUT)
+      // Actualizar Borrador
       this.ventaService.actualizarVenta(this.ventaId, request).subscribe({
         next: () => {
-          alert('✅ Borrador actualizado correctamente');
-          this.router.navigate(['/ventas']); // Volver a la lista
+          alert('✅ Borrador actualizado');
+          this.router.navigate(['/ventas/lista']);
         },
-        error: () => {
-          this.isSaving = false;
-          alert('Error al actualizar');
-        }
+        error: () => { this.isSaving = false; alert('Error al actualizar'); }
       });
     } else {
-      // 🟢 MODO CREACIÓN: NUEVO (POST)
+      // Crear Borrador
       this.ventaService.guardarBorrador(request).subscribe({
         next: () => {
-          alert('✅ Borrador guardado exitosamente');
+          alert('✅ Borrador guardado');
           this.limpiarFormulario();
           this.isSaving = false;
         },

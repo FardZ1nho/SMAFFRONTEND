@@ -1,9 +1,13 @@
-<div class="header">
+<div class="ventas-container">
+  <div class="header">
     <h1>{{ esEdicion ? 'Editar Borrador' : 'Nueva Venta' }}</h1>
-    <h3 *ngIf="esEdicion" style="color: #666;">Ticket #{{ventaId}}</h3>
-</div>
+    <h3 *ngIf="esEdicion" style="color: #666; font-size: 16px; margin-top: 4px;">
+      Editando Ticket #{{ ventaId }}
+    </h3>
+  </div>
 
   <div class="content-wrapper">
+    
     <div class="left-column">
       
       <div class="search-section">
@@ -14,6 +18,7 @@
             placeholder="Buscar por nombre o SKU..."
             [(ngModel)]="terminoBusqueda"
             (input)="buscarProductos()"
+            autocomplete="off"
           >
         </mat-form-field>
 
@@ -40,6 +45,7 @@
         
         <div class="productos-venta-container" *ngIf="productosEnVenta.length > 0">
           <div class="producto-venta-item" *ngFor="let item of productosEnVenta; let i = index">
+            
             <div class="producto-venta-header">
               <div class="producto-venta-info">
                 <mat-icon class="producto-icon">inventory_2</mat-icon>
@@ -52,7 +58,7 @@
                 mat-icon-button 
                 color="warn"
                 (click)="eliminarProducto(i)"
-                matTooltip="Eliminar producto"
+                matTooltip="Quitar producto"
               >
                 <mat-icon>delete</mat-icon>
               </button>
@@ -88,6 +94,7 @@
                   type="number"
                   [(ngModel)]="item.descuento"
                   (ngModelChange)="onDescuentoChange(item)"
+                  min="0" max="100"
                 >
               </mat-form-field>
 
@@ -147,13 +154,15 @@
         <h3>Información del Cliente</h3>
         
         <div class="cliente-search-container">
-          <mat-form-field appearance="outline" class="full-width">
+          <mat-form-field appearance="outline" class="full-width" style="margin-bottom: 6px;">
             <mat-label>Buscar Cliente *</mat-label>
+            <mat-icon matPrefix>search</mat-icon>
             <input 
               matInput 
               [(ngModel)]="busquedaCliente" 
               (input)="buscarClientes()"
               placeholder="DNI, RUC o Nombre..."
+              autocomplete="off"
             >
             <button 
               mat-icon-button 
@@ -165,19 +174,35 @@
             </button>
           </mat-form-field>
 
+          <div class="crear-cliente-wrapper" *ngIf="!clienteSeleccionado">
+            <button mat-button color="primary" class="btn-small" (click)="abrirNuevoCliente()">
+              <mat-icon>add</mat-icon>
+              Crear nuevo cliente
+            </button>
+          </div>
+
           <div class="clientes-dropdown" *ngIf="mostrarListaClientes && clientesFiltrados.length > 0">
             <div 
               class="cliente-item" 
               *ngFor="let c of clientesFiltrados" 
               (click)="seleccionarCliente(c)"
             >
-              {{ c.nombreCompleto }} ({{ c.numeroDocumento }})
+              <div class="cliente-item-info">
+                <mat-icon>person</mat-icon>
+                <div>
+                  <div class="cliente-nombre">{{ c.nombreCompleto }}</div>
+                  <div class="cliente-documento">{{ c.numeroDocumento }}</div>
+                </div>
+              </div>
             </div>
           </div>
 
           <div class="cliente-seleccionado" *ngIf="clienteSeleccionado">
             <mat-icon color="primary">check_circle</mat-icon>
-            <strong>{{ clienteSeleccionado.nombreCompleto }}</strong>
+            <div>
+              <strong>{{ clienteSeleccionado.nombreCompleto }}</strong>
+              <p style="margin:0; font-size:12px; color:#666;">Doc: {{ clienteSeleccionado.numeroDocumento }}</p>
+            </div>
           </div>
         </div>
 
@@ -192,7 +217,7 @@
 
         <div *ngIf="esPagoMixto()" class="pago-mixto-container">
           <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Transferencia</mat-label>
+            <mat-label>Monto Transferencia</mat-label>
             <input 
               matInput 
               type="number" 
@@ -203,7 +228,7 @@
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Efectivo</mat-label>
+            <mat-label>Monto Efectivo</mat-label>
             <input 
               matInput 
               type="number" 
@@ -225,6 +250,10 @@
           <span>Subtotal:</span>
           <strong>{{ moneda === 'PEN' ? 'S/' : '$' }} {{ subtotal.toFixed(2) }}</strong>
         </div>
+        <div class="resumen-row">
+          <span>IGV (18%):</span>
+          <strong>{{ moneda === 'PEN' ? 'S/' : '$' }} {{ igv.toFixed(2) }}</strong>
+        </div>
         <div class="resumen-row total">
           <span>Total:</span>
           <strong>{{ moneda === 'PEN' ? 'S/' : '$' }} {{ total.toFixed(2) }}</strong>
@@ -234,22 +263,25 @@
           <button 
             mat-raised-button 
             color="primary" 
+            class="btn-completar"
             (click)="completarVenta()" 
             [disabled]="productosEnVenta.length === 0 || !clienteSeleccionado || isSaving"
           >
             <mat-spinner *ngIf="isSaving" diameter="20"></mat-spinner>
-            <span *ngIf="!isSaving">Completar Venta</span>
+            <span *ngIf="!isSaving">{{ esEdicion ? 'Actualizar y Completar' : 'Completar Venta' }}</span>
           </button>
           
           <button 
             mat-stroked-button 
+            class="btn-borrador"
             (click)="guardarComoBorrador()" 
             [disabled]="productosEnVenta.length === 0 || isSaving"
           >
-            Guardar Borrador
+            {{ esEdicion ? 'Actualizar Borrador' : 'Guardar Borrador' }}
           </button>
         </div>
       </div>
 
     </div>
   </div>
+</div>

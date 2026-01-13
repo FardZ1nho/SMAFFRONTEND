@@ -79,6 +79,12 @@ export const routes: Routes = [
     canActivate: [seguridadGuard]
   },
 
+  {
+  path: 'ventas/:id',
+  loadComponent: () => import('./components/ventas/ventas').then(m => m.VentasComponent),
+  canActivate: [seguridadGuard]
+},
+
   // Ruta por defecto
   {
     path: '**',

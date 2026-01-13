@@ -1,6 +1,4 @@
-// src/app/components/ventas/ventas.component.ts
-
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -12,17 +10,15 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-
-import { VentaService } from '../../services/venta-service'; 
+import { ActivatedRoute, Router } from '@angular/router'; // ← Agregar Router
+import { VentaService } from '../../services/venta-service';
 import { ProductoService } from '../../services/producto-service';
 import { ClienteService } from '../../services/cliente-service';
 import { Producto } from '../../models/producto';
 import { Cliente } from '../../models/cliente';
-import { 
-  VentaRequest, 
-  TipoCliente, 
-  MetodoPago 
-} from '../../models/venta';
+import { VentaRequest, TipoCliente, MetodoPago } from '../../models/venta';
+import { forkJoin } from 'rxjs'; // 👈 IMPORTANTE
+
 
 interface ProductoEnVenta {
   producto: Producto;
@@ -36,32 +32,21 @@ interface ProductoEnVenta {
   selector: 'app-ventas',
   standalone: true,
   imports: [
-    CommonModule,
-    FormsModule,
-    MatButtonModule,
-    MatIconModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    MatDatepickerModule,
-    MatNativeDateModule,
-    MatTooltipModule,
-    MatProgressSpinnerModule
+    CommonModule, FormsModule, MatButtonModule, MatIconModule, MatFormFieldModule,
+    MatInputModule, MatSelectModule, MatDatepickerModule, MatNativeDateModule,
+    MatTooltipModule, MatProgressSpinnerModule
   ],
   templateUrl: './ventas.html',
   styleUrls: ['./ventas.css']
 })
 export class VentasComponent implements OnInit {
-  // Búsqueda de productos
+  // Búsqueda y Listas
   terminoBusqueda: string = '';
   productos: Producto[] = [];
   productosFiltrados: Producto[] = [];
   isLoadingProductos: boolean = false;
-
-  // Productos en la venta
   productosEnVenta: ProductoEnVenta[] = [];
 
-  // CLIENTES
   clientes: Cliente[] = [];
   clientesFiltrados: Cliente[] = [];
   clienteSeleccionado: Cliente | null = null;
@@ -69,14 +54,25 @@ export class VentasComponent implements OnInit {
   mostrarListaClientes: boolean = false;
   isLoadingClientes: boolean = false;
 
-  // Información del cliente
+  // Formulario de Venta
   nombreCliente: string = '';
   tipoCliente: TipoCliente = TipoCliente.COMUN;
   fechaVenta: Date = new Date();
   metodoPago: MetodoPago = MetodoPago.EFECTIVO;
   notas: string = '';
 
-  // ⭐ PAGO MIXTO
+  tipoDocumento: string = 'NOTA';
+  tiposDocumento = [
+    { value: 'NOTA', label: 'Nota de Venta' },
+    { value: 'BOLETA', label: 'Boleta' },
+    { value: 'FACTURA', label: 'Factura' }
+  ];
+
+  // ⭐ CONFIGURACIÓN DE MONEDA Y TIPO DE CAMBIO
+  moneda: string = 'PEN';
+  tipoCambio: number = 3.80;
+
+  // Pago Mixto
   pagoEfectivo: number = 0;
   pagoTransferencia: number = 0;
 
@@ -84,59 +80,275 @@ export class VentasComponent implements OnInit {
   subtotal: number = 0;
   igv: number = 0;
   total: number = 0;
-
-  // Estados
   isSaving: boolean = false;
 
-  // Opciones (⭐ ELIMINADOS tiposCliente)
   metodosPago = [
     { value: MetodoPago.EFECTIVO, label: 'Efectivo' },
     { value: MetodoPago.TARJETA, label: 'Tarjeta' },
     { value: MetodoPago.TRANSFERENCIA, label: 'Transferencia' },
     { value: MetodoPago.YAPE, label: 'Yape' },
     { value: MetodoPago.PLIN, label: 'Plin' },
-    { value: MetodoPago.MIXTO, label: 'Mixto (Efectivo + Transferencia)' } // ⭐ AGREGAR
+    { value: MetodoPago.MIXTO, label: 'Mixto (Efectivo + Transferencia)' }
   ];
+
+  esEdicion: boolean = false;
+  ventaId: number | null = null;
+  titulo: string = 'Nueva Venta'; // Para cambiar el título en el HTML dinámicamente
 
   constructor(
     private ventaService: VentaService,
     private productoService: ProductoService,
-    private clienteService: ClienteService
-  ) {}
+    private clienteService: ClienteService,
+    private router: Router,
+    private route: ActivatedRoute, // ✅ AGREGAR ESTO para leer la URL
+    private cdr: ChangeDetectorRef // 👈 AGREGAR ESTO
+  ) { }
 
   ngOnInit(): void {
-    this.cargarProductos();
-    this.cargarClientes();
-  }
+  this.isLoadingProductos = true; // Bloqueamos la UI mientras carga todo
 
-  // ⭐ MÉTODO PARA DETECTAR SI ES PAGO MIXTO
-  esPagoMixto(): boolean {
-    return this.metodoPago === MetodoPago.MIXTO;
-  }
+  // 1. Preparamos las peticiones base (Productos y Clientes)
+  const cargaProductos$ = this.productoService.listarProductosActivos();
+  const cargaClientes$ = this.clienteService.listarClientesActivos();
 
-  // ⭐ VALIDAR PAGO MIXTO
-  validarPagoMixto(): boolean {
-    if (!this.esPagoMixto()) return true;
-    
-    const totalPagado = this.pagoEfectivo + this.pagoTransferencia;
-    return totalPagado === this.total;
-  }
+  // 2. Usamos forkJoin para esperar a ambas
+  forkJoin([cargaProductos$, cargaClientes$]).subscribe({
+    next: ([listaProductos, listaClientes]) => {
+      
+      // Guardamos los datos en las variables del componente
+      this.productos = listaProductos;
+      this.productosFiltrados = listaProductos;
+      
+      this.clientes = listaClientes;
+      // No filtramos clientes aún
 
-  // MÉTODOS DE CLIENTES
+      console.log('✅ Base de datos (Productos y Clientes) cargada correctamente');
+
+      // 3. AHORA SÍ es seguro verificar si hay una ID en la URL
+      const idParam = this.route.snapshot.paramMap.get('id');
+      if (idParam) {
+        this.ventaId = +idParam;
+        this.esEdicion = true;
+        this.titulo = `Editando Venta #${this.ventaId}`;
+        
+        // Llamamos a cargar la venta, sabiendo que los productos YA existen
+        this.cargarDatosVenta(this.ventaId);
+      } else {
+        this.isLoadingProductos = false; // Si es venta nueva, terminamos de cargar aquí
+      }
+    },
+    error: (err) => {
+      console.error('Error cargando datos base:', err);
+      this.isLoadingProductos = false;
+    }
+  });
+}
+
+  // --- MÉTODOS DE CARGA DE DATOS ---
+  cargarProductos(): void {
+    this.isLoadingProductos = true;
+    this.productoService.listarProductosActivos().subscribe({
+      next: (data) => {
+        this.productos = data;
+        this.productosFiltrados = data;
+        this.isLoadingProductos = false;
+      },
+      error: (error) => {
+        console.error('Error al cargar productos', error);
+        this.isLoadingProductos = false;
+      }
+    });
+  }
+  cargarDatosVenta(id: number): void {
+  // Nota: isLoadingProductos suele venir en true desde el ngOnInit, 
+  // pero lo forzamos aquí por si acaso se llama desde otro lado.
+  this.isLoadingProductos = true;
+
+  this.ventaService.obtenerVenta(id).subscribe({
+    next: (venta: any) => {
+      console.log('📦 DATOS VENTA RECIBIDOS:', venta);
+
+      // =========================================================
+      // 1. RECUPERACIÓN INTELIGENTE DEL CLIENTE (Plan A, B, C)
+      // =========================================================
+      let idClienteBusqueda = venta.clienteId;
+      
+      // Si el ID no viene suelto, búscalo dentro del objeto cliente
+      if (!idClienteBusqueda && venta.cliente) {
+        idClienteBusqueda = venta.cliente.id;
+      }
+
+      console.log(`🔎 Buscando Cliente ID: ${idClienteBusqueda} en lista de ${this.clientes.length} clientes`);
+
+      // PLAN A: Buscar en lista local (Comparando como String para evitar error "5" vs 5)
+      const clienteEncontrado = this.clientes.find(c => String(c.id) === String(idClienteBusqueda));
+
+      if (clienteEncontrado) {
+        console.log('✅ PLAN A: Cliente encontrado en lista local');
+        // Esto rellena busquedaCliente, nombreCliente y clienteSeleccionado automáticamente
+        this.seleccionarCliente(clienteEncontrado); 
+      } 
+      else if (venta.cliente) {
+        console.log('⚠️ PLAN B: Usando objeto cliente de la venta (posiblemente inactivo)');
+        this.clienteSeleccionado = venta.cliente;
+        this.nombreCliente = venta.cliente.nombreCompleto || venta.nombreCliente;
+        // IMPORTANTE: Rellenar el input visual manualmente
+        this.busquedaCliente = `${this.nombreCliente} (Histórico)`;
+      } 
+      else if (venta.nombreCliente) {
+         console.log('⚠️ PLAN C: Solo nombre disponible');
+         this.nombreCliente = venta.nombreCliente;
+         this.busquedaCliente = venta.nombreCliente;
+         // Crear dummy para evitar errores de validación
+         this.clienteSeleccionado = { 
+            id: idClienteBusqueda || 0, 
+            nombreCompleto: venta.nombreCliente, 
+            numeroDocumento: '---' 
+         } as any;
+      }
+
+      // =========================================================
+      // 2. DATOS GENERALES
+      // =========================================================
+      this.fechaVenta = new Date(venta.fechaVenta);
+      this.metodoPago = venta.metodoPago;
+      this.notas = venta.notas || '';
+      this.moneda = venta.moneda || 'PEN'; // Si tu backend guarda la moneda, úsala aquí
+      this.tipoCambio = venta.tipoCambio || 3.80; // Igual con el TC
+      
+      if (venta.tipoDocumento) {
+        this.tipoDocumento = venta.tipoDocumento;
+      }
+
+      // =========================================================
+      // 3. RECUPERACIÓN DE PRODUCTOS
+      // =========================================================
+      if (venta.detalles) {
+        this.productosEnVenta = venta.detalles.map((detalle: any) => {
+          // Buscar en catálogo local (seguro contra string/number)
+          const productoCatalogo = this.productos.find(p => String(p.id) === String(detalle.productoId));
+          
+          // Prioridad: 1. Catálogo Local -> 2. Objeto en Detalle -> 3. Dummy
+          const productoReal = productoCatalogo || detalle.producto || {
+             id: detalle.productoId, 
+             nombre: 'Producto No Disponible', 
+             codigo: '???', 
+             precioVenta: 0, 
+             stockActual: 0,
+             moneda: 'PEN'
+          };
+
+          return {
+            producto: productoReal,
+            cantidad: detalle.cantidad,
+            precioUnitario: detalle.precioUnitario,
+            descuento: detalle.descuento || 0,
+            subtotal: 0 // Se recalcula abajo
+          };
+        });
+
+        // Recalcular montos matemáticos
+        this.productosEnVenta.forEach(item => this.calcularSubtotalProducto(item));
+        this.calcularTotales();
+      }
+
+      // =========================================================
+      // 4. FINALIZACIÓN Y REFRESCO DE PANTALLA (CRÍTICO)
+      // =========================================================
+      this.isLoadingProductos = false;
+      
+      // 🔥 ESTO SOLUCIONA QUE TENGAS QUE DAR CLIC PARA VER LOS DATOS
+      this.cdr.detectChanges();
+    },
+    error: (err) => {
+      console.error('❌ Error cargando venta:', err);
+      this.isLoadingProductos = false;
+      this.cdr.detectChanges(); // Refrescar para quitar el spinner
+      // Opcional: Mostrar alerta
+    }
+  });
+}
   cargarClientes(): void {
     this.isLoadingClientes = true;
     this.clienteService.listarClientesActivos().subscribe({
       next: (data) => {
-        console.log('✅ Clientes cargados:', data);
         this.clientes = data;
-        this.clientesFiltrados = data;
         this.isLoadingClientes = false;
       },
       error: (error) => {
-        console.error('❌ Error al cargar clientes:', error);
+        console.error('Error al cargar clientes', error);
         this.isLoadingClientes = false;
       }
     });
+  }
+
+  // --- LÓGICA DE MONEDA Y TIPO DE CAMBIO ---
+  onTipoCambioChange() {
+    if (this.tipoCambio <= 0) this.tipoCambio = 1;
+    this.recalcularTodoElCarrito();
+  }
+
+  cambiarMoneda(nuevaMoneda: string) {
+    this.moneda = nuevaMoneda;
+    this.recalcularTodoElCarrito();
+  }
+
+  private recalcularTodoElCarrito() {
+    this.productosEnVenta.forEach(item => {
+      item.precioUnitario = this.convertirPrecio(item.producto);
+      this.calcularSubtotalProducto(item);
+    });
+    this.calcularTotales();
+  }
+
+  private convertirPrecio(producto: Producto): number {
+    let precioOriginal = producto.precioVenta ?? 0;
+    // Si el producto está en USD y la venta en PEN
+    if (producto.moneda === 'USD' && this.moneda === 'PEN') {
+      return Number((precioOriginal * this.tipoCambio).toFixed(2));
+    }
+    // Si el producto está en PEN y la venta en USD
+    else if (producto.moneda === 'PEN' && this.moneda === 'USD') {
+      return Number((precioOriginal / this.tipoCambio).toFixed(2));
+    }
+    return precioOriginal;
+  }
+
+  // --- GESTIÓN DEL CARRITO ---
+  agregarProducto(producto: Producto): void {
+    const existe = this.productosEnVenta.find(p => p.producto.id === producto.id);
+    if (existe) {
+      existe.cantidad++;
+      this.calcularSubtotalProducto(existe);
+    } else {
+      const precioFinal = this.convertirPrecio(producto);
+      this.productosEnVenta.push({
+        producto: producto,
+        cantidad: 1,
+        precioUnitario: precioFinal,
+        descuento: 0,
+        subtotal: precioFinal
+      });
+    }
+    this.calcularTotales();
+    this.terminoBusqueda = '';
+  }
+
+  eliminarProducto(index: number): void {
+    this.productosEnVenta.splice(index, 1);
+    this.calcularTotales();
+  }
+
+  // --- BÚSQUEDAS FILTRADAS ---
+  buscarProductos(): void {
+    if (!this.terminoBusqueda.trim()) {
+      this.productosFiltrados = this.productos;
+      return;
+    }
+    const termino = this.terminoBusqueda.toLowerCase();
+    this.productosFiltrados = this.productos.filter(p =>
+      p.nombre.toLowerCase().includes(termino) || p.codigo.toLowerCase().includes(termino)
+    );
   }
 
   buscarClientes(): void {
@@ -145,12 +357,9 @@ export class VentasComponent implements OnInit {
       this.mostrarListaClientes = false;
       return;
     }
-
     const termino = this.busquedaCliente.toLowerCase();
-    this.clientesFiltrados = this.clientes.filter(cliente =>
-      cliente.nombreCompleto.toLowerCase().includes(termino) ||
-      (cliente.numeroDocumento && cliente.numeroDocumento.toLowerCase().includes(termino)) ||
-      (cliente.email && cliente.email.toLowerCase().includes(termino))
+    this.clientesFiltrados = this.clientes.filter(c =>
+      c.nombreCompleto.toLowerCase().includes(termino) || c.numeroDocumento?.toLowerCase().includes(termino)
     );
     this.mostrarListaClientes = this.clientesFiltrados.length > 0;
   }
@@ -166,238 +375,176 @@ export class VentasComponent implements OnInit {
     this.clienteSeleccionado = null;
     this.busquedaCliente = '';
     this.nombreCliente = '';
-    this.mostrarListaClientes = false;
   }
 
-  cargarProductos(): void {
-    this.isLoadingProductos = true;
-    this.productoService.listarProductosActivos().subscribe({
-      next: (data) => {
-        this.productos = data;
-        this.productosFiltrados = data;
-        this.isLoadingProductos = false;
-      },
-      error: (error) => {
-        console.error('Error al cargar productos:', error);
-        this.isLoadingProductos = false;
-        alert('Error al cargar los productos');
-      }
-    });
-  }
-
-  buscarProductos(): void {
-    if (!this.terminoBusqueda.trim()) {
-      this.productosFiltrados = this.productos;
-      return;
-    }
-
-    const termino = this.terminoBusqueda.toLowerCase();
-    this.productosFiltrados = this.productos.filter(producto =>
-      producto.nombre.toLowerCase().includes(termino) ||
-      producto.codigo.toLowerCase().includes(termino)
-    );
-  }
-
-  agregarProducto(producto: Producto): void {
-    const existe = this.productosEnVenta.find(p => p.producto.id === producto.id);
-    
-    if (existe) {
-      existe.cantidad++;
-      this.calcularSubtotalProducto(existe);
-    } else {
-      const precioBase = producto.precioVenta ?? 0;
-      
-      const nuevoProducto: ProductoEnVenta = {
-        producto: producto,
-        cantidad: 1,
-        precioUnitario: precioBase,
-        descuento: 0,
-        subtotal: precioBase
-      };
-      this.productosEnVenta.push(nuevoProducto);
-    }
-
-    this.calcularTotales();
-    this.terminoBusqueda = '';
-    this.productosFiltrados = this.productos;
-  }
-
-  eliminarProducto(index: number): void {
-    this.productosEnVenta.splice(index, 1);
+  // --- CÁLCULOS ---
+  onCantidadChange(item: ProductoEnVenta): void {
+    if (item.cantidad < 1) item.cantidad = 1;
+    if (item.cantidad > item.producto.stockActual) item.cantidad = item.producto.stockActual;
+    this.calcularSubtotalProducto(item);
     this.calcularTotales();
   }
 
-  onCantidadChange(productoEnVenta: ProductoEnVenta): void {
-    if (productoEnVenta.cantidad < 1) {
-      productoEnVenta.cantidad = 1;
-    }
-    if (productoEnVenta.cantidad > productoEnVenta.producto.stockActual) {
-      alert(`Stock insuficiente. Disponible: ${productoEnVenta.producto.stockActual}`);
-      productoEnVenta.cantidad = productoEnVenta.producto.stockActual;
-    }
-    this.calcularSubtotalProducto(productoEnVenta);
+  onPrecioChange(item: ProductoEnVenta): void {
+    this.calcularSubtotalProducto(item);
     this.calcularTotales();
   }
 
-  onPrecioChange(productoEnVenta: ProductoEnVenta): void {
-    if (productoEnVenta.precioUnitario < 0) {
-      productoEnVenta.precioUnitario = 0;
-    }
-    this.calcularSubtotalProducto(productoEnVenta);
+  onDescuentoChange(item: ProductoEnVenta): void {
+    this.calcularSubtotalProducto(item);
     this.calcularTotales();
   }
 
-  onDescuentoChange(productoEnVenta: ProductoEnVenta): void {
-    if (productoEnVenta.descuento < 0) {
-      productoEnVenta.descuento = 0;
-    }
-    if (productoEnVenta.descuento > 100) {
-      productoEnVenta.descuento = 100;
-    }
-    this.calcularSubtotalProducto(productoEnVenta);
-    this.calcularTotales();
-  }
-
-  calcularSubtotalProducto(productoEnVenta: ProductoEnVenta): void {
-    let subtotal = productoEnVenta.cantidad * productoEnVenta.precioUnitario;
-    
-    if (productoEnVenta.descuento > 0) {
-      const descuentoMonto = subtotal * (productoEnVenta.descuento / 100);
-      subtotal -= descuentoMonto;
-    }
-    
-    productoEnVenta.subtotal = Number(subtotal.toFixed(2));
+  calcularSubtotalProducto(item: ProductoEnVenta): void {
+    let subtotal = item.cantidad * item.precioUnitario;
+    if (item.descuento > 0) subtotal -= (subtotal * (item.descuento / 100));
+    item.subtotal = Number(subtotal.toFixed(2));
   }
 
   calcularTotales(): void {
-    this.total = this.productosEnVenta.reduce((sum, p) => sum + p.subtotal, 0);
-    this.subtotal = this.total / 1.18;
-    this.igv = this.total - this.subtotal;
-
-    this.total = Number(this.total.toFixed(2));
-    this.subtotal = Number(this.subtotal.toFixed(2));
-    this.igv = Number(this.igv.toFixed(2));
+    this.total = Number(this.productosEnVenta.reduce((sum, p) => sum + p.subtotal, 0).toFixed(2));
+    this.subtotal = Number((this.total / 1.18).toFixed(2));
+    this.igv = Number((this.total - this.subtotal).toFixed(2));
+    if (this.esPagoMixto()) this.validarMontoMixto('T');
   }
 
+  // --- PAGO MIXTO ---
+  validarMontoMixto(campo: 'E' | 'T') {
+    if (campo === 'T') {
+      if (this.pagoTransferencia > this.total) this.pagoTransferencia = this.total;
+      this.pagoEfectivo = Number((this.total - this.pagoTransferencia).toFixed(2));
+    } else {
+      if (this.pagoEfectivo > this.total) this.pagoEfectivo = this.total;
+      this.pagoTransferencia = Number((this.total - this.pagoEfectivo).toFixed(2));
+    }
+  }
+
+  esPagoMixto(): boolean { return this.metodoPago === MetodoPago.MIXTO; }
+
+  // --- ACCIONES FINALES ---
   completarVenta(): void {
-    // ⭐ VALIDAR QUE HAYA PRODUCTOS
-    if (this.productosEnVenta.length === 0) {
-      alert('❌ Debe agregar al menos un producto');
-      return;
-    }
+  if (this.productosEnVenta.length === 0 || !this.clienteSeleccionado) return;
+  
+  // Confirmación opcional (puedes quitarla si quieres que sea directo)
+  if (!confirm('¿Estás seguro de emitir esta venta?')) return;
 
-    // ⭐ VALIDAR QUE HAYA CLIENTE SELECCIONADO
-    if (!this.clienteSeleccionado) {
-      alert('❌ Debe seleccionar un cliente para completar la venta');
-      return;
-    }
+  this.isSaving = true;
+  const request = this.prepararRequest();
 
-    // ⭐ VALIDAR PAGO MIXTO
-    if (this.esPagoMixto() && !this.validarPagoMixto()) {
-      const totalPagado = this.pagoEfectivo + this.pagoTransferencia;
-      alert(`❌ El pago mixto no cuadra\nTotal a pagar: S/ ${this.total.toFixed(2)}\nTotal pagado: S/ ${totalPagado.toFixed(2)}\nDiferencia: S/ ${(this.total - totalPagado).toFixed(2)}`);
-      return;
-    }
-
-    this.isSaving = true;
-
-    const ventaRequest: VentaRequest = {
-      fechaVenta: this.fechaVenta,
-      clienteId: this.clienteSeleccionado.id,
-      nombreCliente: this.nombreCliente,
-      tipoCliente: this.tipoCliente,
-      metodoPago: this.metodoPago,
-      notas: this.notas || undefined,
-      detalles: this.productosEnVenta.map(p => ({
-        productoId: p.producto.id,
-        cantidad: p.cantidad,
-        precioUnitario: p.precioUnitario,
-        descuento: p.descuento
-      }))
-    };
-
-    // ⭐ AGREGAR INFO DE PAGO MIXTO EN LAS NOTAS
-    if (this.esPagoMixto()) {
-      const notasPagoMixto = `\nPago Mixto:\n- Efectivo: S/ ${this.pagoEfectivo.toFixed(2)}\n- Transferencia: S/ ${this.pagoTransferencia.toFixed(2)}`;
-      ventaRequest.notas = (ventaRequest.notas || '') + notasPagoMixto;
-    }
-
-    console.log('📤 Enviando venta:', ventaRequest);
-
-    this.ventaService.crearVenta(ventaRequest).subscribe({
-      next: (response) => {
-        console.log('✅ Venta creada:', response);
-        alert(`✅ Venta completada exitosamente\nCódigo: ${response.codigo}\nTotal: S/ ${response.total.toFixed(2)}`);
-        this.limpiarFormulario();
-        this.isSaving = false;
-      },
-      error: (error) => {
-        console.error('❌ Error al crear venta:', error);
-        this.isSaving = false;
-        
-        let mensaje = 'Error al completar la venta';
-        if (error.error?.message) {
-          mensaje += ': ' + error.error.message;
+  // Lógica para Venta NUEVA o EDICIÓN de borrador
+  if (this.esEdicion && this.ventaId) {
+      // CASO A: Estamos editando un borrador para completarlo
+      this.ventaService.actualizarVenta(this.ventaId, request).subscribe({
+          next: () => {
+              // Una vez guardados los datos, completamos
+              this.ventaService.completarVenta(this.ventaId!).subscribe({
+                  next: () => {
+                      alert('✅ Venta completada exitosamente');
+                      this.isSaving = false;
+                      // 👇 REDIRECCIÓN AQUÍ
+                      this.router.navigate(['/ventas/lista']); 
+                  },
+                  error: (err) => {
+                      this.isSaving = false; 
+                      console.error(err);
+                      alert('Error al completar la venta');
+                  }
+              });
+          },
+          error: () => {
+              this.isSaving = false;
+              alert('Error al actualizar datos previos a completar');
+          }
+      });
+  } else {
+      // CASO B: Es una venta nueva directa
+      this.ventaService.crearVenta(request).subscribe({
+        next: () => {
+          alert('✅ Venta registrada exitosamente');
+          this.isSaving = false;
+          // 👇 REDIRECCIÓN AQUÍ
+          this.router.navigate(['/ventas/lista']); 
+        },
+        error: (err) => {
+            console.error(err);
+            this.isSaving = false;
+            alert('Error al registrar la venta. Revisa los datos.');
         }
-        alert(mensaje);
-      }
-    });
+      });
+  }
+}
+
+  // 👇 HELPER PARA NO REPETIR CÓDIGO
+ private prepararRequest(): any {
+      // Validamos si es mixto para enviar los datos, sino enviamos null o 0
+      const esMixto = this.metodoPago === 'MIXTO';
+
+      return {
+        fechaVenta: this.fechaVenta,
+        clienteId: this.clienteSeleccionado?.id,
+        nombreCliente: this.nombreCliente,
+        tipoCliente: this.tipoCliente, // Asegúrate de tener esta variable o quítala si no la usas
+        
+        // ✅ AQUÍ ESTÁ EL CAMBIO IMPORTANTE:
+        metodoPago: this.metodoPago,
+        pagoEfectivo: esMixto ? this.pagoEfectivo : 0,
+        pagoTransferencia: esMixto ? this.pagoTransferencia : 0,
+        
+        moneda: this.moneda,
+        tipoCambio: this.tipoCambio,
+        notas: this.notas,
+        
+        detalles: this.productosEnVenta.map(p => ({
+            productoId: p.producto.id,
+            cantidad: p.cantidad,
+            precioUnitario: p.precioUnitario,
+            descuento: p.descuento
+        }))
+      };
   }
 
   guardarComoBorrador(): void {
-    if (this.productosEnVenta.length === 0) {
-      alert('❌ Debe agregar al menos un producto');
-      return;
-    }
-
-    // ⭐ NO SE REQUIERE CLIENTE PARA BORRADOR
+    if (this.productosEnVenta.length === 0) return;
     this.isSaving = true;
 
-    const ventaRequest: VentaRequest = {
-      fechaVenta: this.fechaVenta,
-      clienteId: this.clienteSeleccionado?.id,
-      nombreCliente: this.nombreCliente || undefined,
-      tipoCliente: this.tipoCliente,
-      metodoPago: this.metodoPago,
-      notas: this.notas || undefined,
-      detalles: this.productosEnVenta.map(p => ({
-        productoId: p.producto.id,
-        cantidad: p.cantidad,
-        precioUnitario: p.precioUnitario,
-        descuento: p.descuento
-      }))
-    };
+    // Preparamos el objeto Request (reutilizable)
+    const request = this.prepararRequest();
 
-    this.ventaService.guardarBorrador(ventaRequest).subscribe({
-      next: (response) => {
-        console.log('✅ Borrador guardado:', response);
-        alert(`✅ Borrador guardado exitosamente\nCódigo: ${response.codigo}`);
-        this.limpiarFormulario();
-        this.isSaving = false;
-      },
-      error: (error) => {
-        console.error('❌ Error al guardar borrador:', error);
-        this.isSaving = false;
-        alert('Error al guardar el borrador');
-      }
-    });
+    if (this.esEdicion && this.ventaId) {
+      // 🔵 MODO EDICIÓN: ACTUALIZAR (PUT)
+      this.ventaService.actualizarVenta(this.ventaId, request).subscribe({
+        next: () => {
+          alert('✅ Borrador actualizado correctamente');
+          this.router.navigate(['/ventas']); // Volver a la lista
+        },
+        error: () => {
+          this.isSaving = false;
+          alert('Error al actualizar');
+        }
+      });
+    } else {
+      // 🟢 MODO CREACIÓN: NUEVO (POST)
+      this.ventaService.guardarBorrador(request).subscribe({
+        next: () => {
+          alert('✅ Borrador guardado exitosamente');
+          this.limpiarFormulario();
+          this.isSaving = false;
+        },
+        error: () => this.isSaving = false
+      });
+    }
   }
 
   limpiarFormulario(): void {
     this.productosEnVenta = [];
     this.clienteSeleccionado = null;
     this.busquedaCliente = '';
-    this.nombreCliente = '';
-    this.tipoCliente = TipoCliente.COMUN;
-    this.fechaVenta = new Date();
-    this.metodoPago = MetodoPago.EFECTIVO;
-    this.notas = '';
-    this.pagoEfectivo = 0; // ⭐ AGREGAR
-    this.pagoTransferencia = 0; // ⭐ AGREGAR
+    this.total = 0;
     this.subtotal = 0;
     this.igv = 0;
-    this.total = 0;
+    this.pagoEfectivo = 0;
+    this.pagoTransferencia = 0;
+    this.notas = '';
     this.terminoBusqueda = '';
-    this.productosFiltrados = this.productos;
   }
 }

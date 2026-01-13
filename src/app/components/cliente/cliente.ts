@@ -64,30 +64,26 @@ export class ClientesComponent implements OnInit {
   }
 
   cargarClientes(): void {
-  // ✅ Usar setTimeout para diferir el cambio de isLoading
-  setTimeout(() => {
     this.isLoading = true;
-  });
-  
-  this.errorMessage = '';
-  
-  this.clienteService.listarClientesActivos().subscribe({
-    next: (data) => {
-      console.log('✅ Clientes cargados:', data);
-      this.clientes = data;
-      this.clientesFiltrados.data = data;
-      this.isLoading = false;
-      // Ya no necesitas cdr.detectChanges() aquí
-    },
-    error: (error) => {
-      console.error('❌ Error al cargar clientes:', error);
-      this.errorMessage = 'Error al cargar los clientes';
-      this.isLoading = false;
-      this.mostrarMensaje('Error al cargar clientes', 'error');
-      // Ya no necesitas cdr.detectChanges() aquí tampoco
-    }
-  });
-}
+    this.errorMessage = '';
+    
+    this.clienteService.listarClientesActivos().subscribe({
+      next: (data) => {
+        console.log('✅ Clientes cargados:', data);
+        this.clientes = data;
+        this.clientesFiltrados.data = data;
+        this.isLoading = false;
+        this.cdr.detectChanges(); // ⭐ FORZAR ACTUALIZACIÓN
+      },
+      error: (error) => {
+        console.error('❌ Error al cargar clientes:', error);
+        this.errorMessage = 'Error al cargar los clientes';
+        this.isLoading = false;
+        this.mostrarMensaje('Error al cargar clientes', 'error');
+        this.cdr.detectChanges(); // ⭐ FORZAR ACTUALIZACIÓN
+      }
+    });
+  }
 
   abrirModalNuevoCliente(): void {
     const dialogRef = this.dialog.open(ClienteModalComponent, {
@@ -100,8 +96,11 @@ export class ClientesComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        this.cargarClientes();
         this.mostrarMensaje('✅ Cliente registrado exitosamente', 'success');
+        // ⭐ RECARGAR DESPUÉS DE CERRAR EL MODAL
+        setTimeout(() => {
+          this.cargarClientes();
+        }, 300);
       }
     });
   }
@@ -131,7 +130,6 @@ export class ClientesComponent implements OnInit {
 
   verDetalle(cliente: Cliente): void {
     console.log('Ver detalle:', cliente);
-    // TODO: Implementar modal de detalle
     this.mostrarMensaje('Función en desarrollo', 'error');
   }
 
@@ -147,8 +145,11 @@ export class ClientesComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        this.cargarClientes();
         this.mostrarMensaje('✅ Cliente actualizado exitosamente', 'success');
+        // ⭐ RECARGAR DESPUÉS DE CERRAR EL MODAL
+        setTimeout(() => {
+          this.cargarClientes();
+        }, 300);
       }
     });
   }
@@ -163,9 +164,7 @@ export class ClientesComponent implements OnInit {
     this.clienteService.eliminarCliente(cliente.id).subscribe({
       next: () => {
         this.mostrarMensaje('✅ Cliente eliminado exitosamente', 'success');
-        this.clientes = this.clientes.filter(c => c.id !== cliente.id);
-        this.clientesFiltrados.data = this.clientes;
-        this.cdr.detectChanges();
+        this.cargarClientes(); // ⭐ RECARGAR LISTA COMPLETA
       },
       error: (error) => {
         console.error('❌ Error al eliminar cliente:', error);
@@ -191,5 +190,18 @@ export class ClientesComponent implements OnInit {
   abrirFiltros(): void {
     console.log('Abrir filtros');
     this.mostrarMensaje('Función en desarrollo', 'error');
+  }
+
+  // ⭐⭐⭐ GETTERS CORRECTOS PARA EL REPORTE ⭐⭐⭐
+  get totalClientes(): number {
+    return this.clientesFiltrados.data.length;
+  }
+
+  get totalPersonas(): number {
+    return this.clientesFiltrados.data.filter(c => c.tipoCliente === 'PERSONA').length;
+  }
+
+  get totalEmpresas(): number {
+    return this.clientesFiltrados.data.filter(c => c.tipoCliente === 'EMPRESA').length;
   }
 }

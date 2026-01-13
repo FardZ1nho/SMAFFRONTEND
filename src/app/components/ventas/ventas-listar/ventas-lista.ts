@@ -1,5 +1,3 @@
-// src/app/components/ventas-lista/ventas-lista.component.ts
-
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -82,14 +80,13 @@ export class VentasListaComponent implements OnInit {
 
         this.ventaService.listarTodas().subscribe({
             next: (data) => {
-                console.log('✅ Ventas cargadas:', data);
                 this.ventas = data;
                 this.aplicarFiltros();
                 this.isLoading = false;
                 this.cdr.detectChanges();
             },
             error: (error) => {
-                console.error('❌ Error al cargar ventas:', error);
+                console.error('Error al cargar ventas:', error);
                 this.errorMessage = 'Error al cargar las ventas';
                 this.isLoading = false;
                 this.mostrarMensaje('Error al cargar ventas', 'error');
@@ -98,105 +95,79 @@ export class VentasListaComponent implements OnInit {
         });
     }
 
+    // ⭐ PUNTO 5: Solo suma ventas COMPLETADAS
     calcularMontoTotal(): number {
-        return this.ventasFiltradas.data.reduce((sum, v) => sum + v.total, 0);
+        return this.ventasFiltradas.data
+            .filter(v => v.estado === EstadoVenta.COMPLETADA)
+            .reduce((sum, v) => sum + v.total, 0);
+    }
+
+    // ⭐ PUNTO 4: Redirigir a edición de borrador
+    // En VentasListaComponent - editarBorrador():
+    editarBorrador(venta: Venta): void {
+        if (venta.estado !== EstadoVenta.BORRADOR) {
+            this.mostrarMensaje('Solo se pueden editar borradores', 'error');
+            return;
+        }
+        // Usa la misma ruta pero con ID
+        this.router.navigate(['/ventas', venta.id]);
     }
 
     aplicarFiltros(): void {
-        let ventasFiltradas = [...this.ventas];
+        let filtradas = [...this.ventas];
 
-        // Filtrar por estado
         if (this.estadoFiltro !== 'TODAS') {
-            ventasFiltradas = ventasFiltradas.filter(v => v.estado === this.estadoFiltro);
+            filtradas = filtradas.filter(v => v.estado === this.estadoFiltro);
         }
 
-        // Filtrar por búsqueda
         if (this.terminoBusqueda.trim()) {
             const termino = this.terminoBusqueda.toLowerCase();
-            ventasFiltradas = ventasFiltradas.filter(venta =>
-                venta.codigo.toLowerCase().includes(termino) ||
-                (venta.nombreCliente && venta.nombreCliente.toLowerCase().includes(termino))
+            filtradas = filtradas.filter(v =>
+                v.codigo.toLowerCase().includes(termino) ||
+                (v.nombreCliente && v.nombreCliente.toLowerCase().includes(termino))
             );
         }
 
-        this.ventasFiltradas.data = ventasFiltradas;
+        this.ventasFiltradas.data = filtradas;
     }
 
-    onEstadoChange(): void {
-        this.aplicarFiltros();
-    }
-
-    buscarVentas(): void {
-        this.aplicarFiltros();
-    }
-
-    limpiarBusqueda(): void {
-        this.terminoBusqueda = '';
-        this.aplicarFiltros();
-    }
-
-    nuevaVenta(): void {
-        this.router.navigate(['/ventas']);
-    }
-
-    verDetalle(venta: Venta): void {
-        console.log('Ver detalle:', venta);
-        // TODO: Implementar modal o navegación a detalle
-        this.mostrarMensaje('Función en desarrollo', 'error');
-    }
+    onEstadoChange(): void { this.aplicarFiltros(); }
+    buscarVentas(): void { this.aplicarFiltros(); }
+    limpiarBusqueda(): void { this.terminoBusqueda = ''; this.aplicarFiltros(); }
+    nuevaVenta(): void { this.router.navigate(['/ventas']); }
 
     completarVenta(venta: Venta): void {
-        if (venta.estado !== EstadoVenta.BORRADOR) {
-            this.mostrarMensaje('Solo se pueden completar borradores', 'error');
-            return;
-        }
-
+        if (venta.estado !== EstadoVenta.BORRADOR) return;
         if (confirm(`¿Deseas completar la venta ${venta.codigo}?`)) {
             this.ventaService.completarVenta(venta.id).subscribe({
-                next: (ventaActualizada) => {
+                next: () => {
                     this.mostrarMensaje('✅ Venta completada exitosamente', 'success');
                     this.cargarVentas();
                 },
-                error: (error) => {
-                    console.error('❌ Error al completar venta:', error);
-                    this.mostrarMensaje('Error al completar la venta', 'error');
-                }
+                error: () => this.mostrarMensaje('Error al completar la venta', 'error')
             });
         }
     }
 
     cancelarVenta(venta: Venta): void {
-        if (venta.estado === EstadoVenta.CANCELADA) {
-            this.mostrarMensaje('Esta venta ya está cancelada', 'error');
-            return;
-        }
-
         if (confirm(`¿Estás seguro de cancelar la venta ${venta.codigo}?`)) {
             this.ventaService.cancelarVenta(venta.id).subscribe({
                 next: () => {
                     this.mostrarMensaje('✅ Venta cancelada exitosamente', 'success');
                     this.cargarVentas();
                 },
-                error: (error) => {
-                    console.error('❌ Error al cancelar venta:', error);
-                    this.mostrarMensaje('Error al cancelar la venta', 'error');
-                }
+                error: () => this.mostrarMensaje('Error al cancelar la venta', 'error')
             });
         }
     }
 
     eliminarVenta(venta: Venta): void {
-        if (confirm(`¿Estás seguro de eliminar la venta ${venta.codigo}? Esta acción no se puede deshacer.`)) {
+        if (confirm(`¿Estás seguro de eliminar la venta ${venta.codigo}?`)) {
             this.ventaService.eliminarVenta(venta.id).subscribe({
                 next: () => {
                     this.mostrarMensaje('✅ Venta eliminada exitosamente', 'success');
                     this.ventas = this.ventas.filter(v => v.id !== venta.id);
                     this.aplicarFiltros();
-                    this.cdr.detectChanges();
-                },
-                error: (error) => {
-                    console.error('❌ Error al eliminar venta:', error);
-                    this.mostrarMensaje('Error al eliminar la venta', 'error');
                 }
             });
         }
@@ -204,52 +175,33 @@ export class VentasListaComponent implements OnInit {
 
     getEstadoClass(estado: string): string {
         switch (estado) {
-            case EstadoVenta.COMPLETADA:
-                return 'estado-completada';
-            case EstadoVenta.BORRADOR:
-                return 'estado-borrador';
-            case EstadoVenta.CANCELADA:
-                return 'estado-cancelada';
-            default:
-                return '';
+            case EstadoVenta.COMPLETADA: return 'estado-completada';
+            case EstadoVenta.BORRADOR: return 'estado-borrador';
+            case EstadoVenta.CANCELADA: return 'estado-cancelada';
+            default: return '';
         }
     }
 
     getEstadoLabel(estado: string): string {
         switch (estado) {
-            case EstadoVenta.COMPLETADA:
-                return 'Completada';
-            case EstadoVenta.BORRADOR:
-                return 'Borrador';
-            case EstadoVenta.CANCELADA:
-                return 'Cancelada';
-            default:
-                return estado;
+            case EstadoVenta.COMPLETADA: return 'Completada';
+            case EstadoVenta.BORRADOR: return 'Borrador';
+            case EstadoVenta.CANCELADA: return 'Cancelada';
+            default: return estado;
         }
     }
 
     getMetodoPagoIcon(metodoPago: string): string {
         switch (metodoPago) {
-            case 'EFECTIVO':
-                return 'payments';
-            case 'TARJETA':
-                return 'credit_card';
-            case 'TRANSFERENCIA':
-                return 'account_balance';
-            case 'YAPE':
-            case 'PLIN':
-                return 'phone_android';
-            default:
-                return 'payment';
+            case 'EFECTIVO': return 'payments';
+            case 'TARJETA': return 'credit_card';
+            case 'TRANSFERENCIA': return 'account_balance';
+            default: return 'payment';
         }
     }
 
     formatearFecha(fecha: Date): string {
-        return new Date(fecha).toLocaleDateString('es-PE', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-        });
+        return new Date(fecha).toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' });
     }
 
     private mostrarMensaje(mensaje: string, tipo: 'success' | 'error'): void {
@@ -261,8 +213,6 @@ export class VentasListaComponent implements OnInit {
         });
     }
 
-    exportarDatos(): void {
-        console.log('Exportar datos');
-        this.mostrarMensaje('Función en desarrollo', 'error');
-    }
+    verDetalle(venta: Venta): void { this.mostrarMensaje('Función en desarrollo', 'error'); }
+    exportarDatos(): void { this.mostrarMensaje('Función en desarrollo', 'error'); }
 }

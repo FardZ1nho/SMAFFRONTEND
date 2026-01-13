@@ -4,10 +4,20 @@ export interface Venta {
   id: number;
   codigo: string;
   fechaVenta: Date;
-  clienteId?: number;          // ⭐ AGREGAR
+  clienteId?: number;
   nombreCliente?: string;
   tipoCliente: TipoCliente;
   metodoPago: MetodoPago;
+
+  // ✅ PAGO MIXTO (Para ver el historial después)
+  pagoEfectivo?: number;
+  pagoTransferencia?: number;
+
+  // ⭐ NUEVOS CAMPOS PARA MONEDA Y DOCUMENTO
+  moneda: string;           
+  tipoDocumento: string;    
+  tipoCambio: number;       
+  // ---------------------------------------
   subtotal: number;
   igv: number;
   total: number;
@@ -31,10 +41,20 @@ export interface DetalleVenta {
 
 export interface VentaRequest {
   fechaVenta?: Date;
-  clienteId?: number;          // ⭐ AGREGAR
+  clienteId?: number;
   nombreCliente?: string;
   tipoCliente: TipoCliente;
   metodoPago: MetodoPago;
+
+  // ✅✅ ESTO ES LO QUE TE FALTA AGREGAR ✅✅
+  pagoEfectivo?: number;
+  pagoTransferencia?: number;
+
+  // ⭐ ESTOS DEBEN COINCIDIR CON TU VentaRequestDTO DE JAVA
+  moneda: string;           
+  tipoDocumento: string;    
+  tipoCambio: number;       
+  // -------------------------------------------------------
   notas?: string;
   detalles: DetalleVentaRequest[];
 }
@@ -58,7 +78,7 @@ export enum MetodoPago {
   TRANSFERENCIA = 'TRANSFERENCIA',
   YAPE = 'YAPE',
   PLIN = 'PLIN',
-  MIXTO = 'MIXTO' // ⭐ AGREGAR
+  MIXTO = 'MIXTO'
 }
 
 export enum EstadoVenta {

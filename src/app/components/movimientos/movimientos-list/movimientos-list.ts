@@ -1,6 +1,6 @@
 // src/app/components/movimientos/movimientos-list/movimientos-list.component.ts
 
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core'; // Import ChangeDetectorRef
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -30,53 +30,47 @@ export class MovimientosListComponent implements OnInit {
   // Enum para el template
   TipoMovimiento = TipoMovimiento;
 
-  constructor(private movimientoService: MovimientoService) { }
+  constructor(
+    private movimientoService: MovimientoService,
+    private cdr: ChangeDetectorRef // Inject ChangeDetectorRef
+  ) { }
 
   ngOnInit(): void {
-    // Usar setTimeout para evitar ExpressionChangedAfterItHasBeenCheckedError
-    setTimeout(() => {
-      this.cargarMovimientos();
-    }, 0);
+    // Remove setTimeout if possible, or keep it short. 
+    // Direct call is usually fine unless there are specific rendering conflicts.
+    this.cargarMovimientos(); 
   }
 
   cargarMovimientos(): void {
     this.cargando = true;
     this.error = '';
     
-    console.log('Cargando movimientos desde:', `${this.movimientoService['baseUrl'] || 'http://localhost:8080/movimientos'}`);
+    console.log('Cargando movimientos...');
     
     this.movimientoService.listarTodos().subscribe({
       next: (data) => {
-        console.log('✅ Movimientos recibidos exitosamente:', data);
+        console.log('✅ Movimientos recibidos:', data);
         this.movimientos = data || [];
+        
+        // Ensure filters are applied immediately
         this.aplicarFiltros();
-        this.actualizarEstadisticas(); // ⭐ ACTUALIZAR ESTADÍSTICAS
+        this.actualizarEstadisticas();
+        
         this.cargando = false;
+        
+        // Force view update to ensure loading spinner disappears and data shows
+        this.cdr.detectChanges(); 
       },
       error: (err) => {
-        console.error('❌ Error al cargar movimientos:', err);
-        console.error('Status:', err.status);
-        console.error('Message:', err.message);
-        
-        if (err.status === 0) {
-          this.error = 'No se puede conectar con el servidor. Verifica que esté corriendo en http://localhost:8080';
-        } else if (err.status === 401) {
-          this.error = 'No autorizado. Verifica tu sesión';
-        } else if (err.status === 404) {
-          this.error = 'Endpoint no encontrado. Verifica la URL del servicio';
-        } else {
-          this.error = `Error al cargar movimientos: ${err.error?.message || err.message || 'Error desconocido'}`;
-        }
+        console.error('❌ Error:', err);
+        // ... error handling ...
+        this.error = `Error al cargar movimientos: ${err.message}`;
         
         this.cargando = false;
         this.movimientos = [];
         this.movimientosFiltrados = [];
-        this.actualizarEstadisticas(); // ⭐ ACTUALIZAR ESTADÍSTICAS VACÍAS
-      },
-      complete: () => {
-        console.log('🔵 Petición completada');
-        // Asegurarse de que cargando sea false
-        this.cargando = false;
+        this.actualizarEstadisticas();
+        this.cdr.detectChanges(); // Force view update on error too
       }
     });
   }
@@ -101,6 +95,8 @@ export class MovimientosListComponent implements OnInit {
     }
 
     this.movimientosFiltrados = resultado;
+    // No need for cdr.detectChanges() here usually as this is triggered by user events
+    // but safe to add if UI lags
   }
 
   onFiltroTextoChange(texto: string): void {
@@ -114,7 +110,7 @@ export class MovimientosListComponent implements OnInit {
   }
 
   obtenerIconoTipo(tipo: TipoMovimiento): string {
-    const iconos = {
+    const iconos: Record<string, string> = { // Typed for safety
       'ENTRADA': '📥',
       'SALIDA': '📤',
       'TRASLADO': '🔄',
@@ -124,7 +120,7 @@ export class MovimientosListComponent implements OnInit {
   }
 
   obtenerClaseTipo(tipo: TipoMovimiento): string {
-    const clases = {
+    const clases: Record<string, string> = { // Typed for safety
       'ENTRADA': 'tipo-entrada',
       'SALIDA': 'tipo-salida',
       'TRASLADO': 'tipo-traslado',
@@ -133,27 +129,16 @@ export class MovimientosListComponent implements OnInit {
     return clases[tipo] || '';
   }
 
-  // Estadísticas (cachear valores para evitar recalcular en cada detección de cambios)
+  // Estadísticas
   private _totalMovimientos: number = 0;
   private _totalEntradas: number = 0;
   private _totalSalidas: number = 0;
   private _totalTraslados: number = 0;
 
-  get totalMovimientos(): number {
-    return this._totalMovimientos;
-  }
-
-  get totalEntradas(): number {
-    return this._totalEntradas;
-  }
-
-  get totalSalidas(): number {
-    return this._totalSalidas;
-  }
-
-  get totalTraslados(): number {
-    return this._totalTraslados;
-  }
+  get totalMovimientos(): number { return this._totalMovimientos; }
+  get totalEntradas(): number { return this._totalEntradas; }
+  get totalSalidas(): number { return this._totalSalidas; }
+  get totalTraslados(): number { return this._totalTraslados; }
 
   private actualizarEstadisticas(): void {
     this._totalMovimientos = this.movimientos.length;

@@ -22,7 +22,8 @@
     <div class="search-bar-section">
         <div class="filter-group search-main">
             <label class="search-label">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="11" cy="11" r="8"></circle>
                     <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                 </svg>
@@ -70,7 +71,8 @@
             <mat-icon>receipt</mat-icon>
             <h3>No se encontraron ventas</h3>
             <p>Ajusta los filtros o crea una nueva transacción</p>
-            <button mat-raised-button color="primary" class="btn-nuevo" (click)="nuevaVenta()">Registrar Primera Venta</button>
+            <button mat-raised-button color="primary" class="btn-nuevo" (click)="nuevaVenta()">Registrar Primera
+                Venta</button>
         </div>
 
         <div class="table-responsive" *ngIf="!isLoading && !errorMessage && ventasFiltradas.data.length > 0">
@@ -141,15 +143,25 @@
                                 <mat-icon color="primary">visibility</mat-icon>
                                 <span>Ver Factura</span>
                             </button>
+
+                            <!-- ✅ NUEVO: Editar borrador -->
+                            <button mat-menu-item (click)="editarBorrador(venta)" *ngIf="venta.estado === 'BORRADOR'">
+                                <mat-icon style="color: #f59e0b;">edit</mat-icon>
+                                <span>Editar Borrador</span>
+                            </button>
+
                             <button mat-menu-item (click)="completarVenta(venta)" *ngIf="venta.estado === 'BORRADOR'">
                                 <mat-icon style="color: #059669;">check_circle</mat-icon>
                                 <span>Emitir Venta</span>
                             </button>
+
                             <button mat-menu-item (click)="cancelarVenta(venta)" *ngIf="venta.estado !== 'CANCELADA'">
                                 <mat-icon color="warn">cancel</mat-icon>
                                 <span>Anular Comprobante</span>
                             </button>
+
                             <div mat-divider></div>
+
                             <button mat-menu-item (click)="eliminarVenta(venta)" class="delete-item">
                                 <mat-icon>delete_forever</mat-icon>
                                 <span>Eliminar Registro</span>

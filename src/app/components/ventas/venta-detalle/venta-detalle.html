@@ -1,0 +1,95 @@
+<div class="modal-container">
+  
+  <div class="modal-header">
+    <div class="header-info">
+      <h2 mat-dialog-title>Detalle de Venta</h2>
+      <span class="codigo-badge">#{{ venta.codigo }}</span>
+    </div>
+    <div class="estado-badge" [ngClass]="venta.estado">
+      {{ venta.estado }}
+    </div>
+  </div>
+
+  <mat-dialog-content class="modal-content">
+    
+    <div class="info-grid">
+      
+      <div class="info-card">
+        <h3><mat-icon>info</mat-icon> Información General</h3>
+        <p><strong>Fecha:</strong> {{ formatearFecha(venta.fechaVenta) }}</p>
+        <p><strong>Comprobante:</strong> {{ venta.tipoDocumento }}</p>
+        <p><strong>N° Documento:</strong> {{ venta.numeroDocumento || '---' }}</p>
+      </div>
+
+      <div class="info-card">
+        <h3><mat-icon>person</mat-icon> Cliente</h3>
+        <p><strong>Nombre:</strong> {{ venta.nombreCliente || 'Cliente General' }}</p>
+        <p><strong>Tipo:</strong> {{ venta.tipoCliente }}</p>
+      </div>
+
+      <div class="info-card">
+        <h3><mat-icon>payments</mat-icon> Pago</h3>
+        <p><strong>Método:</strong> {{ venta.metodoPago }}</p>
+        <p><strong>Moneda:</strong> {{ venta.moneda }} (TC: {{ venta.tipoCambio }})</p>
+        
+        <div *ngIf="venta.metodoPago === 'MIXTO'" class="pago-mixto-info">
+          <small>Efectivo: {{ venta.moneda === 'USD' ? '$' : 'S/' }} {{ venta.pagoEfectivo | number:'1.2-2' }}</small>
+          <small>Transferencia: {{ venta.moneda === 'USD' ? '$' : 'S/' }} {{ venta.pagoTransferencia | number:'1.2-2' }}</small>
+        </div>
+      </div>
+
+    </div>
+
+    <h3 class="section-title">Productos</h3>
+    <div class="table-container">
+      <table class="products-table">
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th class="text-right">Cant.</th>
+            <th class="text-right">Precio</th>
+            <th class="text-right">Desc.</th>
+            <th class="text-right">Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of venta.detalles">
+            <td>
+              <div class="prod-name">{{ item.productoNombre }}</div>
+              <div class="prod-code">{{ item.productoCodigo }}</div>
+            </td>
+            <td class="text-right">{{ item.cantidad }}</td>
+            <td class="text-right">{{ item.precioUnitario | number:'1.2-2' }}</td>
+            <td class="text-right">{{ item.descuento }}%</td>
+            <td class="text-right font-bold">{{ item.subtotal | number:'1.2-2' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="totals-section">
+      <div class="total-row">
+        <span>Subtotal:</span>
+        <span>{{ venta.moneda === 'USD' ? '$' : 'S/' }} {{ venta.subtotal | number:'1.2-2' }}</span>
+      </div>
+      <div class="total-row">
+        <span>IGV (18%):</span>
+        <span>{{ venta.moneda === 'USD' ? '$' : 'S/' }} {{ venta.igv | number:'1.2-2' }}</span>
+      </div>
+      <div class="total-row main-total">
+        <span>TOTAL:</span>
+        <span>{{ venta.moneda === 'USD' ? '$' : 'S/' }} {{ venta.total | number:'1.2-2' }}</span>
+      </div>
+    </div>
+
+    <div class="notas-section" *ngIf="venta.notas">
+      <strong>Notas:</strong>
+      <p>{{ venta.notas }}</p>
+    </div>
+
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-stroked-button (click)="cerrar()">Cerrar</button>
+    <button mat-flat-button color="primary" (click)="cerrar()">Imprimir</button> </mat-dialog-actions>
+</div>

@@ -1,242 +1,173 @@
-<div class="detalle-modal-container">
+<div class="modal-container">
 
-  <!-- Close Button -->
-  <button mat-icon-button class="close-btn" (click)="cerrar()">
-    <mat-icon>close</mat-icon>
-  </button>
-
-  <!-- Header Card -->
-  <div class="header-card">
-    <div class="header-left">
-      <div class="producto-avatar">
+  <div class="modal-header">
+    <div class="header-content">
+      <div class="product-icon-large">
         <mat-icon>inventory_2</mat-icon>
       </div>
-      <div class="producto-info">
-        <h1>{{ producto.nombre }}</h1>
-        <div class="meta-info">
-          <span class="sku-badge">{{ producto.codigo }}</span>
-          <mat-chip class="categoria-badge">
-            <mat-icon>category</mat-icon>
+      <div class="product-main-info">
+        <h2>{{ producto.nombre }}</h2>
+        <div class="badges-container">
+          <span class="badge sku">
+            <mat-icon style="font-size:14px; width:14px; height:14px;">qr_code</mat-icon>
+            {{ producto.codigo }}
+          </span>
+          <span class="badge category">
+            <mat-icon style="font-size:14px; width:14px; height:14px;">category</mat-icon>
             {{ producto.nombreCategoria }}
-          </mat-chip>
-          <mat-chip class="estado-badge" [ngClass]="getEstadoStockClass()">
+          </span>
+          <span class="badge stock-status" [ngClass]="getEstadoStockClass()">
             {{ producto.estadoStock }}
-          </mat-chip>
+          </span>
         </div>
       </div>
     </div>
+
     <div class="header-actions">
-      <button mat-raised-button class="btn-editar" (click)="editarProducto()">
-        <mat-icon>edit</mat-icon>
-        Editar
+      <button mat-flat-button class="btn-edit" (click)="editarProducto()">
+        <mat-icon>edit</mat-icon> Editar
       </button>
-      <button mat-raised-button class="btn-eliminar" (click)="eliminarProducto()">
-        <mat-icon>delete</mat-icon>
-        Eliminar
+      <button mat-flat-button class="btn-delete" (click)="eliminarProducto()">
+        <mat-icon>delete</mat-icon> Eliminar
       </button>
     </div>
+
+    <button mat-icon-button class="close-btn" (click)="cerrar()">
+      <mat-icon>close</mat-icon>
+    </button>
   </div>
 
-  <!-- Stock Alert -->
-  <div class="alert-card" *ngIf="mostrarStockBajo">
-    <mat-icon>warning_amber</mat-icon>
-    <div class="alert-content">
-      <strong>Stock Bajo</strong>
-      <span>{{ producto.stockActual }} unidades disponibles • Mínimo recomendado: {{ producto.stockMinimo }}</span>
+  <div class="modal-body">
+    
+    <div class="alert-card" *ngIf="mostrarStockBajo">
+      <mat-icon>warning_amber</mat-icon>
+      <div class="alert-content">
+        <strong>Stock Bajo Detectado</strong>
+        <span>Solo quedan {{ producto.stockActual }} unidades. El mínimo es {{ producto.stockMinimo }}.</span>
+      </div>
     </div>
-  </div>
 
-  <!-- Content -->
-  <div class="content-wrapper">
-
-    <mat-tab-group class="custom-tabs" animationDuration="300ms" [(selectedIndex)]="selectedTab">
-
-      <!-- Tab: Información General -->
-      <mat-tab>
-        <ng-template mat-tab-label>
-          <mat-icon>info</mat-icon>
-          Información General
-        </ng-template>
-
+    <mat-tab-group animationDuration="0ms">
+      
+      <mat-tab label="Información General">
         <div class="tab-content">
-
-          <!-- Cards Grid -->
-          <div class="cards-grid">
-
-            <!-- Card 1: Detalles del Producto -->
-            <div class="info-card">
+          
+          <div class="main-column">
+            
+            <div class="detail-card">
               <div class="card-header">
-                <mat-icon>inventory</mat-icon>
+                <mat-icon>feed</mat-icon>
                 <h3>Detalles del Producto</h3>
               </div>
-              <div class="card-body">
-                <div class="info-row">
+              
+              <div class="info-grid">
+                <div class="info-item">
                   <span class="label">Código SKU</span>
                   <span class="value">{{ producto.codigo }}</span>
                 </div>
-                <div class="info-row">
+                <div class="info-item">
                   <span class="label">Categoría</span>
                   <span class="value">{{ producto.nombreCategoria }}</span>
                 </div>
+                <div class="info-item full-width">
+                  <span class="label">Descripción</span>
+                  <p class="description">{{ producto.descripcion || 'Sin descripción' }}</p>
+                </div>
+              </div>
+
+              <div class="warehouse-section">
+                <h4 class="subsection-title">
+                  <mat-icon>warehouse</mat-icon> Distribución en Almacenes
+                </h4>
                 
-                <!-- ✅ MODIFICADO: Mostrar distribución por almacenes -->
-                <div class="info-row full-width">
-                  <span class="label">
-                    <mat-icon class="inline-icon">warehouse</mat-icon>
-                    Distribución en Almacenes
-                  </span>
-                  <div class="almacenes-distribucion">
-                    <div *ngIf="cargandoAlmacenes" class="loading-small">
-                      Cargando...
-                    </div>
-                    
-                    <div *ngIf="!cargandoAlmacenes && productosAlmacen.length > 0" class="almacenes-lista">
-                      <div class="almacen-item-small" *ngFor="let pa of productosAlmacen">
-                        <mat-icon>store</mat-icon>
-                        <div class="almacen-info-small">
-                          <strong>{{ pa.almacenCodigo }} - {{ pa.almacenNombre }}</strong>
-                          <span class="stock-badge">{{ pa.stock }} unidades</span>
-                          <span *ngIf="pa.ubicacionFisica" class="ubicacion-fisica">
-                            📍 {{ pa.ubicacionFisica }}
-                          </span>
-                        </div>
-                      </div>
-                      <div class="total-distribucion">
-                        <strong>Total: {{ producto.stockActual }} unidades</strong>
-                        <span>en {{ productosAlmacen.length }} almacén(es)</span>
-                      </div>
-                    </div>
-                    
-                    <div *ngIf="!cargandoAlmacenes && productosAlmacen.length === 0" class="sin-almacenes-small">
-                      <mat-icon>info</mat-icon>
-                      <span>No asignado a ningún almacén</span>
+                <div *ngIf="cargandoAlmacenes" class="loading-state">Cargando...</div>
+
+                <div class="warehouse-list" *ngIf="!cargandoAlmacenes && productosAlmacen.length > 0">
+                  <div class="warehouse-item" *ngFor="let pa of productosAlmacen">
+                    <div class="wh-icon"><mat-icon>store</mat-icon></div>
+                    <div class="wh-info">
+                      <strong>{{ pa.almacenNombre }}</strong>
+                      <span class="wh-stock">{{ pa.stock }} unidades</span>
                     </div>
                   </div>
+                  <div class="wh-total">
+                    Total: <strong>{{ producto.stockActual }}</strong> en {{ productosAlmacen.length }} almacén(es)
+                  </div>
                 </div>
-                
-                <div class="info-row full-width">
-                  <span class="label">Descripción</span>
-                  <p class="descripcion">{{ producto.descripcion || 'Sin descripción disponible' }}</p>
+
+                <div class="empty-state-small" *ngIf="!cargandoAlmacenes && productosAlmacen.length === 0">
+                  No asignado a almacenes
                 </div>
               </div>
             </div>
 
-            <!-- Card 2: Stock e Inventario -->
-            <div class="info-card highlight">
+          </div>
+
+          <div class="side-column">
+            
+            <div class="kpis-container">
               <div class="card-header">
-                <mat-icon>warehouse</mat-icon>
+                <mat-icon>inventory</mat-icon>
                 <h3>Stock e Inventario</h3>
               </div>
-              <div class="card-body">
-                <div class="stock-display">
-                  <div class="stock-item">
-                    <span class="stock-label">Stock Actual</span>
-                    <span class="stock-number" [ngClass]="getEstadoStockClass()">
-                      {{ producto.stockActual }}
-                    </span>
-                    <span class="stock-unit">unidades</span>
-                  </div>
-                  <div class="stock-item">
-                    <span class="stock-label">Stock Mínimo</span>
-                    <span class="stock-number secondary">{{ producto.stockMinimo }}</span>
-                    <span class="stock-unit">unidades</span>
-                  </div>
+              <div class="kpi-row">
+                <div class="kpi-item">
+                  <span class="kpi-label">STOCK ACTUAL</span>
+                  <span class="kpi-value primary">{{ producto.stockActual }}</span>
+                  <span class="kpi-unit">unidades</span>
                 </div>
-
-                <div class="divider"></div>
-
-                <div class="info-row highlighted">
-                  <span class="label">Precio Unitario</span>
-                  <span class="value precio">{{ formatearPrecio(producto.precioVenta) }}</span>
+                <div class="kpi-divider"></div>
+                <div class="kpi-item">
+                  <span class="kpi-label">STOCK MÍNIMO</span>
+                  <span class="kpi-value secondary">{{ producto.stockMinimo }}</span>
+                  <span class="kpi-unit">unidades</span>
                 </div>
-                <div class="info-row highlighted">
-                  <span class="label">Valor Total en Stock</span>
-                  <span class="value valor-total">{{ formatearPrecio(valorTotal) }}</span>
+              </div>
+              <div class="financial-summary">
+                <div class="summary-row">
+                  <span>Precio Unitario</span>
+                  <strong>{{ formatearPrecio(producto.precioVenta) }}</strong>
+                </div>
+                <div class="summary-row total">
+                  <span>Valor Total Stock</span>
+                  <strong>{{ formatearPrecio(valorTotal) }}</strong>
                 </div>
               </div>
             </div>
 
-            <!-- Card 3: Información Financiera -->
-            <div class="info-card">
-              <div class="card-header">
-                <mat-icon>attach_money</mat-icon>
-                <h3>Información Financiera ({{ producto.moneda || 'USD' }})</h3>
-              </div>
-              <div class="card-body">
-                <div class="info-row">
-                  <span class="label">Precio de China</span>
-                  <span class="value">{{ formatearPrecio(producto.precioChina) }}</span>
+            <div class="info-section">
+              <h3>Información Financiera ({{ producto.moneda || 'USD' }})</h3>
+              <div class="financial-grid">
+                <div class="f-row">
+                  <span>Precio China</span>
+                  <strong>{{ formatearPrecio(producto.precioChina) }}</strong>
                 </div>
-                <div class="info-row">
-                  <span class="label">Costo Total</span>
-                  <span class="value">{{ formatearPrecio(producto.costoTotal) }}</span>
-                </div>
-                <div class="info-row">
-                  <span class="label">Precio de Venta</span>
-                  <span class="value precio">{{ formatearPrecio(producto.precioVenta) }}</span>
-                </div>
-                <div class="info-row">
-                  <span class="label">Margen de Ganancia</span>
-                  <span class="value margen">{{ calcularMargen() }}</span>
-                </div>
-                <div class="info-row">
-                  <span class="label">Unidad de Medida</span>
-                  <span class="value">{{ producto.unidadMedida || 'UND' }}</span>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Card 4: Información Adicional -->
-            <div class="info-card">
-              <div class="card-header">
-                <mat-icon>business</mat-icon>
-                <h3>Información del Proveedor</h3>
-              </div>
-              <div class="card-body">
-                <div class="empty-state">
-                  <mat-icon>store</mat-icon>
-                  <p>Sin proveedor asignado</p>
-                  <span class="hint">Agrega un proveedor para este producto</span>
+                <div class="f-row">
+                  <span>Precio Venta</span>
+                  <strong class="highlight">{{ formatearPrecio(producto.precioVenta) }}</strong>
                 </div>
               </div>
             </div>
 
           </div>
+
         </div>
       </mat-tab>
 
-      <!-- Tab: Movimientos -->
-      <mat-tab>
-        <ng-template mat-tab-label>
+      <mat-tab label="Movimientos">
+        <div class="empty-tab">
           <mat-icon>history</mat-icon>
-          Movimientos
-        </ng-template>
-        <div class="tab-content">
-          <div class="empty-state-large">
-            <mat-icon>history</mat-icon>
-            <h3>Historial de Movimientos</h3>
-            <p>Próximamente podrás ver todos los movimientos de entrada y salida</p>
-          </div>
+          <p>Próximamente: Historial de movimientos</p>
         </div>
       </mat-tab>
 
-      <!-- Tab: Historial de Precios -->
-      <mat-tab>
-        <ng-template mat-tab-label>
+      <mat-tab label="Historial de Precios">
+        <div class="empty-tab">
           <mat-icon>show_chart</mat-icon>
-          Historial de Precios
-        </ng-template>
-        <div class="tab-content">
-          <div class="empty-state-large">
-            <mat-icon>show_chart</mat-icon>
-            <h3>Historial de Precios</h3>
-            <p>Próximamente podrás ver el histórico de cambios de precio</p>
-          </div>
+          <p>Próximamente: Gráfica de precios</p>
         </div>
       </mat-tab>
 
     </mat-tab-group>
-
   </div>
-
 </div>

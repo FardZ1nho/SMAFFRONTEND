@@ -1,0 +1,50 @@
+.modal-container { min-width: 600px; max-width: 800px; }
+
+/* Cabecera */
+.modal-header {
+  background: #fee2e2; padding: 20px 24px;
+  display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 1px solid #fecaca;
+}
+.header-content { display: flex; align-items: center; gap: 12px; }
+.modal-header h2 { margin: 0; color: #991b1b; font-weight: 700; }
+.nc-badge { background: #fff; padding: 4px 10px; border-radius: 4px; font-weight: 600; color: #b91c1c; font-size: 13px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+.date-info { font-size: 13px; color: #7f1d1d; }
+
+.modal-body { padding: 24px !important; display: flex; flex-direction: column; gap: 20px; }
+
+/* Tarjetas */
+.section-card { background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid #e2e8f0; }
+.alert-state { background: #fff5f5; border-color: #fed7d7; }
+
+h3 { margin: 0 0 12px 0; font-size: 14px; font-weight: 600; color: #475569; display: flex; align-items: center; gap: 8px; }
+
+/* Grid de Datos */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.data-item { display: flex; flex-direction: column; }
+.data-item label { font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 600; }
+.data-item strong { font-size: 14px; color: #1e293b; }
+.text-red { color: #dc2626; }
+.obs-text { font-style: italic; color: #4b5563; margin-top: 4px; background: rgba(255,255,255,0.5); padding: 8px; border-radius: 4px; }
+.full-row { margin-top: 12px; }
+
+/* Sección Venta */
+.section-title-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+.venta-ref { font-weight: 600; color: #2563eb; cursor: pointer; }
+
+.cliente-info { background: #eff6ff; padding: 10px; border-radius: 6px; margin-bottom: 12px; font-size: 13px; border: 1px solid #dbeafe; }
+.cliente-info .label { font-weight: 600; color: #1e40af; }
+.ml-4 { margin-left: 16px; }
+
+/* Tabla */
+.table-container { border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; }
+.products-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.products-table th { background: #f1f5f9; padding: 8px 12px; text-align: left; color: #64748b; font-weight: 600; }
+.products-table td { padding: 8px 12px; border-bottom: 1px solid #f1f5f9; color: #334155; }
+.text-right { text-align: right; }
+.prod-name { font-weight: 500; }
+.prod-code { font-size: 11px; color: #94a3b8; }
+
+/* Estados */
+.loading-box { text-align: center; padding: 20px; color: #64748b; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.error-box { text-align: center; padding: 20px; color: #ef4444; display: flex; align-items: center; justify-content: center; gap: 8px; }

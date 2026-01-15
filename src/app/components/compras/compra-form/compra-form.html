@@ -1,0 +1,173 @@
+<div class="compra-container">
+  
+  <div class="header-action-row">
+    <button class="btn-back" (click)="cancelar()" title="Volver">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <div class="header-content">
+      <h1>Nueva Compra</h1>
+      <h3>Registre el ingreso de mercadería al almacén</h3>
+    </div>
+  </div>
+
+  <div class="card mb-4">
+    <h3>
+      <mat-icon style="vertical-align: middle; margin-right: 8px;">receipt_long</mat-icon> 
+      Información del Comprobante
+    </h3>
+
+    <div class="config-grid-rows">
+      
+      <div class="config-row four-cols">
+        <div class="grid-input">
+          <label class="section-title">Tipo Comprobante</label>
+          <select class="form-control-smaf full-width" [(ngModel)]="compra.tipoComprobante">
+            <option value="FACTURA ELECTRÓNICA">FACTURA ELECTRÓNICA</option>
+            <option value="BOLETA DE VENTA">BOLETA DE VENTA</option>
+            <option value="GUIA DE REMISION">GUIA DE REMISION</option>
+          </select>
+        </div>
+        
+        <div class="grid-input">
+          <label class="section-title">Serie <span style="color:red">*</span></label>
+          <input type="text" class="form-control-smaf full-width" [(ngModel)]="compra.serie" placeholder="F001">
+        </div>
+
+        <div class="grid-input">
+          <label class="section-title">Número <span style="color:red">*</span></label>
+          <input type="text" class="form-control-smaf full-width" [(ngModel)]="compra.numero" placeholder="000001">
+        </div>
+
+        <div class="grid-input">
+          <label class="section-title">Fecha Emisión</label>
+          <input type="date" class="form-control-smaf full-width" [(ngModel)]="compra.fecEmision">
+        </div>
+      </div>
+
+      <div class="config-row custom-grid-2">
+        <div class="grid-input">
+          <label class="section-title">Proveedor</label>
+          <select class="form-control-smaf full-width" [(ngModel)]="compra.proveedorId">
+            <option value="0">Seleccionar proveedor...</option>
+            <option *ngFor="let p of proveedores" [value]="p.id">{{p.nombre}}</option>
+          </select>
+        </div>
+
+        <div class="grid-input">
+          <label class="section-title">Moneda</label>
+          <select class="form-control-smaf full-width" [(ngModel)]="compra.moneda">
+            <option value="Soles">Soles</option>
+            <option value="Dólares">Dólares</option>
+          </select>
+        </div>
+
+        <div class="grid-input">
+          <label class="section-title">T. Cambio</label>
+          <input type="number" class="form-control-smaf full-width" [(ngModel)]="compra.tipoCambio">
+        </div>
+      </div>
+
+      <div class="grid-input full-width">
+        <label class="section-title">Observaciones</label>
+        <textarea class="form-control-smaf full-width" rows="2" [(ngModel)]="compra.observaciones" placeholder="Detalles adicionales de la compra..."></textarea>
+      </div>
+
+    </div>
+  </div>
+
+ <div class="card">
+    
+    <div class="section-header-with-action">
+      <h3>
+        <mat-icon style="vertical-align: middle; margin-right: 8px;">shopping_cart</mat-icon> 
+        Detalle de Productos
+      </h3>
+      
+      <button class="btn-tiny-action" (click)="nuevoProducto()" title="Registrar un producto que no existe en el catálogo">
+        <mat-icon>add_circle</mat-icon>
+        Nuevo Producto
+      </button>
+    </div>
+
+    <div class="search-section mb-4">
+      <div class="search-wrapper">
+        <mat-icon class="search-icon">search</mat-icon>
+        <input type="text" class="search-input-lg" 
+               placeholder="Buscar producto por nombre o código para agregar..."
+               [(ngModel)]="busquedaProducto" (input)="buscarProducto()">
+        
+        <ul class="search-results shadow-sm" *ngIf="productosFiltrados.length > 0">
+          <li *ngFor="let p of productosFiltrados" (click)="agregarProducto(p)">
+            <div class="result-name">{{p.nombre}}</div>
+            <div class="result-code">{{p.codigo}}</div>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <table class="custom-table">
+        <thead>
+          <tr>
+            <th class="ps-4">Producto</th>
+            <th width="120">Cantidad</th>
+            <th width="120">Precio Unit.</th>
+            <th width="200">Almacén Destino</th>
+            <th width="120">Subtotal</th>
+            <th width="60" class="text-center">Acción</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of itemsAgregados; let i = index">
+            <td class="ps-4">
+              <div class="fw-bold text-main">{{item.nombre}}</div>
+              <small class="text-sub">{{item.codigo}}</small>
+            </td>
+            <td>
+              <input type="number" class="form-control-smaf sm-input" [(ngModel)]="item.cantidad">
+            </td>
+            <td>
+              <input type="number" class="form-control-smaf sm-input" [(ngModel)]="item.precioUnitario">
+            </td>
+            <td>
+              <select class="form-control-smaf sm-input" [(ngModel)]="item.almacenId">
+                <option *ngFor="let a of almacenes" [value]="a.id">{{a.nombre}}</option>
+              </select>
+            </td>
+            <td class="fw-bold text-main">
+              {{ (item.cantidad * item.precioUnitario) | number:'1.2-2' }}
+            </td>
+            <td class="text-center">
+              <button class="btn-icon btn-delete" (click)="eliminarItem(i)" title="Quitar">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </td>
+          </tr>
+
+          <tr *ngIf="itemsAgregados.length === 0">
+            <td colspan="6" class="empty-state">
+              <mat-icon class="empty-icon">add_shopping_cart</mat-icon>
+              <p>Busca y agrega productos para comenzar la compra.</p>
+            </td>
+          </tr>
+        </tbody>
+        
+        <tfoot *ngIf="itemsAgregados.length > 0">
+          <tr class="total-row">
+            <td colspan="4" class="text-end label-total">TOTAL A PAGAR:</td>
+            <td class="amount-total">{{ calcularTotal() | number:'1.2-2' }}</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <div class="form-actions mt-4">
+      <button class="btn-borrador" (click)="cancelar()">Cancelar</button>
+      <button class="btn-completar" (click)="guardarCompra()">
+        <mat-icon>save</mat-icon> Guardar Compra
+      </button>
+    </div>
+
+  </div>
+</div>

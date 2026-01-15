@@ -1,0 +1,62 @@
+<div class="modal-container">
+  
+  <div class="modal-header">
+    <h2 mat-dialog-title>Emitir Nota de Crédito</h2>
+    <div class="subtitle">
+      Afectando a: <strong>{{ venta.tipoDocumento }} #{{ venta.codigo }}</strong>
+    </div>
+  </div>
+
+  <mat-dialog-content>
+    <div class="alert-info">
+      <mat-icon>info</mat-icon>
+      <p>Esta acción generará un documento fiscal negativo. Si selecciona "Devolución", el stock retornará al inventario.</p>
+    </div>
+
+    <div class="form-grid">
+      
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Motivo SUNAT</mat-label>
+        <mat-select [(ngModel)]="motivoSeleccionado">
+          <mat-option *ngFor="let m of motivos" [value]="m.value">
+            {{ m.label }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Monto a Devolver ({{ venta.moneda }})</mat-label>
+        <input 
+          matInput 
+          type="number" 
+          [(ngModel)]="monto" 
+          [max]="venta.total" 
+          min="0"
+          step="0.01"
+        >
+        <mat-hint align="end">Máximo disponible: <strong>{{ venta.total | number:'1.2-2' }}</strong></mat-hint>
+        <span matPrefix>{{ venta.moneda === 'USD' ? '$ ' : 'S/ ' }}&nbsp;</span>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Observaciones / Sustento</mat-label>
+        <textarea 
+          matInput 
+          [(ngModel)]="observaciones" 
+          rows="3" 
+          placeholder="Ej: Cliente devolvió el producto por falla de fábrica..."
+        ></textarea>
+      </mat-form-field>
+
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end" class="modal-actions">
+    <button mat-stroked-button (click)="cerrar()" [disabled]="isSaving">Cancelar</button>
+    
+    <button mat-flat-button color="warn" (click)="emitir()" [disabled]="isSaving">
+      <mat-icon>save_as</mat-icon> 
+      {{ isSaving ? 'Procesando...' : 'Emitir Nota' }}
+    </button>
+  </mat-dialog-actions>
+</div>

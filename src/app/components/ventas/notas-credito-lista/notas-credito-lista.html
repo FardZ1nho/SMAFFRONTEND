@@ -1,0 +1,85 @@
+<div class="nc-container">
+  
+  <div class="header">
+    <div class="title-section">
+      <button mat-icon-button (click)="volverAVentas()">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div>
+        <h1>Notas de Crédito</h1>
+        <p class="subtitle">Historial de devoluciones y anulaciones</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="filter-section">
+    <mat-form-field appearance="outline" class="search-field">
+      <mat-icon matPrefix>search</mat-icon>
+      <input matInput (keyup)="aplicarFiltro($event)" placeholder="Buscar por código de NC o Ticket..." #input>
+    </mat-form-field>
+  </div>
+
+  <div class="table-card">
+    
+    <div *ngIf="isLoading" class="loading-state">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Cargando historial...</p>
+    </div>
+
+    <div *ngIf="!isLoading && dataSource.data.length === 0" class="empty-state">
+      <mat-icon>folder_off</mat-icon>
+      <p>No hay notas de crédito emitidas aún.</p>
+    </div>
+
+    <table mat-table [dataSource]="dataSource" *ngIf="!isLoading && dataSource.data.length > 0">
+
+      <ng-container matColumnDef="codigo">
+        <th mat-header-cell *matHeaderCellDef> Nota de Crédito </th>
+        <td mat-cell *matCellDef="let element"> 
+          <span class="badge-nc">{{ element.codigoCompleto }}</span> 
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="ventaRef">
+        <th mat-header-cell *matHeaderCellDef> Afecta a </th>
+        <td mat-cell *matCellDef="let element"> 
+          <span class="ref-link">#{{ element.codigoVentaAfectada }}</span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="motivo">
+        <th mat-header-cell *matHeaderCellDef> Motivo </th>
+        <td mat-cell *matCellDef="let element"> {{ element.motivo }} </td>
+      </ng-container>
+
+      <ng-container matColumnDef="fecha">
+        <th mat-header-cell *matHeaderCellDef> Emisión </th>
+        <td mat-cell *matCellDef="let element"> {{ formatearFecha(element.fechaEmision) }} </td>
+      </ng-container>
+
+      <ng-container matColumnDef="monto">
+        <th mat-header-cell *matHeaderCellDef> Devolución </th>
+        <td mat-cell *matCellDef="let element" class="monto-negativo"> 
+          - {{ element.moneda === 'USD' ? '$' : 'S/' }} {{ element.montoTotal | number:'1.2-2' }} 
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="acciones">
+        <th mat-header-cell *matHeaderCellDef> </th>
+        <td mat-cell *matCellDef="let element" style="text-align: right;">
+          
+          <button mat-icon-button color="primary" matTooltip="Ver Detalle Completo" (click)="verDetalle(element)">
+            <mat-icon>visibility</mat-icon>
+          </button>
+          
+          <button mat-icon-button color="accent" matTooltip="Descargar PDF">
+            <mat-icon>picture_as_pdf</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+  </div>
+</div>

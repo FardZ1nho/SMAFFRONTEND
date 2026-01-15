@@ -6,7 +6,7 @@
       </div>
       <div>
         <h1>Inventario</h1>
-        <p class="subtitle">Control total de stock, SKU y ubicaciones de productos</p>
+        <p class="subtitle">Control total de stock, SKU y precios de productos</p>
       </div>
     </div>
     <button mat-raised-button color="primary" class="btn-nuevo" (click)="abrirModalNuevoProducto()">
@@ -18,25 +18,17 @@
   <div class="toolbar">
     <div class="filter-group search-container">
       <label class="search-label">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round">
           <circle cx="11" cy="11" r="8"></circle>
           <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
         </svg>
         Buscar:
       </label>
       <div class="input-wrapper">
-        <input 
-          type="text" 
-          class="filter-input"
-          placeholder="Nombre del producto o SKU..." 
-          [(ngModel)]="terminoBusqueda"
-          (input)="buscarProductos()"
-        >
-        <button 
-          class="btn-clear"
-          *ngIf="terminoBusqueda"
-          (click)="limpiarBusqueda()"
-        >
+        <input type="text" class="filter-input" placeholder="Nombre del producto o SKU..." [(ngModel)]="terminoBusqueda"
+          (input)="buscarProductos()">
+        <button class="btn-clear" *ngIf="terminoBusqueda" (click)="limpiarBusqueda()">
           <mat-icon>close</mat-icon>
         </button>
       </div>
@@ -62,7 +54,7 @@
 
     <div class="table-responsive" *ngIf="!isLoading">
       <table mat-table [dataSource]="productosFiltrados">
-        
+
         <ng-container matColumnDef="codigo">
           <th mat-header-cell *matHeaderCellDef>SKU</th>
           <td mat-cell *matCellDef="let producto">
@@ -102,12 +94,12 @@
           </td>
         </ng-container>
 
-        <ng-container matColumnDef="ubicacion">
-          <th mat-header-cell *matHeaderCellDef>UBICACIÓN</th>
+        <ng-container matColumnDef="precio">
+          <th mat-header-cell *matHeaderCellDef> PRECIO UNIT. </th>
           <td mat-cell *matCellDef="let producto">
-            <div class="location-cell">
-              <mat-icon>place</mat-icon>
-              <span>{{ producto.ubicacion || 'Sin asignar' }}</span>
+            <div class="price-cell">
+              <span class="currency">{{ producto.moneda === 'PEN' ? 'S/' : '$' }}</span>
+              <span class="amount">{{ producto.precioVenta | number:'1.2-2' }}</span>
             </div>
           </td>
         </ng-container>
@@ -122,7 +114,8 @@
               <button mat-icon-button class="btn-edit-green" (click)="editarProducto(producto)" matTooltip="Editar">
                 <mat-icon>edit</mat-icon>
               </button>
-              <button mat-icon-button color="warn" class="delete-btn" (click)="eliminarProducto(producto)" matTooltip="Eliminar">
+              <button mat-icon-button color="warn" class="delete-btn" (click)="eliminarProducto(producto)"
+                matTooltip="Eliminar">
                 <mat-icon>delete_outline</mat-icon>
               </button>
             </div>

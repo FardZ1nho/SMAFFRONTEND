@@ -12,6 +12,12 @@
             </div>
         </div>
         <div class="header-actions">
+            <button mat-stroked-button color="warn" (click)="irANotasCredito()"
+                style="margin-right: 12px; border-color: #fca5a5; color: #b91c1c;">
+                <mat-icon>history</mat-icon>
+                Ver Devoluciones
+            </button>
+
             <button mat-raised-button color="primary" class="btn-nuevo" (click)="nuevaVenta()">
                 <mat-icon>add</mat-icon>
                 Nueva Venta
@@ -56,6 +62,7 @@
     </div>
 
     <div class="table-card">
+
         <div *ngIf="isLoading" class="state-container">
             <mat-spinner diameter="40"></mat-spinner>
             <p>Sincronizando ventas...</p>
@@ -138,13 +145,20 @@
                         <button mat-icon-button [matMenuTriggerFor]="menu" class="btn-more">
                             <mat-icon>more_horiz</mat-icon>
                         </button>
+
                         <mat-menu #menu="matMenu" class="modern-menu">
+
                             <button mat-menu-item (click)="verDetalle(venta)">
                                 <mat-icon color="primary">visibility</mat-icon>
-                                <span>Ver Factura</span>
+                                <span>Ver Venta</span>
                             </button>
 
-                            <!-- ✅ NUEVO: Editar borrador -->
+                            <button mat-menu-item (click)="abrirModalNotaCredito(venta)"
+                                *ngIf="venta.estado === 'COMPLETADA'">
+                                <mat-icon style="color: #ef4444;">replay</mat-icon>
+                                <span>Emitir Nota de Crédito</span>
+                            </button>
+
                             <button mat-menu-item (click)="editarBorrador(venta)" *ngIf="venta.estado === 'BORRADOR'">
                                 <mat-icon style="color: #f59e0b;">edit</mat-icon>
                                 <span>Editar Borrador</span>
@@ -177,6 +191,7 @@
     </div>
 
     <div *ngIf="!isLoading && ventasFiltradas.data.length > 0" class="footer-stats">
+
         <div class="stat-card">
             <div class="stat-icon blue">
                 <mat-icon>receipt_long</mat-icon>
@@ -186,14 +201,20 @@
                 <span class="stat-value">{{ ventasFiltradas.data.length }}</span>
             </div>
         </div>
+
         <div class="stat-card">
             <div class="stat-icon green">
                 <mat-icon>payments</mat-icon>
             </div>
             <div class="stat-data">
-                <span class="stat-label">Ingreso Acumulado</span>
-                <span class="stat-value">S/ {{ calcularMontoTotal().toFixed(2) }}</span>
+                <span class="stat-label">Ingreso Neto (Ventas - Devoluciones)</span>
+                <span class="stat-value">S/ {{ ingresoNetoReal.toFixed(2) }}</span>
+
+                <div style="font-size: 10px; color: #64748b; margin-top: 2px;">
+                    Bruto: {{ totalVentas | number:'1.0-0' }} | Devoluciones: -{{ totalNotasCredito | number:'1.0-0' }}
+                </div>
             </div>
         </div>
+
     </div>
 </div>

@@ -6,7 +6,7 @@
   --border-color: #e2e8f0;
 }
 
-.inventario-container {
+.compras-container {
   padding: 24px;
   background-color: var(--bg-body);
   min-height: 100vh;
@@ -48,10 +48,9 @@
   margin: 0;
 }
 
-/* ⭐ BOTÓN NUEVO CORREGIDO ⭐ */
 .btn-nuevo {
-  background-color: var(--primary) !important; /* Fondo Azul */
-  color: white !important; /* Letra Blanca */
+  background-color: var(--primary) !important;
+  color: white !important;
   border-radius: 10px !important;
   font-weight: 600 !important;
   padding: 0 20px !important;
@@ -122,7 +121,7 @@
   color: var(--text-main) !important;
 }
 
-/* MAIN CARD & TABLE */
+/* TABLE STYLES */
 .main-card {
   background: white;
   border-radius: 16px;
@@ -130,8 +129,6 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   overflow: hidden;
 }
-
-.mat-table { width: 100%; }
 
 th.mat-header-cell {
   background: #f1f5f9;
@@ -149,7 +146,7 @@ td.mat-cell {
 
 .row-hover:hover { background-color: #f8fafc; }
 
-/* CELL STYLES */
+/* BADGES & INFO */
 .sku-badge {
   font-family: monospace;
   background: #f1f5f9;
@@ -174,39 +171,11 @@ td.mat-cell {
 
 .stock-badge {
   display: inline-flex;
-  align-items: center;
-  gap: 4px;
   padding: 4px 12px;
   border-radius: 12px;
   font-weight: 700;
-  margin: 0 auto; /* Centrar el badge */
 }
-
-/* Colores de Stock */
-.stock-agotado { background: #fee2e2; color: #991b1b; }
-.stock-bajo { background: #fff7ed; color: #9a3412; }
 .stock-normal { background: #eff6ff; color: #1e40af; }
-.stock-alto { background: #ecfdf5; color: #065f46; }
-
-/* ACTIONS */
-.action-buttons { display: flex; gap: 4px; justify-content: center; }
-.btn-view-blue { color: #2563eb !important; }
-.btn-edit-green { color: #059669 !important; }
-.delete-btn { color: #dc2626 !important; }
-
-/* STATES */
-.state-container {
-  padding: 80px 24px;
-  text-align: center;
-  color: var(--text-sub);
-}
-.empty-icon { font-size: 48px; width: 48px; height: 48px; opacity: 0.3; margin-bottom: 16px; }
-
-/* ⭐ NUEVOS ESTILOS PARA PRECIO ⭐ */
-.mat-column-precio {
-  text-align: center !important;
-  justify-content: center !important;
-}
 
 .price-cell {
   display: flex;
@@ -214,15 +183,19 @@ td.mat-cell {
   align-items: center;
   font-weight: 600;
   color: #1e293b;
-  font-size: 14px;
 }
 
-.price-cell .currency {
-  color: #64748b;
-  margin-right: 2px;
-  font-size: 12px;
-}
+.price-cell .currency { color: #64748b; margin-right: 2px; font-size: 12px; }
+.price-cell .amount { color: var(--primary); }
 
-.price-cell .amount {
-  color: #2563eb; /* Azul corporativo para resaltar el precio */
+.action-buttons { display: flex; gap: 4px; justify-content: center; }
+.btn-view-blue { color: #2563eb !important; }
+.btn-edit-green { color: #059669 !important; }
+.delete-btn { color: #dc2626 !important; }
+
+.state-container {
+  padding: 80px 24px;
+  text-align: center;
+  color: var(--text-sub);
 }
+.empty-icon { font-size: 48px; width: 48px; height: 48px; opacity: 0.3; margin-bottom: 16px; }

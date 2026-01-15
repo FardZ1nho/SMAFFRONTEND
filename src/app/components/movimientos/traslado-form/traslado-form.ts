@@ -1,17 +1,20 @@
-// src/app/components/movimientos/traslado-form/traslado-form.component.ts
-
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
+import { MatIcon } from '@angular/material/icon';
+import { MatProgressSpinner } from "@angular/material/progress-spinner";
+
+// Servicios
 import { MovimientoService } from '../../../services/movimiento-service'; 
 import { ProductoService } from '../../../services/producto-service'; 
 import { AlmacenService } from '../../../services/almacen-service'; 
+import { ProductoAlmacenService } from '../../../services/producto-almacen-service';
+
+// Modelos
 import { TrasladoRequest } from '../../../models/movimiento';
 import { Producto } from '../../../models/producto';
 import { Almacen } from '../../../models/almacen';
-import { MatIcon } from '@angular/material/icon';
-import { MatProgressSpinner } from "@angular/material/progress-spinner";
 
 @Component({
   selector: 'app-traslado-form',
@@ -22,33 +25,38 @@ import { MatProgressSpinner } from "@angular/material/progress-spinner";
 })
 export class TrasladoFormComponent implements OnInit {
 
-  // Listas para selects
   productos: Producto[] = [];
   almacenes: Almacen[] = [];
 
-  // Campos del formulario
-  productoId: number | null = null;
+  // Formulario
   almacenOrigenId: number | null = null;
   almacenDestinoId: number | null = null;
+  productoId: number | null = null;
   cantidad: number = 1;
   motivo: string = '';
 
-  // Estados
+  // Estados y Validación
   cargando: boolean = false;
   guardando: boolean = false;
+  verificandoStock: boolean = false;
   errorMensaje: string = '';
-  stockDisponible: number = 0;
+  
+  // Datos calculados
   productoSeleccionado: Producto | null = null;
+  stockEnOrigen: number = 0;
+  existeEnOrigen: boolean = true;
 
   constructor(
     private movimientoService: MovimientoService,
     private productoService: ProductoService,
     private almacenService: AlmacenService,
-    private router: Router
+    private productoAlmacenService: ProductoAlmacenService,
+    private router: Router,
+    private cdr: ChangeDetectorRef 
   ) { }
 
   ngOnInit(): void {
-    // Usar setTimeout para evitar ExpressionChangedAfterItHasBeenCheckedError
+    // Timeout para evitar conflictos de ciclo de vida inicial
     setTimeout(() => {
       this.cargarDatos();
     }, 0);
@@ -56,103 +64,76 @@ export class TrasladoFormComponent implements OnInit {
 
   cargarDatos(): void {
     this.cargando = true;
-    this.errorMensaje = '';
-    let productosLoaded = false;
-    let almacenesLoaded = false;
+    
+    const promesaAlmacenes = this.almacenService.listarAlmacenesActivos().toPromise();
+    const promesaProductos = this.productoService.listarProductosActivos().toPromise();
 
-    // Cargar productos activos
-    this.productoService.listarProductosActivos().subscribe({
-      next: (productos) => {
-        this.productos = productos;
-        console.log('Productos cargados:', productos);
-        productosLoaded = true;
-        if (productosLoaded && almacenesLoaded) {
-          this.cargando = false;
-        }
-      },
-      error: (err) => {
-        console.error('Error al cargar productos:', err);
-        this.errorMensaje = 'Error al cargar productos';
-        this.cargando = false;
-      }
-    });
+    Promise.all([promesaAlmacenes, promesaProductos]).then(([almacenesData, productosData]) => {
+      this.almacenes = almacenesData || [];
+      this.productos = productosData || [];
+      this.cargando = false;
+      
+      // ⭐ AQUÍ ESTÁ EL ARREGLO: Forzamos la actualización de la vista al terminar de cargar
+      this.cdr.detectChanges(); 
 
-    // Cargar almacenes activos
-    this.almacenService.listarAlmacenesActivos().subscribe({
-      next: (almacenes) => {
-        this.almacenes = almacenes;
-        console.log('Almacenes cargados:', almacenes);
-        almacenesLoaded = true;
-        if (productosLoaded && almacenesLoaded) {
-          this.cargando = false;
-        }
-      },
-      error: (err) => {
-        console.error('Error al cargar almacenes:', err);
-        this.errorMensaje = 'Error al cargar almacenes';
-        this.cargando = false;
-      }
+    }).catch(err => {
+      console.error('Error cargando datos:', err);
+      this.errorMensaje = 'Error al cargar los datos iniciales.';
+      this.cargando = false;
+      this.cdr.detectChanges(); // También en caso de error
     });
+  }
+
+  onAlmacenOrigenChange(): void {
+    this.verificarStockReal();
   }
 
   onProductoChange(): void {
     if (this.productoId) {
       this.productoSeleccionado = this.productos.find(p => p.id === this.productoId) || null;
-      console.log('Producto seleccionado:', this.productoSeleccionado);
-      this.onAlmacenOrigenChange();
+      this.verificarStockReal();
     } else {
       this.productoSeleccionado = null;
-      this.stockDisponible = 0;
+      this.stockEnOrigen = 0;
     }
   }
 
-  obtenerNombreAlmacen(almacenId: number | null): string {
-    if (!almacenId) return '';
-    const almacen = this.almacenes.find(a => a.id === almacenId);
-    return almacen ? almacen.nombre : '';
-  }
-
-  onAlmacenOrigenChange(): void {
-    if (this.productoSeleccionado) {
-      this.stockDisponible = this.productoSeleccionado.stockActual || 0;
+  verificarStockReal(): void {
+    if (!this.productoId || !this.almacenOrigenId) {
+      this.stockEnOrigen = 0;
+      return;
     }
-  }
 
-  validarFormulario(): boolean {
+    this.verificandoStock = true;
     this.errorMensaje = '';
+    this.existeEnOrigen = true;
 
-    if (!this.productoId) {
-      this.errorMensaje = 'Debes seleccionar un producto';
-      return false;
-    }
-
-    if (!this.almacenOrigenId) {
-      this.errorMensaje = 'Debes seleccionar un almacén de origen';
-      return false;
-    }
-
-    if (!this.almacenDestinoId) {
-      this.errorMensaje = 'Debes seleccionar un almacén de destino';
-      return false;
-    }
-
-    if (this.almacenOrigenId === this.almacenDestinoId) {
-      this.errorMensaje = 'El almacén de origen y destino no pueden ser el mismo';
-      return false;
-    }
-
-    if (this.cantidad <= 0) {
-      this.errorMensaje = 'La cantidad debe ser mayor a 0';
-      return false;
-    }
-
-    return true;
+    this.productoAlmacenService.listarUbicacionesPorProducto(this.productoId).subscribe({
+      next: (ubicaciones) => {
+        const ubicacionOrigen = ubicaciones.find(u => u.almacenId === this.almacenOrigenId);
+        
+        if (ubicacionOrigen) {
+          this.stockEnOrigen = ubicacionOrigen.stock;
+          this.existeEnOrigen = true;
+        } else {
+          this.stockEnOrigen = 0;
+          this.existeEnOrigen = false;
+        }
+        
+        this.verificandoStock = false;
+        this.cdr.detectChanges(); // Forzamos actualización visual del stock
+      },
+      error: (err) => {
+        console.error('Error verificando stock:', err);
+        this.stockEnOrigen = 0;
+        this.verificandoStock = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   registrarTraslado(): void {
-    if (!this.validarFormulario()) {
-      return;
-    }
+    if (!this.validarFormulario()) return;
 
     this.guardando = true;
     this.errorMensaje = '';
@@ -165,30 +146,48 @@ export class TrasladoFormComponent implements OnInit {
       motivo: this.motivo.trim() || undefined
     };
 
-    console.log('Enviando traslado:', request);
-
     this.movimientoService.registrarTraslado(request).subscribe({
-      next: (response) => {
-        console.log('Traslado registrado:', response);
+      next: () => {
         this.guardando = false;
-        alert('✅ Traslado registrado exitosamente');
+        alert('✅ Traslado realizado con éxito');
         this.router.navigate(['/movimientos']);
       },
       error: (error) => {
-        console.error('Error al registrar traslado:', error);
         this.guardando = false;
-
-        if (error.error?.error) {
-          this.errorMensaje = error.error.error;
-        } else if (error.status === 400) {
-          this.errorMensaje = 'Datos inválidos. Verifica la información';
-        } else if (error.status === 0) {
-          this.errorMensaje = 'No se puede conectar con el servidor';
-        } else {
-          this.errorMensaje = 'Error al registrar el traslado';
-        }
+        console.error(error);
+        this.errorMensaje = error.error?.message || 'Error al procesar el traslado.';
+        this.cdr.detectChanges(); // Importante para mostrar el error
       }
     });
+  }
+
+  validarFormulario(): boolean {
+    if (!this.almacenOrigenId || !this.almacenDestinoId || !this.productoId) {
+      this.errorMensaje = 'Todos los campos de selección son obligatorios.';
+      return false;
+    }
+
+    if (this.almacenOrigenId === this.almacenDestinoId) {
+      this.errorMensaje = 'El origen y el destino no pueden ser el mismo almacén.';
+      return false;
+    }
+
+    if (!this.existeEnOrigen) {
+      this.errorMensaje = 'El producto seleccionado NO existe en el almacén de origen.';
+      return false;
+    }
+
+    if (this.cantidad > this.stockEnOrigen) {
+      this.errorMensaje = `Stock insuficiente en origen. Disponible: ${this.stockEnOrigen}`;
+      return false;
+    }
+
+    if (this.cantidad <= 0) {
+      this.errorMensaje = 'La cantidad debe ser mayor a 0.';
+      return false;
+    }
+
+    return true;
   }
 
   cancelar(): void {
@@ -197,6 +196,10 @@ export class TrasladoFormComponent implements OnInit {
 
   limpiarError(): void {
     this.errorMensaje = '';
+  }
+
+  obtenerNombreAlmacen(id: number): string {
+    return this.almacenes.find(a => a.id === id)?.nombre || '';
   }
 
   get almacenesDestino(): Almacen[] {

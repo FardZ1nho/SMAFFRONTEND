@@ -8,10 +8,124 @@
 
   <div class="content-wrapper">
     
-    <div class="left-column">
+    <div class="main-column">
       
-      <div class="search-section">
-        <mat-form-field class="search-field" appearance="outline">
+      <div class="card sales-header-card">
+        <div class="sales-header-grid">
+          
+          <div class="col-cliente">
+            <h3 class="section-title">Información del Cliente</h3>
+            
+            <div class="cliente-search-container">
+              <mat-form-field appearance="outline" class="full-width no-bottom-space">
+                <mat-label>Buscar Cliente *</mat-label>
+                <mat-icon matPrefix>search</mat-icon>
+                <input 
+                  matInput 
+                  [(ngModel)]="busquedaCliente" 
+                  (input)="buscarClientes()"
+                  placeholder="DNI, RUC o Nombre..."
+                  autocomplete="off"
+                >
+                <button 
+                  mat-icon-button 
+                  matSuffix 
+                  *ngIf="clienteSeleccionado" 
+                  (click)="limpiarCliente()"
+                >
+                  <mat-icon>close</mat-icon>
+                </button>
+              </mat-form-field>
+
+              <div class="crear-cliente-wrapper" *ngIf="!clienteSeleccionado">
+                <button mat-button color="primary" class="btn-create" (click)="abrirNuevoCliente()">
+                  <mat-icon>add</mat-icon> Nuevo
+                </button>
+              </div>
+
+              <div class="clientes-dropdown" *ngIf="mostrarListaClientes && clientesFiltrados.length > 0">
+                <div 
+                  class="cliente-item" 
+                  *ngFor="let c of clientesFiltrados" 
+                  (click)="seleccionarCliente(c)"
+                >
+                  <div class="cliente-item-info">
+                    <mat-icon>person</mat-icon>
+                    <div>
+                      <div class="cliente-nombre">{{ c.nombreCompleto }}</div>
+                      <div class="cliente-documento">{{ c.numeroDocumento }}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="cliente-seleccionado" *ngIf="clienteSeleccionado">
+                <mat-icon class="icon-success">check_circle</mat-icon>
+                <div class="info-sel">
+                  <span class="sel-name">{{ clienteSeleccionado.nombreCompleto }}</span>
+                  <span class="sel-doc">{{ clienteSeleccionado.numeroDocumento }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-config">
+            <h3 class="section-title">Datos de Emisión</h3>
+            <div class="config-grid-rows">
+              
+              <div class="config-row">
+                <mat-form-field appearance="outline" class="field-comprobante">
+                  <mat-label>Comprobante</mat-label>
+                  <mat-select [(ngModel)]="tipoDocumento">
+                    <mat-option *ngFor="let doc of tiposDocumento" [value]="doc.value">
+                      {{ doc.label }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="field-numero">
+                  <mat-label>N° Documento</mat-label>
+                  <mat-icon matPrefix>tag</mat-icon>
+                  <input 
+                    matInput 
+                    [(ngModel)]="numeroDocumento" 
+                    placeholder="Ej: F001-0023"
+                    autocomplete="off"
+                  >
+                </mat-form-field>
+              </div>
+
+              <div class="config-row">
+                <mat-form-field appearance="outline" class="field-moneda">
+                  <mat-label>Moneda</mat-label>
+                  <mat-select [(ngModel)]="moneda" (selectionChange)="cambiarMoneda($event.value)">
+                    <mat-option value="PEN">Soles</mat-option>
+                    <mat-option value="USD">Dólares</mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="field-cambio">
+                  <mat-label>T. Cambio</mat-label>
+                  <input 
+                    matInput 
+                    type="number" 
+                    [(ngModel)]="tipoCambio" 
+                    (input)="onTipoCambioChange()" 
+                    step="0.01"
+                    (focus)="$any($event.target).select()"
+                  >
+                </mat-form-field>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="card search-section">
+        <h3>Agregar Productos</h3>
+        <mat-form-field class="search-field full-width" appearance="outline">
           <mat-icon matPrefix>search</mat-icon>
           <input 
             matInput 
@@ -40,15 +154,17 @@
         </div>
       </div>
 
-      <div class="productos-venta-section">
-        <h3>Productos en la Venta</h3>
+      <div class="card productos-venta-section">
+        <h3>Detalle de Venta</h3>
         
         <div class="productos-venta-container" *ngIf="productosEnVenta.length > 0">
           <div class="producto-venta-item" *ngFor="let item of productosEnVenta; let i = index">
             
             <div class="producto-venta-header">
               <div class="producto-venta-info">
-                <mat-icon class="producto-icon">inventory_2</mat-icon>
+                <div class="producto-icon">
+                  <mat-icon>inventory_2</mat-icon>
+                </div>
                 <div>
                   <div class="producto-venta-nombre">{{ item.producto.nombre }}</div>
                   <div class="producto-venta-codigo">{{ item.producto?.codigo || '---' }}</div>
@@ -65,7 +181,7 @@
             </div>
 
             <div class="producto-venta-details">
-              <mat-form-field appearance="outline" class="small-field">
+              <mat-form-field appearance="outline" class="grid-input">
                 <mat-label>Cant.</mat-label>
                 <input 
                   matInput 
@@ -73,10 +189,11 @@
                   [(ngModel)]="item.cantidad"
                   (ngModelChange)="onCantidadChange(item)"
                   min="1"
+                  (focus)="$any($event.target).select()"
                 >
               </mat-form-field>
 
-              <mat-form-field appearance="outline" class="small-field">
+              <mat-form-field appearance="outline" class="grid-input">
                 <mat-label>Precio Unit.</mat-label>
                 <input 
                   matInput 
@@ -84,10 +201,11 @@
                   [(ngModel)]="item.precioUnitario"
                   (ngModelChange)="onPrecioChange(item)"
                   step="0.01"
+                  (focus)="$any($event.target).select()"
                 >
               </mat-form-field>
 
-              <mat-form-field appearance="outline" class="small-field">
+              <mat-form-field appearance="outline" class="grid-input">
                 <mat-label>Desc. %</mat-label>
                 <input 
                   matInput 
@@ -95,6 +213,7 @@
                   [(ngModel)]="item.descuento"
                   (ngModelChange)="onDescuentoChange(item)"
                   min="0" max="100"
+                  (focus)="$any($event.target).select()"
                 >
               </mat-form-field>
 
@@ -112,99 +231,11 @@
           <p class="subtitle">Agregue productos para realizar la venta</p>
         </div>
       </div>
-    </div>
 
-    <div class="right-column">
+    </div> <div class="side-column">
       
-      <div class="options-section card" style="padding: 15px; margin-bottom: 16px;">
-        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-          <mat-form-field appearance="outline" style="flex: 2;">
-            <mat-label>Comprobante</mat-label>
-            <mat-select [(ngModel)]="tipoDocumento">
-              <mat-option *ngFor="let doc of tiposDocumento" [value]="doc.value">
-                {{ doc.label }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" style="flex: 1;">
-            <mat-label>Moneda</mat-label>
-            <mat-select [(ngModel)]="moneda" (selectionChange)="cambiarMoneda($event.value)">
-              <mat-option value="PEN">Soles (S/)</mat-option>
-              <mat-option value="USD">Dólares ($)</mat-option>
-            </mat-select>
-          </mat-form-field>
-        </div>
-
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Tipo de Cambio</mat-label>
-          <mat-icon matPrefix>currency_exchange</mat-icon>
-          <input 
-            matInput 
-            type="number" 
-            [(ngModel)]="tipoCambio" 
-            (input)="onTipoCambioChange()" 
-            step="0.01"
-          >
-          <mat-hint>Afecta la conversión de productos USD/PEN</mat-hint>
-        </mat-form-field>
-      </div>
-
-      <div class="cliente-section card">
-        <h3>Información del Cliente</h3>
-        
-        <div class="cliente-search-container">
-          <mat-form-field appearance="outline" class="full-width" style="margin-bottom: 6px;">
-            <mat-label>Buscar Cliente *</mat-label>
-            <mat-icon matPrefix>search</mat-icon>
-            <input 
-              matInput 
-              [(ngModel)]="busquedaCliente" 
-              (input)="buscarClientes()"
-              placeholder="DNI, RUC o Nombre..."
-              autocomplete="off"
-            >
-            <button 
-              mat-icon-button 
-              matSuffix 
-              *ngIf="clienteSeleccionado" 
-              (click)="limpiarCliente()"
-            >
-              <mat-icon>close</mat-icon>
-            </button>
-          </mat-form-field>
-
-          <div class="crear-cliente-wrapper" *ngIf="!clienteSeleccionado">
-            <button mat-button color="primary" class="btn-small" (click)="abrirNuevoCliente()">
-              <mat-icon>add</mat-icon>
-              Crear nuevo cliente
-            </button>
-          </div>
-
-          <div class="clientes-dropdown" *ngIf="mostrarListaClientes && clientesFiltrados.length > 0">
-            <div 
-              class="cliente-item" 
-              *ngFor="let c of clientesFiltrados" 
-              (click)="seleccionarCliente(c)"
-            >
-              <div class="cliente-item-info">
-                <mat-icon>person</mat-icon>
-                <div>
-                  <div class="cliente-nombre">{{ c.nombreCompleto }}</div>
-                  <div class="cliente-documento">{{ c.numeroDocumento }}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="cliente-seleccionado" *ngIf="clienteSeleccionado">
-            <mat-icon color="primary">check_circle</mat-icon>
-            <div>
-              <strong>{{ clienteSeleccionado.nombreCompleto }}</strong>
-              <p style="margin:0; font-size:12px; color:#666;">Doc: {{ clienteSeleccionado.numeroDocumento }}</p>
-            </div>
-          </div>
-        </div>
+      <div class="card resumen-section">
+        <h3>Resumen y Pago</h3>
 
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Método de Pago</mat-label>
@@ -223,6 +254,7 @@
               type="number" 
               [(ngModel)]="pagoTransferencia" 
               (input)="validarMontoMixto('T')"
+              (focus)="$any($event.target).select()" 
             >
             <span matSuffix>{{ moneda === 'PEN' ? 'S/' : '$' }}</span>
           </mat-form-field>
@@ -234,6 +266,7 @@
               type="number" 
               [(ngModel)]="pagoEfectivo" 
               (input)="validarMontoMixto('E')"
+              (focus)="$any($event.target).select()"
             >
             <span matSuffix>{{ moneda === 'PEN' ? 'S/' : '$' }}</span>
           </mat-form-field>
@@ -241,11 +274,11 @@
 
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Notas (Opcional)</mat-label>
-          <textarea matInput [(ngModel)]="notas" rows="2"></textarea>
+          <textarea matInput [(ngModel)]="notas" rows="3"></textarea>
         </mat-form-field>
-      </div>
 
-      <div class="resumen-section card">
+        <div class="divider"></div>
+
         <div class="resumen-row">
           <span>Subtotal:</span>
           <strong>{{ moneda === 'PEN' ? 'S/' : '$' }} {{ subtotal.toFixed(2) }}</strong>
@@ -282,6 +315,5 @@
         </div>
       </div>
 
-    </div>
-  </div>
+    </div> </div>
 </div>

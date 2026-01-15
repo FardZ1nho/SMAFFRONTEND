@@ -1,0 +1,117 @@
+<div class="ventas-container">
+  
+  <div class="header-action-row">
+    <button class="btn-back" (click)="cancelar()" title="Volver a la lista">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    
+    <div class="header-content">
+      <h1>{{ titulo }}</h1>
+      <h3>{{ esEdicion ? 'Actualice la información del proveedor seleccionado' : 'Complete el formulario para registrar un nuevo proveedor en el sistema' }}</h3>
+    </div>
+  </div>
+  <form (ngSubmit)="guardar()" #f="ngForm" class="content-wrapper">
+    
+    <div class="main-column">
+      
+      <div class="card">
+        <h3>
+          <mat-icon style="vertical-align: middle; margin-right: 8px;">badge</mat-icon> 
+          Información Fiscal
+        </h3>
+        
+        <div class="config-grid-rows">
+          
+          <div class="config-row">
+            <div class="grid-input">
+              <label class="section-title">RUC / Documento <span style="color:red">*</span></label>
+              <input type="text" class="form-control-smaf full-width" 
+                     name="ruc" [(ngModel)]="proveedor.ruc" 
+                     placeholder="Ej: 20601234567" maxlength="11" required>
+            </div>
+            
+            <div class="grid-input">
+              <label class="section-title">Razón Social / Nombre <span style="color:red">*</span></label>
+              <input type="text" class="form-control-smaf full-width" 
+                     name="nombre" [(ngModel)]="proveedor.nombre" 
+                     placeholder="Ej: Distribuidora del Norte S.A.C." required>
+            </div>
+          </div>
+
+          <div class="grid-input full-width">
+            <label class="section-title">Dirección Fiscal</label>
+            <input type="text" class="form-control-smaf full-width" 
+                   name="direccion" [(ngModel)]="proveedor.direccion" 
+                   placeholder="Av. Principal 123, Distrito, Ciudad">
+          </div>
+
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>
+          <mat-icon style="vertical-align: middle; margin-right: 8px;">contact_phone</mat-icon> 
+          Datos de Contacto
+        </h3>
+        
+        <div class="config-grid-rows">
+          <div class="config-row" style="grid-template-columns: 1fr 1fr 1fr;"> 
+            
+            <div class="grid-input">
+              <label class="section-title">Persona de Contacto</label>
+              <input type="text" class="form-control-smaf full-width" 
+                     name="contacto" [(ngModel)]="proveedor.contacto" 
+                     placeholder="Ej: Juan Pérez">
+            </div>
+
+            <div class="grid-input">
+              <label class="section-title">Teléfono / Celular</label>
+              <input type="text" class="form-control-smaf full-width" 
+                     name="telefono" [(ngModel)]="proveedor.telefono" 
+                     placeholder="999 000 000">
+            </div>
+
+            <div class="grid-input">
+              <label class="section-title">Correo Electrónico</label>
+              <input type="email" class="form-control-smaf full-width" 
+                     name="email" [(ngModel)]="proveedor.email" 
+                     placeholder="ventas@empresa.com">
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="side-column">
+      
+      <div class="card resumen-section">
+        <h3>Estado y Acciones</h3>
+        
+        <div class="grid-input mb-4">
+          <label class="section-title">Estado del Proveedor</label>
+          <select class="form-control-smaf full-width" name="activo" [(ngModel)]="proveedor.activo">
+            <option [ngValue]="true">🟢 Activo</option>
+            <option [ngValue]="false">🔴 Inactivo</option>
+          </select>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="action-buttons">
+          <button type="button" class="btn-borrador full-width" (click)="cancelar()">
+            Cancelar / Volver
+          </button>
+          
+          <button type="submit" class="btn-completar full-width">
+            <mat-icon style="vertical-align: middle; font-size: 18px;">save</mat-icon> 
+            {{ btnTexto }}
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+  </form>
+</div>

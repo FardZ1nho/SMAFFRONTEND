@@ -1,0 +1,81 @@
+/* Contenedor del Modal */
+.modal-container {
+  min-width: 450px;
+  max-width: 600px;
+  padding-bottom: 8px;
+}
+
+/* Cabecera */
+.modal-header {
+  padding: 24px 24px 0;
+  margin-bottom: 16px;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 20px;
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: #64748b;
+  margin-top: 4px;
+}
+.subtitle strong {
+  color: #334155;
+  font-weight: 600;
+}
+
+/* Alerta informativa azul */
+.alert-info {
+  background-color: #eff6ff;
+  border-left: 4px solid #3b82f6;
+  padding: 12px;
+  border-radius: 4px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+.alert-info mat-icon {
+  color: #3b82f6;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+.alert-info p {
+  margin: 0;
+  font-size: 13px;
+  color: #1e3a8a;
+  line-height: 1.4;
+}
+
+/* Grid del Formulario */
+.form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.full-width {
+  width: 100%;
+}
+
+/* Botones de Acción */
+.modal-actions {
+  padding: 16px 24px 24px;
+  gap: 8px;
+}
+
+/* --- Estilos para las Alertas Flotantes (SnackBar) --- */
+/* Esto asegura que se vean bien aunque el snackbar esté fuera del componente */
+::ng-deep .snackbar-error {
+  background-color: #dc2626 !important;
+  color: white !important;
+}
+::ng-deep .snackbar-success {
+  background-color: #16a34a !important;
+  color: white !important;
+}

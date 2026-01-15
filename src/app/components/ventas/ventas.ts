@@ -11,6 +11,7 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
@@ -36,7 +37,7 @@ interface ProductoEnVenta {
   imports: [
     CommonModule, FormsModule, MatButtonModule, MatIconModule, MatFormFieldModule,
     MatInputModule, MatSelectModule, MatDatepickerModule, MatNativeDateModule,
-    MatTooltipModule, MatProgressSpinnerModule, MatDialogModule
+    MatTooltipModule, MatProgressSpinnerModule, MatDialogModule, MatSnackBarModule
   ],
   templateUrl: './ventas.html',
   styleUrls: ['./ventas.css']
@@ -63,11 +64,14 @@ export class VentasComponent implements OnInit {
   metodoPago: MetodoPago = MetodoPago.EFECTIVO;
   notas: string = '';
 
-  tipoDocumento: string = 'NOTA';
+  // --- Datos de Emisión (NUEVO: numeroDocumento) ---
+  tipoDocumento: string = 'FACTURA';
+  numeroDocumento: string = ''; // <--- Variable para el N° de Comprobante
+
   tiposDocumento = [
-    { value: 'NOTA', label: 'Nota de Venta' },
+    { value: 'FACTURA', label: 'Factura' },
     { value: 'BOLETA', label: 'Boleta' },
-    { value: 'FACTURA', label: 'Factura' }
+    { value: 'NOTA', label: 'Nota de Venta' }
   ];
 
   // --- Configuración de Moneda ---
@@ -75,8 +79,8 @@ export class VentasComponent implements OnInit {
   tipoCambio: number = 3.80;
 
   // --- Pago Mixto ---
-  pagoEfectivo: number = 0;
-  pagoTransferencia: number = 0;
+  pagoEfectivo: number | null = 0;
+  pagoTransferencia: number | null = 0;
 
   // --- Totales ---
   subtotal: number = 0;
@@ -104,13 +108,14 @@ export class VentasComponent implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
     private cdr: ChangeDetectorRef,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private snackBar: MatSnackBar
   ) { }
 
   ngOnInit(): void {
     this.isLoadingProductos = true;
 
-    // 1. Carga optimizada: Productos y Clientes en paralelo
+    // Carga paralela de productos y clientes
     const cargaProductos$ = this.productoService.listarProductosActivos();
     const cargaClientes$ = this.clienteService.listarClientesActivos();
 
@@ -120,7 +125,7 @@ export class VentasComponent implements OnInit {
         this.productosFiltrados = listaProductos;
         this.clientes = listaClientes;
 
-        // 2. Verificar si estamos editando un borrador (ID en URL)
+        // Verificar si estamos editando
         const idParam = this.route.snapshot.paramMap.get('id');
         if (idParam) {
           this.ventaId = +idParam;
@@ -133,6 +138,7 @@ export class VentasComponent implements OnInit {
       error: (err) => {
         console.error('Error cargando datos base:', err);
         this.isLoadingProductos = false;
+        this.mostrarNotificacion('Error cargando datos iniciales', 'error');
       }
     });
   }
@@ -145,7 +151,7 @@ export class VentasComponent implements OnInit {
         // Recuperar Cliente
         let idCliente = venta.clienteId || (venta.cliente ? venta.cliente.id : null);
         const clienteEncontrado = this.clientes.find(c => String(c.id) === String(idCliente));
-        
+
         if (clienteEncontrado) {
           this.seleccionarCliente(clienteEncontrado);
         } else if (venta.nombreCliente) {
@@ -160,14 +166,21 @@ export class VentasComponent implements OnInit {
         this.notas = venta.notas || '';
         this.moneda = venta.moneda || 'PEN';
         this.tipoCambio = venta.tipoCambio || 3.80;
+        
+        // Recuperar Datos de Documento
         if (venta.tipoDocumento) this.tipoDocumento = venta.tipoDocumento;
+        this.numeroDocumento = venta.numeroDocumento || ''; // <--- RECUPERAR NÚMERO
+
+        // Recuperar Pagos
+        this.pagoEfectivo = venta.pagoEfectivo || 0;
+        this.pagoTransferencia = venta.pagoTransferencia || 0;
 
         // Recuperar Productos
         if (venta.detalles) {
           this.productosEnVenta = venta.detalles.map((detalle: any) => {
             const productoCatalogo = this.productos.find(p => String(p.id) === String(detalle.productoId));
             const productoReal = productoCatalogo || detalle.producto || {
-               id: detalle.productoId, nombre: 'No Disponible', codigo: '???', precioVenta: 0, stockActual: 0, moneda: 'PEN'
+              id: detalle.productoId, nombre: 'No Disponible', codigo: '???', precioVenta: 0, stockActual: 0, moneda: 'PEN'
             };
             return {
               producto: productoReal,
@@ -183,23 +196,34 @@ export class VentasComponent implements OnInit {
         this.isLoadingProductos = false;
         this.cdr.detectChanges();
       },
-      error: () => this.isLoadingProductos = false
+      error: () => {
+        this.isLoadingProductos = false;
+        this.mostrarNotificacion('Error cargando la venta', 'error');
+      }
     });
   }
 
-  // --- MODAL NUEVO CLIENTE (Tu nueva función) ---
+  // --- NOTIFICACIONES ---
+  mostrarNotificacion(mensaje: string, tipo: 'success' | 'warning' | 'error'): void {
+    this.snackBar.open(mensaje, 'Cerrar', {
+      duration: 3000,
+      horizontalPosition: 'center',
+      verticalPosition: 'bottom',
+      panelClass: [`snackbar-${tipo}`]
+    });
+  }
+
+  // --- MODAL NUEVO CLIENTE ---
   abrirNuevoCliente(): void {
     const dialogRef = this.dialog.open(ClienteModalComponent, {
       width: '700px',
       disableClose: true,
-      data: { cliente: null } // null para modo creación
+      data: { cliente: null }
     });
 
     dialogRef.afterClosed().subscribe(nuevoCliente => {
       if (nuevoCliente) {
-        // 1. Agregamos a la lista
         this.clientes.push(nuevoCliente);
-        // 2. Lo seleccionamos automáticamente
         this.seleccionarCliente(nuevoCliente);
         this.cdr.detectChanges();
       }
@@ -235,13 +259,27 @@ export class VentasComponent implements OnInit {
     return precioOriginal;
   }
 
-  // --- GESTIÓN CARRITO ---
+  // --- GESTIÓN CARRITO CON VALIDACIONES ---
   agregarProducto(producto: Producto): void {
+    // 1. Validación Stock Agotado
+    if (producto.stockActual <= 0) {
+      this.mostrarNotificacion(`❌ El producto "${producto.nombre}" está AGOTADO.`, 'error');
+      return;
+    }
+
     const existe = this.productosEnVenta.find(p => p.producto.id === producto.id);
+
     if (existe) {
+      // 2. Validación Tope de Stock
+      if (existe.cantidad >= producto.stockActual) {
+        this.mostrarNotificacion(`⚠️ Stock máximo alcanzado (${producto.stockActual}).`, 'warning');
+        return;
+      }
       existe.cantidad++;
       this.calcularSubtotalProducto(existe);
+      this.mostrarNotificacion(`Agregado (+1): ${producto.nombre}`, 'success');
     } else {
+      // Agregar nuevo
       const precioFinal = this.convertirPrecio(producto);
       this.productosEnVenta.push({
         producto: producto,
@@ -250,6 +288,11 @@ export class VentasComponent implements OnInit {
         descuento: 0,
         subtotal: precioFinal
       });
+
+      // 3. Alerta Stock Bajo
+      if (producto.stockActual <= (producto.stockMinimo || 5)) {
+        this.mostrarNotificacion(`⚠️ Advertencia: Stock bajo en "${producto.nombre}" (${producto.stockActual} restantes).`, 'warning');
+      }
     }
     this.calcularTotales();
     this.terminoBusqueda = '';
@@ -300,8 +343,16 @@ export class VentasComponent implements OnInit {
 
   // --- CÁLCULOS ---
   onCantidadChange(item: ProductoEnVenta): void {
-    if (item.cantidad < 1) item.cantidad = 1;
-    if (item.cantidad > item.producto.stockActual) item.cantidad = item.producto.stockActual;
+    if (!item.cantidad || item.cantidad < 1) {
+      item.cantidad = 1;
+    }
+    
+    // Validación manual de stock
+    if (item.cantidad > item.producto.stockActual) {
+      item.cantidad = item.producto.stockActual;
+      this.mostrarNotificacion(`⚠️ Cantidad ajustada al stock máximo (${item.producto.stockActual}).`, 'warning');
+    }
+
     this.calcularSubtotalProducto(item);
     this.calcularTotales();
   }
@@ -330,18 +381,21 @@ export class VentasComponent implements OnInit {
   }
 
   validarMontoMixto(campo: 'E' | 'T') {
+    const valT = this.pagoTransferencia || 0;
+    const valE = this.pagoEfectivo || 0;
+
     if (campo === 'T') {
-      if (this.pagoTransferencia > this.total) this.pagoTransferencia = this.total;
-      this.pagoEfectivo = Number((this.total - this.pagoTransferencia).toFixed(2));
+      if (valT > this.total) this.pagoTransferencia = this.total;
+      this.pagoEfectivo = Number((this.total - (this.pagoTransferencia || 0)).toFixed(2));
     } else {
-      if (this.pagoEfectivo > this.total) this.pagoEfectivo = this.total;
-      this.pagoTransferencia = Number((this.total - this.pagoEfectivo).toFixed(2));
+      if (valE > this.total) this.pagoEfectivo = this.total;
+      this.pagoTransferencia = Number((this.total - (this.pagoEfectivo || 0)).toFixed(2));
     }
   }
 
   esPagoMixto(): boolean { return this.metodoPago === MetodoPago.MIXTO; }
 
-  // --- PREPARAR DATOS (DRY) ---
+  // --- PREPARAR DATOS ---
   private prepararRequest(): any {
     const esMixto = this.metodoPago === 'MIXTO';
     return {
@@ -350,12 +404,17 @@ export class VentasComponent implements OnInit {
       nombreCliente: this.nombreCliente,
       tipoCliente: this.tipoCliente,
       metodoPago: this.metodoPago,
-      pagoEfectivo: esMixto ? this.pagoEfectivo : 0,
-      pagoTransferencia: esMixto ? this.pagoTransferencia : 0,
+      pagoEfectivo: esMixto ? (this.pagoEfectivo || 0) : 0,
+      pagoTransferencia: esMixto ? (this.pagoTransferencia || 0) : 0,
+      
       moneda: this.moneda,
       tipoCambio: this.tipoCambio,
-      notas: this.notas,
+      
+      // ✅ ENVÍO DE DATOS DE DOCUMENTO
       tipoDocumento: this.tipoDocumento,
+      numeroDocumento: this.numeroDocumento, 
+
+      notas: this.notas,
       detalles: this.productosEnVenta.map(p => ({
         productoId: p.producto.id,
         cantidad: p.cantidad,
@@ -368,35 +427,37 @@ export class VentasComponent implements OnInit {
   // --- ACCIONES FINALES ---
   completarVenta(): void {
     if (this.productosEnVenta.length === 0 || !this.clienteSeleccionado) return;
+    
+    // Validación extra: Verificar N° de documento (Opcional, si quieres hacerlo obligatorio)
+    // if (!this.numeroDocumento) { this.mostrarNotificacion('Falta el N° de Documento', 'warning'); return; }
+
     if (!confirm('¿Estás seguro de emitir esta venta?')) return;
 
     this.isSaving = true;
     const request = this.prepararRequest();
 
     if (this.esEdicion && this.ventaId) {
-      // Editar Borrador -> Completar
       this.ventaService.actualizarVenta(this.ventaId, request).subscribe({
         next: () => {
           this.ventaService.completarVenta(this.ventaId!).subscribe({
             next: () => {
-              alert('✅ Venta completada exitosamente');
+              this.mostrarNotificacion('✅ Venta completada exitosamente', 'success');
               this.isSaving = false;
               this.router.navigate(['/ventas/lista']);
             },
-            error: () => { this.isSaving = false; alert('Error al completar'); }
+            error: () => { this.isSaving = false; this.mostrarNotificacion('Error al completar', 'error'); }
           });
         },
-        error: () => { this.isSaving = false; alert('Error al actualizar'); }
+        error: () => { this.isSaving = false; this.mostrarNotificacion('Error al actualizar', 'error'); }
       });
     } else {
-      // Venta Nueva
       this.ventaService.crearVenta(request).subscribe({
         next: () => {
-          alert('✅ Venta registrada exitosamente');
+          this.mostrarNotificacion('✅ Venta registrada exitosamente', 'success');
           this.isSaving = false;
           this.router.navigate(['/ventas/lista']);
         },
-        error: () => { this.isSaving = false; alert('Error al registrar venta'); }
+        error: () => { this.isSaving = false; this.mostrarNotificacion('Error al registrar venta', 'error'); }
       });
     }
   }
@@ -407,23 +468,21 @@ export class VentasComponent implements OnInit {
     const request = this.prepararRequest();
 
     if (this.esEdicion && this.ventaId) {
-      // Actualizar Borrador
       this.ventaService.actualizarVenta(this.ventaId, request).subscribe({
         next: () => {
-          alert('✅ Borrador actualizado');
+          this.mostrarNotificacion('✅ Borrador actualizado', 'success');
           this.router.navigate(['/ventas/lista']);
         },
-        error: () => { this.isSaving = false; alert('Error al actualizar'); }
+        error: () => { this.isSaving = false; this.mostrarNotificacion('Error al actualizar', 'error'); }
       });
     } else {
-      // Crear Borrador
       this.ventaService.guardarBorrador(request).subscribe({
         next: () => {
-          alert('✅ Borrador guardado');
+          this.mostrarNotificacion('✅ Borrador guardado', 'success');
           this.limpiarFormulario();
           this.isSaving = false;
         },
-        error: () => this.isSaving = false
+        error: () => { this.isSaving = false; this.mostrarNotificacion('Error al guardar borrador', 'error'); }
       });
     }
   }
@@ -439,5 +498,6 @@ export class VentasComponent implements OnInit {
     this.pagoTransferencia = 0;
     this.notas = '';
     this.terminoBusqueda = '';
+    this.numeroDocumento = ''; // Limpiar N° Documento
   }
 }

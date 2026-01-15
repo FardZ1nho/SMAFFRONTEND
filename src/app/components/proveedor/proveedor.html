@@ -1,0 +1,125 @@
+<div class="proveedor-container">
+  
+  <div class="page-header">
+    <div class="header-content">
+      <div class="icon-box">
+        <mat-icon>groups</mat-icon>
+      </div>
+      <div>
+        <h1>Gestión de Proveedores</h1>
+        <p class="subtitle">Administra la base de datos y perfiles de tus proveedores</p>
+      </div>
+    </div>
+    
+    <button class="btn-nuevo" (click)="irANuevo()">
+      <mat-icon>add</mat-icon>
+      Nuevo Proveedor
+    </button>
+  </div>
+
+  <div class="toolbar">
+    <div class="search-container">
+      <label class="search-label">
+        <mat-icon style="font-size: 16px; width: 16px; height: 16px; margin-right: 4px;">search</mat-icon> 
+        BUSCAR:
+      </label>
+      <div class="input-wrapper">
+        <input type="text" class="filter-input" 
+               placeholder="Nombre, documento, email o teléfono..." 
+               [(ngModel)]="terminoBusqueda">
+        
+        <button class="btn-clear" *ngIf="terminoBusqueda" (click)="terminoBusqueda = ''">
+          <mat-icon style="font-size: 18px; width: 18px; height: 18px;">close</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn-tool">
+        <mat-icon style="font-size: 18px; width: 18px; height: 18px;">filter_list</mat-icon> 
+        Filtros
+      </button>
+      <button class="btn-tool">
+        <mat-icon style="font-size: 18px; width: 18px; height: 18px;">download</mat-icon> 
+        Exportar
+      </button>
+    </div>
+  </div>
+
+  <div class="main-card">
+    <div class="table-container">
+      <table class="custom-table">
+        <thead>
+          <tr>
+            <th class="ps-4">Tipo</th>
+            <th>Proveedor / Razón Social</th>
+            <th>Identificación</th>
+            <th>Contacto</th>
+            <th>Ubicación</th>
+            <th class="text-center pe-4">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let p of proveedoresFiltrados">
+            <td class="ps-4">
+              <span class="badge-custom" 
+                    [ngClass]="p.ruc.length === 11 ? 'badge-purple' : 'badge-blue'">
+                {{ p.ruc.length === 11 ? 'EMPRESA' : 'PERSONA' }}
+              </span>
+            </td>
+
+            <td>
+              <div class="fw-bold text-main">{{ p.nombre }}</div>
+              <small class="text-sub" *ngIf="p.activo">Activo</small>
+              <small class="text-sub" *ngIf="!p.activo" style="color: red;">Inactivo</small>
+            </td>
+
+            <td>
+              <span class="text-sub fw-medium">{{ p.ruc.length === 11 ? 'RUC' : 'DNI' }} {{ p.ruc }}</span>
+            </td>
+
+            <td>
+              <div class="contact-info">
+                <div *ngIf="p.telefono" class="contact-row">
+                   <mat-icon class="icon-tiny" style="font-size: 14px; width: 14px; height: 14px; vertical-align: middle;">phone</mat-icon> 
+                   {{ p.telefono }}
+                </div>
+                <div *ngIf="p.email" class="contact-row">
+                   <mat-icon class="icon-tiny" style="font-size: 14px; width: 14px; height: 14px; vertical-align: middle;">email</mat-icon> 
+                   {{ p.email }}
+                </div>
+              </div>
+            </td>
+
+            <td>
+              <span class="text-sub small truncate-text">
+                {{ p.direccion || '-' }}
+              </span>
+            </td>
+
+            <td class="text-center pe-4">
+              <div class="action-buttons">
+                <button class="btn-icon btn-view" title="Ver Detalle">
+                  <mat-icon>visibility</mat-icon>
+                </button>
+                <button class="btn-icon btn-edit" (click)="irAEditar(p.id!)" title="Editar">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button class="btn-icon btn-delete" (click)="eliminar(p.id!)" title="Eliminar">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </td>
+          </tr>
+
+          <tr *ngIf="proveedoresFiltrados.length === 0">
+            <td colspan="6" class="empty-state">
+              <mat-icon class="empty-icon" style="font-size: 48px; width: 48px; height: 48px;">search_off</mat-icon>
+              <p>No se encontraron proveedores.</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

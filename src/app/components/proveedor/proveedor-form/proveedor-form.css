@@ -1,0 +1,322 @@
+/* =========================================
+   VARIABLES Y CONFIGURACIÓN GLOBAL
+   ========================================= */
+   :host {
+    --primary: #2563eb;       /* Azul SMAF */
+    --bg-body: #f5f5f5;       /* Fondo gris claro */
+    --text-main: #1e293b;     /* Texto oscuro */
+    --text-sub: #64748b;      /* Texto secundario */
+    --border: #e2e8f0;        /* Bordes suaves */
+    --white: #ffffff;
+  }
+  
+  .ventas-container {
+    padding: 24px;
+    background-color: var(--bg-body);
+    min-height: 100vh;
+    box-sizing: border-box;
+    font-family: 'Roboto', 'Segoe UI', sans-serif;
+  }
+
+  /* =========================================
+   NUEVO HEADER CON BOTÓN ATRÁS
+   ========================================= */
+.header-action-row {
+  display: flex;
+  align-items: flex-start; /* Alinea con la parte superior del título */
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.btn-back {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background-color: white;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  flex-shrink: 0; /* Evita que se aplaste */
+}
+
+.btn-back:hover {
+  background-color: var(--primary);
+  color: white;
+  border-color: var(--primary);
+  transform: translateX(-2px); /* Pequeña animación hacia la izquierda */
+}
+
+.btn-back mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+.header-content h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0;
+  line-height: 1.2; /* Ajuste para alinear visualmente con el botón */
+}
+
+.header-content h3 {
+  font-size: 14px;
+  color: var(--text-sub);
+  margin: 4px 0 0 0;
+  font-weight: 400;
+}
+  
+  /* =========================================
+     HEADER (TÍTULO DE PÁGINA)
+     ========================================= */
+  .header {
+    margin-bottom: 24px;
+  }
+  
+  .header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0;
+    letter-spacing: -0.5px;
+  }
+  
+  .header h3 {
+    font-size: 14px;
+    color: var(--text-sub);
+    margin: 4px 0 0 0;
+    font-weight: 400;
+  }
+  
+  /* =========================================
+     GRID PRINCIPAL (IZQUIERDA / DERECHA)
+     ========================================= */
+  .content-wrapper {
+    display: grid;
+    grid-template-columns: 1fr 380px; /* Columna principal flexible, Lateral fija 380px */
+    gap: 24px;
+    align-items: start;
+  }
+  
+  .main-column {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    min-width: 0;
+  }
+  
+  .side-column {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  
+  /* =========================================
+     ESTILOS DE TARJETAS (CARDS)
+     ========================================= */
+  .card {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--border);
+  }
+  
+  /* Títulos dentro de las tarjetas */
+  .card h3 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-sub);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 20px 0;
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 12px;
+    display: flex;
+    align-items: center;
+  }
+  
+  /* Iconos en los títulos */
+  .card h3 mat-icon, 
+  .card h3 i {
+    margin-right: 8px;
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    vertical-align: middle;
+  }
+  
+  /* =========================================
+     GRID DE FORMULARIO (INPUTS)
+     ========================================= */
+  .config-grid-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .config-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Dos columnas iguales por defecto */
+    gap: 20px;
+    align-items: start;
+  }
+  
+  .grid-input {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  
+  /* Labels de los inputs */
+  .section-title {
+    font-size: 12px;
+    color: #475569;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  
+  /* =========================================
+     INPUTS PERSONALIZADOS (SMAF STYLE)
+     ========================================= */
+  .form-control-smaf {
+    width: 100%;
+    height: 42px;
+    padding: 0 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    color: var(--text-main);
+    background-color: var(--white);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-sizing: border-box;
+  }
+  
+  .form-control-smaf:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  }
+  
+  .form-control-smaf::placeholder {
+    color: #94a3b8;
+  }
+  
+  /* Select específico */
+  select.form-control-smaf {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 12px 8px;
+    padding-right: 36px;
+  }
+  
+  /* Utilidad para ancho completo */
+  .full-width {
+    width: 100%;
+  }
+  
+  /* =========================================
+     PANEL LATERAL (ACCIONES)
+     ========================================= */
+  .resumen-section {
+    position: sticky;
+    top: 24px;
+    border-top: 4px solid var(--primary); /* Borde superior azul */
+  }
+  
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 24px 0;
+  }
+  
+  .action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  /* Botón Guardar (Azul Sólido) */
+  .btn-completar {
+    height: 48px;
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background-color 0.2s;
+    width: 100%;
+  }
+  
+  .btn-completar:hover {
+    background-color: #1d4ed8;
+    box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3);
+  }
+  
+  /* Botón Cancelar (Borde Gris) */
+  .btn-borrador {
+    height: 48px;
+    background-color: white;
+    color: var(--text-sub);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    width: 100%;
+  }
+  
+  .btn-borrador:hover {
+    background-color: #f8fafc;
+    color: var(--text-main);
+    border-color: #cbd5e1;
+  }
+  
+  /* Utilidad de margen */
+  .mb-4 {
+    margin-bottom: 16px;
+  }
+  
+  /* =========================================
+     RESPONSIVE (MÓVIL / TABLET)
+     ========================================= */
+  @media (max-width: 1024px) {
+    .content-wrapper {
+      grid-template-columns: 1fr; /* Una sola columna */
+    }
+  
+    .side-column {
+      order: -1; /* Poner botones arriba en móvil, o quitar para dejarlos abajo */
+    }
+    
+    .resumen-section {
+      position: static;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .config-row {
+      grid-template-columns: 1fr; /* Inputs uno debajo de otro en móvil */
+    }
+    
+    .header h1 {
+      font-size: 24px;
+    }
+  }

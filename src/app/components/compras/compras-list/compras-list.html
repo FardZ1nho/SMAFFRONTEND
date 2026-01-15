@@ -1,0 +1,131 @@
+<div class="compras-container">
+  <div class="page-header">
+    <div class="header-content">
+      <div class="icon-box">
+        <mat-icon>receipt_long</mat-icon>
+      </div>
+      <div>
+        <h1>Historial de Compras</h1>
+        <p class="subtitle">Registro de todas las facturas, boletas y precios de compra</p>
+      </div>
+    </div>
+    <button mat-raised-button color="primary" class="btn-nuevo" (click)="irANuevaCompra()">
+      <mat-icon>add</mat-icon>
+      Nueva Compra
+    </button>
+  </div>
+
+  <div class="toolbar">
+    <div class="filter-group search-container">
+      <label class="search-label">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        Buscar:
+      </label>
+      <div class="input-wrapper">
+        <input type="text" class="filter-input" placeholder="Buscar por número de factura o proveedor..." 
+               [(ngModel)]="terminoBusqueda" (input)="filtrar()">
+        <button class="btn-clear" *ngIf="terminoBusqueda" (click)="terminoBusqueda = ''; filtrar()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button mat-stroked-button class="btn-tool">
+        <mat-icon>filter_list</mat-icon>
+        Filtros
+      </button>
+      <button mat-stroked-button class="btn-tool">
+        <mat-icon>file_download</mat-icon>
+        Exportar
+      </button>
+    </div>
+  </div>
+
+  <div class="main-card">
+    <div class="table-responsive">
+      <table mat-table [dataSource]="comprasFiltradas">
+
+        <ng-container matColumnDef="fecha">
+          <th mat-header-cell *matHeaderCellDef>FECHA EMISIÓN</th>
+          <td mat-cell *matCellDef="let compra">
+            <span class="sku-badge">{{ compra.fecEmision | date:'dd/MM/yyyy' }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="comprobante">
+          <th mat-header-cell *matHeaderCellDef>COMPROBANTE</th>
+          <td mat-cell *matCellDef="let compra">
+            <div class="product-cell">
+              <div class="product-avatar">
+                <mat-icon>description</mat-icon>
+              </div>
+              <div class="product-info">
+                <span class="name">{{ compra.tipoComprobante }}</span>
+                <span class="desc">{{ compra.serie }}-{{ compra.numero }}</span>
+              </div>
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="proveedor">
+          <th mat-header-cell *matHeaderCellDef>PROVEEDOR</th>
+          <td mat-cell *matCellDef="let compra">
+            <div class="product-info">
+                <span class="name">{{ compra.nombreProveedor }}</span>
+                <span class="desc">RUC: {{ compra.rucProveedor }}</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="moneda">
+          <th mat-header-cell *matHeaderCellDef>MONEDA</th>
+          <td mat-cell *matCellDef="let compra">
+            <div class="stock-badge stock-normal">
+              {{ compra.moneda }}
+            </div>
+          </td>
+        </ng-container>
+
+     <ng-container matColumnDef="total">
+          <th mat-header-cell *matHeaderCellDef> TOTAL </th>
+          <td mat-cell *matCellDef="let compra">
+            <div class="price-cell">
+              <span class="currency">{{ compra.moneda === 'Soles' ? 'S/' : '$' }}</span>
+              <span class="amount">{{ compra.total | number:'1.2-2' }}</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="acciones">
+          <th mat-header-cell *matHeaderCellDef class="text-center">ACCIONES</th>
+          <td mat-cell *matCellDef="let compra">
+            <div class="action-buttons">
+              <button mat-icon-button class="btn-view-blue" (click)="verDetalle(compra.id)" matTooltip="Ver detalle">
+                <mat-icon>chevron_right</mat-icon>
+              </button>
+              <button mat-icon-button class="btn-edit-green" matTooltip="Editar">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button color="warn" class="delete-btn" matTooltip="Eliminar">
+                <mat-icon>delete_outline</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="['fecha', 'comprobante', 'proveedor', 'moneda', 'total', 'acciones']"></tr>
+        <tr mat-row *matRowDef="let row; columns: ['fecha', 'comprobante', 'proveedor', 'moneda', 'total', 'acciones'];" class="row-hover"></tr>
+      </table>
+    </div>
+
+    <div *ngIf="comprasFiltradas.length === 0" class="state-container">
+      <mat-icon class="empty-icon">receipt_long</mat-icon>
+      <p>No se encontraron registros de compras</p>
+    </div>
+  </div>
+</div>

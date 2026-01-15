@@ -1,5 +1,3 @@
-// src/app/models/venta.ts
-
 export interface Venta {
   id: number;
   codigo: string;
@@ -9,15 +7,16 @@ export interface Venta {
   tipoCliente: TipoCliente;
   metodoPago: MetodoPago;
 
-  // ✅ PAGO MIXTO (Para ver el historial después)
+  // ✅ PAGO MIXTO
   pagoEfectivo?: number;
   pagoTransferencia?: number;
 
-  // ⭐ NUEVOS CAMPOS PARA MONEDA Y DOCUMENTO
+  // ⭐ NUEVOS CAMPOS (Moneda, Documento y Cambio)
   moneda: string;           
   tipoDocumento: string;    
+  numeroDocumento?: string; // <--- ✅ AGREGADO: Faltaba este para el N° de factura/boleta
   tipoCambio: number;       
-  // ---------------------------------------
+  
   subtotal: number;
   igv: number;
   total: number;
@@ -46,15 +45,16 @@ export interface VentaRequest {
   tipoCliente: TipoCliente;
   metodoPago: MetodoPago;
 
-  // ✅✅ ESTO ES LO QUE TE FALTA AGREGAR ✅✅
+  // ✅ PAGO MIXTO
   pagoEfectivo?: number;
   pagoTransferencia?: number;
 
-  // ⭐ ESTOS DEBEN COINCIDIR CON TU VentaRequestDTO DE JAVA
+  // ⭐ NUEVOS CAMPOS PARA ENVIAR AL BACKEND
   moneda: string;           
   tipoDocumento: string;    
+  numeroDocumento?: string; // <--- ✅ AGREGADO: Importante para guardar el número
   tipoCambio: number;       
-  // -------------------------------------------------------
+  
   notas?: string;
   detalles: DetalleVentaRequest[];
 }

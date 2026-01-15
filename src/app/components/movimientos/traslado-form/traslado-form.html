@@ -7,14 +7,14 @@
             </div>
             <div>
                 <h1>Registrar Traslado</h1>
-                <p class="subtitle">Transfiere productos entre almacenes de forma segura</p>
+                <p class="subtitle">Movimiento de inventario entre almacenes</p>
             </div>
         </div>
     </div>
 
     <div *ngIf="cargando" class="state-container">
         <mat-spinner diameter="40"></mat-spinner>
-        <p>Cargando información...</p>
+        <p>Preparando formulario...</p>
     </div>
 
     <div *ngIf="!cargando" class="main-card-form">
@@ -29,26 +29,15 @@
             <div class="selection-section">
                 <form class="traslado-form">
 
-                    <div class="form-group-custom">
-                        <label class="input-label-header">
-                            <mat-icon>inventory_2</mat-icon> PRODUCTO:
-                        </label>
-                        <div class="select-wrapper">
-                            <select [(ngModel)]="productoId" name="producto" (ngModelChange)="onProductoChange()" required class="custom-input">
-                                <option [ngValue]="null">-- Seleccionar Producto --</option>
-                                <option *ngFor="let producto of productos" [ngValue]="producto.id">
-                                    {{ producto.nombre }} ({{ producto.codigo }})
-                                </option>
-                            </select>
-                        </div>
-                    </div>
-
                     <div class="warehouses-grid">
                         <div class="form-group-custom">
-                            <label class="input-label-header">ORIGEN:</label>
+                            <label class="input-label-header">
+                                <mat-icon>logout</mat-icon> ORIGEN:
+                            </label>
                             <div class="select-wrapper">
-                                <select [(ngModel)]="almacenOrigenId" name="almacenOrigen" (ngModelChange)="onAlmacenOrigenChange()" required class="custom-input">
-                                    <option [ngValue]="null">-- Seleccionar --</option>
+                                <select [(ngModel)]="almacenOrigenId" name="almacenOrigen"
+                                    (ngModelChange)="onAlmacenOrigenChange()" required class="custom-input">
+                                    <option [ngValue]="null">-- Seleccionar Origen --</option>
                                     <option *ngFor="let almacen of almacenes" [ngValue]="almacen.id">
                                         {{ almacen.nombre }}
                                     </option>
@@ -57,10 +46,13 @@
                         </div>
 
                         <div class="form-group-custom">
-                            <label class="input-label-header">DESTINO:</label>
+                            <label class="input-label-header">
+                                <mat-icon>login</mat-icon> DESTINO:
+                            </label>
                             <div class="select-wrapper">
-                                <select [(ngModel)]="almacenDestinoId" name="almacenDestino" required class="custom-input">
-                                    <option [ngValue]="null">-- Seleccionar --</option>
+                                <select [(ngModel)]="almacenDestinoId" name="almacenDestino" required
+                                    class="custom-input">
+                                    <option [ngValue]="null">-- Seleccionar Destino --</option>
                                     <option *ngFor="let almacen of almacenesDestino" [ngValue]="almacen.id">
                                         {{ almacen.nombre }}
                                     </option>
@@ -70,41 +62,101 @@
                     </div>
 
                     <div class="form-group-custom">
-                        <label class="input-label-header">CANTIDAD A TRASLADAR:</label>
-                        <input type="number" class="custom-input" placeholder="0" [(ngModel)]="cantidad" name="cantidad" min="1" required>
+                        <label class="input-label-header">
+                            <mat-icon>inventory_2</mat-icon> PRODUCTO:
+                        </label>
+                        <div class="select-wrapper">
+                            <select [(ngModel)]="productoId" name="producto" (ngModelChange)="onProductoChange()"
+                                [disabled]="!almacenOrigenId" class="custom-input">
+                                <option [ngValue]="null">
+                                    {{ almacenOrigenId ? '-- Seleccionar Producto --' : '-- Seleccione Origen Primero
+                                    --' }}
+                                </option>
+                                <option *ngFor="let producto of productos" [ngValue]="producto.id">
+                                    {{ producto.nombre }} ({{ producto.codigo }})
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="stock-status-bar" *ngIf="productoId && almacenOrigenId && !verificandoStock">
+                            <div class="status-alert error" *ngIf="!existeEnOrigen">
+                                <mat-icon>block</mat-icon>
+                                <span>Este producto no está registrado en el almacén de origen.</span>
+                            </div>
+
+                            <div class="status-alert warning" *ngIf="existeEnOrigen && stockEnOrigen === 0">
+                                <mat-icon>warning</mat-icon>
+                                <span>Stock agotado en origen. No se puede realizar traslado.</span>
+                            </div>
+
+                            <div class="status-alert success" *ngIf="existeEnOrigen && stockEnOrigen > 0">
+                                <mat-icon>check_circle</mat-icon>
+                                <span>Disponible en Origen: <strong>{{ stockEnOrigen }} unidades</strong></span>
+                            </div>
+                        </div>
+
+                        <div class="loading-mini" *ngIf="verificandoStock">
+                            <mat-spinner diameter="20"></mat-spinner> Verificando disponibilidad...
+                        </div>
                     </div>
 
                     <div class="form-group-custom">
-                        <label class="input-label-header">MOTIVO DEL MOVIMIENTO:</label>
-                        <textarea class="custom-input textarea" placeholder="Escriba la razón del traslado..." [(ngModel)]="motivo" name="motivo" rows="3"></textarea>
+                        <label class="input-label-header">CANTIDAD A TRASLADAR:</label>
+                        <input type="number" class="custom-input" placeholder="0" [(ngModel)]="cantidad" name="cantidad"
+                            min="1" [max]="stockEnOrigen" required>
+
+                        <span class="field-hint error" *ngIf="cantidad > stockEnOrigen && stockEnOrigen > 0">
+                            La cantidad excede el stock disponible ({{ stockEnOrigen }}).
+                        </span>
+                    </div>
+
+                    <div class="form-group-custom">
+                        <label class="input-label-header">MOTIVO (OPCIONAL):</label>
+                        <textarea class="custom-input textarea" placeholder="Razón del traslado..." [(ngModel)]="motivo"
+                            name="motivo" rows="2"></textarea>
                     </div>
                 </form>
             </div>
 
             <div class="info-sidebar">
                 <div class="summary-box" *ngIf="productoSeleccionado">
-                    <h3>Detalles de Referencia</h3>
-                    <div class="summary-item">
-                        <span class="lbl">SKU</span>
-                        <span class="val">{{ productoSeleccionado.codigo }}</span>
+                    <h3><mat-icon>inventory_2</mat-icon> Ítem a Trasladar</h3>
+
+                    <div class="product-card-mini">
+                        <div class="p-icon">
+                            <mat-icon>widgets</mat-icon>
+                        </div>
+                        <div class="p-info">
+                            <span class="p-name">{{ productoSeleccionado.nombre }}</span>
+                            <span class="p-sku">SKU: {{ productoSeleccionado.codigo }}</span>
+                        </div>
                     </div>
-                    <div class="summary-item">
-                        <span class="lbl">Stock Actual Total</span>
-                        <span class="val highlight">{{ productoSeleccionado.stockActual }} und</span>
+
+                    <div class="stock-info-row">
+                        <span>Stock Total Global:</span>
+                        <strong>{{ productoSeleccionado.stockActual }} und.</strong>
                     </div>
                 </div>
 
                 <div class="flow-visual" *ngIf="almacenOrigenId || almacenDestinoId">
                     <div class="flow-step" [class.active]="almacenOrigenId">
-                        <mat-icon>warehouse</mat-icon>
-                        <span>{{ almacenOrigenId ? obtenerNombreAlmacen(almacenOrigenId) : 'Origen' }}</span>
+                        <mat-icon>logout</mat-icon>
+                        <div>
+                            <small>Desde</small>
+                            <strong>{{ almacenOrigenId ? obtenerNombreAlmacen(almacenOrigenId) : 'Origen' }}</strong>
+                        </div>
                     </div>
+
                     <div class="flow-arrow">
                         <mat-icon>arrow_downward</mat-icon>
                     </div>
+
                     <div class="flow-step destination" [class.active]="almacenDestinoId">
-                        <mat-icon>location_on</mat-icon>
-                        <span>{{ almacenDestinoId ? obtenerNombreAlmacen(almacenDestinoId) : 'Destino' }}</span>
+                        <mat-icon>login</mat-icon>
+                        <div>
+                            <small>Hacia</small>
+                            <strong>{{ almacenDestinoId ? obtenerNombreAlmacen(almacenDestinoId) : 'Destino' }}</strong>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -114,10 +166,11 @@
             <button class="btn-cancel" (click)="cancelar()" [disabled]="guardando">
                 Cancelar
             </button>
-            <button class="btn-submit" (click)="registrarTraslado()" [disabled]="guardando">
+            <button class="btn-submit" (click)="registrarTraslado()"
+                [disabled]="guardando || !existeEnOrigen || stockEnOrigen === 0 || cantidad > stockEnOrigen">
                 <mat-spinner *ngIf="guardando" diameter="20"></mat-spinner>
                 <mat-icon *ngIf="!guardando">swap_horiz</mat-icon>
-                <span>{{ guardando ? 'Registrando...' : 'Confirmar Traslado' }}</span>
+                <span>{{ guardando ? 'Procesando...' : 'Confirmar Traslado' }}</span>
             </button>
         </div>
     </div>

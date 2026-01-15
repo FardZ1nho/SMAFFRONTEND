@@ -1,0 +1,261 @@
+:host {
+  --primary: #2563eb;       /* Azul Inventario */
+  --bg-body: #f8fafc;       /* Fondo Gris Claro */
+  --text-main: #1e293b;     /* Texto Oscuro */
+  --text-sub: #64748b;      /* Texto Gris */
+  --border-color: #e2e8f0;
+}
+
+.proveedor-container {
+  padding: 24px;
+  background-color: var(--bg-body);
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* --- HEADER --- */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.icon-box {
+  background: white;
+  color: var(--primary);
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  font-size: 1.5rem;
+}
+
+.page-header h1 {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.subtitle {
+  color: var(--text-sub);
+  font-size: 14px;
+  margin: 0;
+}
+
+/* --- BOTÓN NUEVO (Estilo exacto Inventario) --- */
+.btn-nuevo {
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  padding: 0 20px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+  box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+}
+
+.btn-nuevo:hover {
+  background-color: #1d4ed8;
+}
+
+/* --- TOOLBAR --- */
+.toolbar {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  align-items: flex-end;
+}
+
+.search-container {
+  flex: 1;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.search-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.filter-input {
+  width: 100%;
+  height: 44px;
+  padding: 10px 12px;
+  border: 1.5px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 14px;
+  background-color: white;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.filter-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.btn-clear {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 1.2rem;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-tool {
+  height: 44px;
+  padding: 0 16px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border-color);
+  background: white;
+  color: var(--text-main);
+  font-weight: 600;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+/* --- TABLA (Estilo Material Design pero con HTML estándar) --- */
+.main-card {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.custom-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.custom-table th {
+  background: #f1f5f9;
+  color: var(--text-sub);
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  padding: 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.custom-table td {
+  padding: 16px;
+  border-bottom: 1px solid var(--border-color);
+  vertical-align: middle;
+  font-size: 14px;
+  color: var(--text-main);
+}
+
+.custom-table tr:hover {
+  background-color: #f8fafc;
+}
+
+/* --- BADGES Y TEXTOS --- */
+.badge-custom {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 11px;
+}
+
+.badge-purple { background-color: #f3e8ff; color: #9333ea; }
+.badge-blue { background-color: #eff6ff; color: #2563eb; }
+
+.fw-bold { font-weight: 600; }
+.text-main { color: var(--text-main); }
+.text-sub { color: var(--text-sub); }
+
+.contact-info { display: flex; flex-direction: column; gap: 4px; }
+.contact-row { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-sub); }
+.icon-tiny { font-size: 12px; opacity: 0.7; }
+
+/* --- BOTONES DE ACCIÓN (Ojo, Lápiz, Basura) --- */
+.action-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* Ajuste para iconos de Material Design */
+.btn-icon mat-icon {
+  font-size: 20px;       /* Tamaño del icono */
+  width: 20px;           /* Ancho del contenedor */
+  height: 20px;          /* Alto del contenedor */
+  vertical-align: middle;
+  line-height: 1;
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;          /* Un poco más de espacio para el clic */
+  transition: transform 0.2s, opacity 0.2s;
+  display: flex;         /* Centra el icono perfectamente */
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-icon:hover { opacity: 0.7; }
+.btn-view { color: #2563eb; }
+.btn-edit { color: #059669; }
+.btn-delete { color: #dc2626; }
+
+/* --- EMPTY STATE --- */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-sub);
+}
+
+.empty-icon {
+  font-size: 48px;
+  opacity: 0.3;
+  display: block;
+  margin-bottom: 16px;
+}

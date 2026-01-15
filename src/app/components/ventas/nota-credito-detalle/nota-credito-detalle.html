@@ -1,0 +1,90 @@
+<div class="modal-container">
+  
+  <div class="modal-header">
+    <div class="header-content">
+      <h2 mat-dialog-title>Nota de Crédito</h2>
+      <span class="nc-badge">{{ nota.codigoCompleto }}</span>
+    </div>
+    <div class="date-info">
+      Emisión: {{ formatearFecha(nota.fechaEmision) }}
+    </div>
+  </div>
+
+  <mat-dialog-content class="modal-body">
+    
+    <div class="section-card alert-state">
+      <h3><mat-icon>info</mat-icon> Datos de la Operación</h3>
+      <div class="grid-2">
+        <div class="data-item">
+          <label>Motivo SUNAT</label>
+          <strong>{{ nota.motivo }}</strong>
+        </div>
+        <div class="data-item">
+          <label>Monto Devuelto</label>
+          <strong class="text-red">
+            - {{ nota.moneda === 'USD' ? '$' : 'S/' }} {{ nota.montoTotal | number:'1.2-2' }}
+          </strong>
+        </div>
+      </div>
+      <div class="data-item full-row" *ngIf="nota.observaciones">
+        <label>Observaciones / Sustento</label>
+        <p class="obs-text">"{{ nota.observaciones }}"</p>
+      </div>
+    </div>
+
+    <mat-divider></mat-divider>
+
+    <div class="section-title-row">
+      <h3><mat-icon>shopping_bag</mat-icon> Referencia: Compra Original</h3>
+      <span class="venta-ref">Ticket #{{ nota.codigoVentaAfectada }}</span>
+    </div>
+
+    <div *ngIf="isLoadingVenta" class="loading-box">
+      <mat-spinner diameter="30"></mat-spinner>
+      <span>Recuperando productos...</span>
+    </div>
+
+    <div *ngIf="!isLoadingVenta && ventaOriginal">
+      
+      <div class="cliente-info">
+        <span class="label">Cliente:</span>
+        <span class="value">{{ ventaOriginal.nombreCliente || 'Cliente General' }}</span>
+        <span class="label ml-4">Tipo:</span>
+        <span class="value">{{ ventaOriginal.tipoCliente }}</span>
+      </div>
+
+      <div class="table-container">
+        <table class="products-table">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th class="text-right">Cant.</th>
+              <th class="text-right">P. Unit</th>
+              <th class="text-right">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of ventaOriginal.detalles">
+              <td>
+                <div class="prod-name">{{ item.productoNombre }}</div>
+                <div class="prod-code">{{ item.productoCodigo }}</div>
+              </td>
+              <td class="text-right">{{ item.cantidad }}</td>
+              <td class="text-right">{{ item.precioUnitario | number:'1.2-2' }}</td>
+              <td class="text-right">{{ item.subtotal | number:'1.2-2' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div *ngIf="!isLoadingVenta && !ventaOriginal" class="error-box">
+      <mat-icon>error_outline</mat-icon> No se encontraron los detalles de la venta original.
+    </div>
+
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-flat-button color="primary" (click)="cerrar()">Cerrar</button>
+  </mat-dialog-actions>
+</div>

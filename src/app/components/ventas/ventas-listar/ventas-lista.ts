@@ -12,11 +12,19 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 
+// Servicios
 import { VentaService } from '../../../services/venta-service';
+import { NotaCreditoService } from '../../../services/nota-credito-service';  // ✅ Nuevo Service
+
+// Modelos y Enums
 import { Venta, EstadoVenta } from '../../../models/venta';
 
+// Componentes Modales
+import { VentaDetalleComponent } from '../venta-detalle/venta-detalle'; 
+import { NotaCreditoModalComponent } from '../nota-credito-modal/nota-credito-modal'; 
 @Component({
     selector: 'app-ventas-lista',
     standalone: true,
@@ -39,12 +47,23 @@ import { Venta, EstadoVenta } from '../../../models/venta';
     styleUrls: ['./ventas-lista.css']
 })
 export class VentasListaComponent implements OnInit {
+    
+    // Datos de la tabla
     ventas: Venta[] = [];
     ventasFiltradas = new MatTableDataSource<Venta>([]);
+    
+    // Filtros
     terminoBusqueda: string = '';
     estadoFiltro: string = 'TODAS';
+    
+    // Estados de carga
     isLoading: boolean = false;
     errorMessage: string = '';
+
+    // ⭐ VARIABLES FINANCIERAS (Ingreso Neto)
+    totalVentas: number = 0;        // Suma de ventas completadas
+    totalNotasCredito: number = 0;  // Suma de devoluciones
+    ingresoNetoReal: number = 0;    // El resultado final (Ventas - NC)
 
     displayedColumns: string[] = [
         'codigo',
@@ -65,14 +84,19 @@ export class VentasListaComponent implements OnInit {
 
     constructor(
         private ventaService: VentaService,
+        private notaCreditoService: NotaCreditoService, // ✅ Inyectamos el servicio de NC
         private cdr: ChangeDetectorRef,
         private snackBar: MatSnackBar,
-        private router: Router
+        private router: Router,
+        private dialog: MatDialog
     ) { }
 
     ngOnInit(): void {
         this.cargarVentas();
+        this.cargarTotalNotasCredito(); // ✅ Cargamos el total de devoluciones al inicio
     }
+
+    // ========== CARGA DE DATOS ==========
 
     cargarVentas(): void {
         this.isLoading = true;
@@ -82,6 +106,15 @@ export class VentasListaComponent implements OnInit {
             next: (data) => {
                 this.ventas = data;
                 this.aplicarFiltros();
+
+                // Calculamos el total BRUTO de ventas completadas
+                this.totalVentas = this.ventas
+                    .filter(v => v.estado === EstadoVenta.COMPLETADA)
+                    .reduce((sum, v) => sum + v.total, 0);
+
+                // Recalculamos el neto
+                this.calcularIngresoNeto();
+
                 this.isLoading = false;
                 this.cdr.detectChanges();
             },
@@ -95,23 +128,26 @@ export class VentasListaComponent implements OnInit {
         });
     }
 
-    // ⭐ PUNTO 5: Solo suma ventas COMPLETADAS
-    calcularMontoTotal(): number {
-        return this.ventasFiltradas.data
-            .filter(v => v.estado === EstadoVenta.COMPLETADA)
-            .reduce((sum, v) => sum + v.total, 0);
+    irANotasCredito(): void {
+  this.router.navigate(['/ventas/notas-credito']);
+}
+
+    cargarTotalNotasCredito(): void {
+        this.notaCreditoService.obtenerTotalDevoluciones().subscribe({
+            next: (monto) => {
+                this.totalNotasCredito = monto || 0;
+                this.calcularIngresoNeto();
+            },
+            error: (err) => console.error('Error cargando notas de crédito', err)
+        });
     }
 
-    // ⭐ PUNTO 4: Redirigir a edición de borrador
-    // En VentasListaComponent - editarBorrador():
-    editarBorrador(venta: Venta): void {
-        if (venta.estado !== EstadoVenta.BORRADOR) {
-            this.mostrarMensaje('Solo se pueden editar borradores', 'error');
-            return;
-        }
-        // Usa la misma ruta pero con ID
-        this.router.navigate(['/ventas', venta.id]);
+    calcularIngresoNeto(): void {
+        // Ingreso Real = Lo vendido - Lo devuelto
+        this.ingresoNetoReal = this.totalVentas - this.totalNotasCredito;
     }
+
+    // ========== LÓGICA DE TABLA Y FILTROS ==========
 
     aplicarFiltros(): void {
         let filtradas = [...this.ventas];
@@ -134,7 +170,20 @@ export class VentasListaComponent implements OnInit {
     onEstadoChange(): void { this.aplicarFiltros(); }
     buscarVentas(): void { this.aplicarFiltros(); }
     limpiarBusqueda(): void { this.terminoBusqueda = ''; this.aplicarFiltros(); }
-    nuevaVenta(): void { this.router.navigate(['/ventas']); }
+    
+    // ========== ACCIONES (BOTONES Y MENÚ) ==========
+
+    nuevaVenta(): void { 
+        this.router.navigate(['/ventas']); 
+    }
+
+    editarBorrador(venta: Venta): void {
+        if (venta.estado !== EstadoVenta.BORRADOR) {
+            this.mostrarMensaje('Solo se pueden editar borradores', 'error');
+            return;
+        }
+        this.router.navigate(['/ventas', venta.id]);
+    }
 
     completarVenta(venta: Venta): void {
         if (venta.estado !== EstadoVenta.BORRADOR) return;
@@ -173,6 +222,35 @@ export class VentasListaComponent implements OnInit {
         }
     }
 
+    // ========== MODALES (DETALLE Y NOTA DE CRÉDITO) ==========
+
+    verDetalle(venta: Venta): void {
+        this.dialog.open(VentaDetalleComponent, {
+            width: '800px',
+            maxWidth: '95vw',
+            data: venta
+        });
+    }
+
+    // ⭐ NUEVA FUNCIÓN: Abrir Modal de Nota de Crédito
+    abrirModalNotaCredito(venta: Venta): void {
+        const dialogRef = this.dialog.open(NotaCreditoModalComponent, {
+            width: '500px',
+            disableClose: true,
+            data: venta // Pasamos la venta seleccionada al modal
+        });
+
+        dialogRef.afterClosed().subscribe(seEmitioNota => {
+            if (seEmitioNota === true) {
+                // Si se creó la nota, recargamos todo para actualizar montos y estados
+                this.cargarVentas();
+                this.cargarTotalNotasCredito();
+            }
+        });
+    }
+
+    // ========== UTILIDADES DE FORMATO ==========
+
     getEstadoClass(estado: string): string {
         switch (estado) {
             case EstadoVenta.COMPLETADA: return 'estado-completada';
@@ -201,7 +279,9 @@ export class VentasListaComponent implements OnInit {
     }
 
     formatearFecha(fecha: Date): string {
-        return new Date(fecha).toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        return new Date(fecha).toLocaleDateString('es-PE', { 
+            day: '2-digit', month: '2-digit', year: 'numeric' 
+        });
     }
 
     private mostrarMensaje(mensaje: string, tipo: 'success' | 'error'): void {
@@ -213,6 +293,7 @@ export class VentasListaComponent implements OnInit {
         });
     }
 
-    verDetalle(venta: Venta): void { this.mostrarMensaje('Función en desarrollo', 'error'); }
-    exportarDatos(): void { this.mostrarMensaje('Función en desarrollo', 'error'); }
+    exportarDatos(): void { 
+        this.mostrarMensaje('Función en desarrollo', 'error'); 
+    }
 }

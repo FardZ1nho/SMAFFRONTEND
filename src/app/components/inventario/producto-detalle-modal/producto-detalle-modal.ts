@@ -7,9 +7,9 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatChipsModule } from '@angular/material/chips';
 
 import { Producto } from '../../../models/producto';
-import { ProductoAlmacen } from '../../../models/producto-almacen'; // ✅ NUEVO
+import { ProductoAlmacen } from '../../../models/producto-almacen';
 import { ProductoService } from '../../../services/producto-service';
-import { ProductoAlmacenService } from '../../../services/producto-almacen-service';  // ✅ NUEVO
+import { ProductoAlmacenService } from '../../../services/producto-almacen-service';
 import { ProductoModalComponent } from '../producto-modal/producto-modal';
 import { ConfirmDialogComponent } from '../confirm-dialog';
 
@@ -29,17 +29,17 @@ import { ConfirmDialogComponent } from '../confirm-dialog';
 })
 export class ProductoDetalleModalComponent implements OnInit {
   producto: Producto;
-  productosAlmacen: ProductoAlmacen[] = []; // ✅ NUEVO: Lista de almacenes donde está el producto
+  productosAlmacen: ProductoAlmacen[] = [];
   valorTotal: number = 0;
   mostrarStockBajo: boolean = false;
   selectedTab: number = 0;
-  cargandoAlmacenes: boolean = false; // ✅ NUEVO
+  cargandoAlmacenes: boolean = false;
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: { productoId: number },
     private dialogRef: MatDialogRef<ProductoDetalleModalComponent>,
     private productoService: ProductoService,
-    private productoAlmacenService: ProductoAlmacenService, // ✅ NUEVO
+    private productoAlmacenService: ProductoAlmacenService,
     private dialog: MatDialog
   ) {
     this.producto = {} as Producto;
@@ -47,7 +47,7 @@ export class ProductoDetalleModalComponent implements OnInit {
 
   ngOnInit(): void {
     this.cargarProducto();
-    this.cargarDistribucionAlmacenes(); // ✅ NUEVO
+    this.cargarDistribucionAlmacenes();
   }
 
   cargarProducto(): void {
@@ -65,17 +65,15 @@ export class ProductoDetalleModalComponent implements OnInit {
     });
   }
 
-  // ✅ NUEVO: Cargar distribución por almacenes
   cargarDistribucionAlmacenes(): void {
     this.cargandoAlmacenes = true;
     this.productoAlmacenService.listarUbicacionesPorProducto(this.data.productoId).subscribe({
       next: (data) => {
         this.productosAlmacen = data;
         this.cargandoAlmacenes = false;
-        console.log('✅ Distribución por almacenes:', data);
       },
       error: (error) => {
-        console.error('❌ Error al cargar distribución:', error);
+        console.error('Error al cargar distribución:', error);
         this.productosAlmacen = [];
         this.cargandoAlmacenes = false;
       }
@@ -89,20 +87,13 @@ export class ProductoDetalleModalComponent implements OnInit {
   }
 
   calcularMargen(): string {
-    if (!this.producto.precioVenta || !this.producto.costoTotal) {
-      return '0%';
-    }
-    
+    if (!this.producto.precioVenta || !this.producto.costoTotal) return '0%';
     const margen = ((this.producto.precioVenta - this.producto.costoTotal) / this.producto.precioVenta) * 100;
     return `${margen.toFixed(1)}%`;
   }
 
   getSimboloMoneda(): string {
-    const simbolos: { [key: string]: string } = {
-      'USD': '$',
-      'PEN': 'S/',
-      'EUR': '€'
-    };
+    const simbolos: { [key: string]: string } = { 'USD': '$', 'PEN': 'S/', 'EUR': '€' };
     return simbolos[this.producto.moneda || 'USD'] || '$';
   }
 
@@ -116,23 +107,23 @@ export class ProductoDetalleModalComponent implements OnInit {
   }
 
   editarProducto(): void {
-    this.dialogRef.close();
-
+    // Cerramos el modal actual
+    this.dialogRef.close(); 
+    
+    // Abrimos el modal de edición
     const dialogRef = this.dialog.open(ProductoModalComponent, {
       width: '1000px',
       maxWidth: '95vw',
-      height: 'auto',
-      maxHeight: '95vh',
       disableClose: false,
-      data: { 
-        producto: this.producto,
-        modo: 'editar'
-      }
+      data: { producto: this.producto, modo: 'editar' }
     });
 
     dialogRef.afterClosed().subscribe(result => {
+      // Si se editó, retornamos el resultado al componente padre
       if (result) {
-        this.dialogRef.close({ accion: 'editado', producto: result });
+        // Podrías reabrir este modal con los datos nuevos si quisieras,
+        // pero lo estándar es volver a la lista.
+        // this.dialogRef.close({ accion: 'editado', producto: result }); <-- Esto ya no aplica pq cerramos antes
       }
     });
   }
@@ -142,7 +133,7 @@ export class ProductoDetalleModalComponent implements OnInit {
       width: '400px',
       data: {
         title: 'Eliminar Producto',
-        message: `¿Estás seguro de que deseas eliminar el producto "${this.producto.nombre}" (${this.producto.codigo})?`,
+        message: `¿Estás seguro de eliminar "${this.producto.nombre}"?`,
         confirmText: 'Eliminar',
         cancelText: 'Cancelar',
         confirmColor: 'warn'
@@ -150,21 +141,14 @@ export class ProductoDetalleModalComponent implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe(confirmado => {
-      if (confirmado) {
-        this.ejecutarEliminacion();
-      }
+      if (confirmado) this.ejecutarEliminacion();
     });
   }
 
   private ejecutarEliminacion(): void {
     this.productoService.eliminarProducto(this.producto.id).subscribe({
-      next: () => {
-        this.dialogRef.close({ accion: 'eliminado', producto: this.producto });
-      },
-      error: (error) => {
-        console.error('Error al eliminar:', error);
-        alert('Error al eliminar el producto');
-      }
+      next: () => this.dialogRef.close({ accion: 'eliminado', producto: this.producto }),
+      error: () => alert('Error al eliminar')
     });
   }
 

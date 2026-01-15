@@ -10,7 +10,7 @@ import { environment } from '../../environments/environment';
 export class ProveedorService {
 
   // Asegúrate de que este puerto coincida con tu backend (Spring Boot por defecto es 8080)
-  private apiUrl = '${environment.base}/proveedores';
+  private apiUrl = `${environment.base}/proveedores`;
 
   constructor(private http: HttpClient) { }
 

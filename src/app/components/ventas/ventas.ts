@@ -15,12 +15,17 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
+// Servicios
 import { VentaService } from '../../services/venta-service';
 import { ProductoService } from '../../services/producto-service';
 import { ClienteService } from '../../services/cliente-service';
+import { CuentaBancariaService } from '../../services/cuenta-bancaria-service'; // ✅ NUEVO
+
+// Modelos
 import { Producto } from '../../models/producto';
 import { Cliente } from '../../models/cliente';
-import { VentaRequest, TipoCliente, MetodoPago } from '../../models/venta';
+import { CuentaBancaria } from '../../models/cuenta-bancaria'; // ✅ NUEVO
+import { VentaRequest, TipoCliente, MetodoPago, TipoPago } from '../../models/venta';
 import { ClienteModalComponent } from '../cliente/cliente-modal/cliente-modal';
 
 interface ProductoEnVenta {
@@ -57,16 +62,29 @@ export class VentasComponent implements OnInit {
   mostrarListaClientes: boolean = false;
   isLoadingClientes: boolean = false;
 
+  // ✅ NUEVO: Variables para Cuentas Bancarias
+  cuentas: CuentaBancaria[] = [];
+  cuentaSeleccionadaId?: number; 
+
   // --- Formulario de Venta ---
   nombreCliente: string = '';
   tipoCliente: TipoCliente = TipoCliente.COMUN;
   fechaVenta: Date = new Date();
+  
+  // VARIABLES DE PAGO Y CRÉDITO
+  tipoPago: TipoPago = TipoPago.CONTADO;
   metodoPago: MetodoPago = MetodoPago.EFECTIVO;
+  
+  montoInicial: number = 0;
+  numeroCuotas: number = 1;
+  montoCuota: number = 0;     
+  saldoPendiente: number = 0; 
+
   notas: string = '';
 
-  // --- Datos de Emisión (NUEVO: numeroDocumento) ---
+  // --- Datos de Emisión ---
   tipoDocumento: string = 'FACTURA';
-  numeroDocumento: string = ''; // <--- Variable para el N° de Comprobante
+  numeroDocumento: string = '';
 
   tiposDocumento = [
     { value: 'FACTURA', label: 'Factura' },
@@ -77,7 +95,7 @@ export class VentasComponent implements OnInit {
   // --- Configuración de Moneda ---
   moneda: string = 'PEN';
   tipoCambio: number = 3.80;
-
+  
   // --- Pago Mixto ---
   pagoEfectivo: number | null = 0;
   pagoTransferencia: number | null = 0;
@@ -96,6 +114,7 @@ export class VentasComponent implements OnInit {
     { value: MetodoPago.PLIN, label: 'Plin' },
     { value: MetodoPago.MIXTO, label: 'Mixto (Efectivo + Transferencia)' }
   ];
+  public eTipoPago = TipoPago;
 
   // --- Edición de Borrador ---
   esEdicion: boolean = false;
@@ -105,6 +124,7 @@ export class VentasComponent implements OnInit {
     private ventaService: VentaService,
     private productoService: ProductoService,
     private clienteService: ClienteService,
+    private cuentaService: CuentaBancariaService, // ✅ INYECTADO
     private router: Router,
     private route: ActivatedRoute,
     private cdr: ChangeDetectorRef,
@@ -114,6 +134,9 @@ export class VentasComponent implements OnInit {
 
   ngOnInit(): void {
     this.isLoadingProductos = true;
+
+    // ✅ Cargar Cuentas Bancarias Activas
+    this.cuentaService.listarActivas().subscribe(data => this.cuentas = data);
 
     // Carga paralela de productos y clientes
     const cargaProductos$ = this.productoService.listarProductosActivos();
@@ -167,11 +190,23 @@ export class VentasComponent implements OnInit {
         this.moneda = venta.moneda || 'PEN';
         this.tipoCambio = venta.tipoCambio || 3.80;
         
-        // Recuperar Datos de Documento
+        // Recuperar Datos de Documento y Pago
         if (venta.tipoDocumento) this.tipoDocumento = venta.tipoDocumento;
-        this.numeroDocumento = venta.numeroDocumento || ''; // <--- RECUPERAR NÚMERO
+        this.numeroDocumento = venta.numeroDocumento || '';
+        
+        // RECUPERAR DATOS DE CRÉDITO
+        this.tipoPago = venta.tipoPago || TipoPago.CONTADO;
+        this.montoInicial = venta.montoInicial || 0;
+        this.numeroCuotas = venta.numeroCuotas || 1;
 
-        // Recuperar Pagos
+        // ✅ RECUPERAR CUENTA BANCARIA
+        if (venta.cuentaBancariaId) {
+            this.cuentaSeleccionadaId = venta.cuentaBancariaId;
+        } else if (venta.cuentaBancaria && venta.cuentaBancaria.id) {
+            this.cuentaSeleccionadaId = venta.cuentaBancaria.id;
+        }
+
+        // Recuperar Pagos Mixtos
         this.pagoEfectivo = venta.pagoEfectivo || 0;
         this.pagoTransferencia = venta.pagoTransferencia || 0;
 
@@ -191,7 +226,7 @@ export class VentasComponent implements OnInit {
             };
           });
           this.productosEnVenta.forEach(item => this.calcularSubtotalProducto(item));
-          this.calcularTotales();
+          this.calcularTotales(); 
         }
         this.isLoadingProductos = false;
         this.cdr.detectChanges();
@@ -341,11 +376,9 @@ export class VentasComponent implements OnInit {
     this.nombreCliente = '';
   }
 
-  // --- CÁLCULOS ---
+  // --- CÁLCULOS PRODUCTOS ---
   onCantidadChange(item: ProductoEnVenta): void {
-    if (!item.cantidad || item.cantidad < 1) {
-      item.cantidad = 1;
-    }
+    if (!item.cantidad || item.cantidad < 1) item.cantidad = 1;
     
     // Validación manual de stock
     if (item.cantidad > item.producto.stockActual) {
@@ -373,11 +406,55 @@ export class VentasComponent implements OnInit {
     item.subtotal = Number(subtotal.toFixed(2));
   }
 
+  // ============================================
+  // ✅ LÓGICA DE CRÉDITO Y TOTALES
+  // ============================================
+
+  onTipoPagoChange(): void {
+    if (this.tipoPago === TipoPago.CONTADO) {
+      // Reseteo valores crédito
+      this.montoInicial = 0;
+      this.numeroCuotas = 1;
+      this.saldoPendiente = 0;
+      this.montoCuota = 0;
+    } else {
+      // Default crédito
+      this.montoInicial = 0;
+      this.numeroCuotas = 1;
+    }
+    this.calcularTotales();
+  }
+
+  calcularCredito(): void {
+    // Validaciones
+    if (this.montoInicial < 0) this.montoInicial = 0;
+    if (this.montoInicial > this.total) {
+      this.montoInicial = this.total; // Tope es el total
+    }
+    if (!this.numeroCuotas || this.numeroCuotas < 1) this.numeroCuotas = 1;
+
+    // Cálculo
+    this.saldoPendiente = Number((this.total - this.montoInicial).toFixed(2));
+    if (this.saldoPendiente > 0) {
+      this.montoCuota = Number((this.saldoPendiente / this.numeroCuotas).toFixed(2));
+    } else {
+      this.montoCuota = 0;
+    }
+  }
+
   calcularTotales(): void {
+    // 1. Sumar productos
     this.total = Number(this.productosEnVenta.reduce((sum, p) => sum + p.subtotal, 0).toFixed(2));
     this.subtotal = Number((this.total / 1.18).toFixed(2));
     this.igv = Number((this.total - this.subtotal).toFixed(2));
+    
+    // 2. Si es pago mixto, recalcular distribuciones
     if (this.esPagoMixto()) this.validarMontoMixto('T');
+
+    // 3. Recalcular crédito si estamos en ese modo
+    if (this.tipoPago === TipoPago.CREDITO) {
+      this.calcularCredito();
+    }
   }
 
   validarMontoMixto(campo: 'E' | 'T') {
@@ -395,7 +472,12 @@ export class VentasComponent implements OnInit {
 
   esPagoMixto(): boolean { return this.metodoPago === MetodoPago.MIXTO; }
 
-  // --- PREPARAR DATOS ---
+  // ✅ HELPER: Determina si se debe mostrar el selector de cuentas
+  esPagoDigital(): boolean {
+    return [MetodoPago.YAPE, MetodoPago.PLIN, MetodoPago.TRANSFERENCIA, MetodoPago.TARJETA].includes(this.metodoPago);
+  }
+
+  // --- PREPARAR DATOS (REQUEST) ---
   private prepararRequest(): any {
     const esMixto = this.metodoPago === 'MIXTO';
     return {
@@ -403,14 +485,25 @@ export class VentasComponent implements OnInit {
       clienteId: this.clienteSeleccionado?.id,
       nombreCliente: this.nombreCliente,
       tipoCliente: this.tipoCliente,
+      
+      // CAMPOS DE PAGO Y CRÉDITO
+      tipoPago: this.tipoPago,
+      // Si es contado, enviamos el total como inicial para consistencia lógica en backend
+      montoInicial: this.tipoPago === TipoPago.CREDITO ? this.montoInicial : this.total,
+      numeroCuotas: this.tipoPago === TipoPago.CREDITO ? this.numeroCuotas : 0,
+
       metodoPago: this.metodoPago,
+      
+      // ✅ ENVIAR CUENTA BANCARIA ID
+      // Si es pago digital, enviamos lo que seleccionó. Si es Efectivo, enviamos null.
+      cuentaBancariaId: this.esPagoDigital() ? this.cuentaSeleccionadaId : null,
+
       pagoEfectivo: esMixto ? (this.pagoEfectivo || 0) : 0,
       pagoTransferencia: esMixto ? (this.pagoTransferencia || 0) : 0,
       
       moneda: this.moneda,
       tipoCambio: this.tipoCambio,
       
-      // ✅ ENVÍO DE DATOS DE DOCUMENTO
       tipoDocumento: this.tipoDocumento,
       numeroDocumento: this.numeroDocumento, 
 
@@ -428,8 +521,19 @@ export class VentasComponent implements OnInit {
   completarVenta(): void {
     if (this.productosEnVenta.length === 0 || !this.clienteSeleccionado) return;
     
-    // Validación extra: Verificar N° de documento (Opcional, si quieres hacerlo obligatorio)
-    // if (!this.numeroDocumento) { this.mostrarNotificacion('Falta el N° de Documento', 'warning'); return; }
+    // Validación extra para Crédito
+    if (this.tipoPago === TipoPago.CREDITO) {
+      if (this.numeroCuotas <= 0) {
+        this.mostrarNotificacion('Debe haber al menos 1 cuota', 'warning');
+        return;
+      }
+    }
+
+    // ✅ Validación: Si es pago digital, DEBE haber cuenta seleccionada
+    if (this.esPagoDigital() && !this.cuentaSeleccionadaId) {
+        this.mostrarNotificacion('❌ Seleccione una cuenta destino para el pago', 'error');
+        return;
+    }
 
     if (!confirm('¿Estás seguro de emitir esta venta?')) return;
 
@@ -494,10 +598,20 @@ export class VentasComponent implements OnInit {
     this.total = 0;
     this.subtotal = 0;
     this.igv = 0;
+    
+    // Reseteo nuevos campos
+    this.tipoPago = TipoPago.CONTADO;
+    this.montoInicial = 0;
+    this.numeroCuotas = 1;
+    this.saldoPendiente = 0;
+
+    // Reseteo cuenta
+    this.cuentaSeleccionadaId = undefined;
+
     this.pagoEfectivo = 0;
     this.pagoTransferencia = 0;
     this.notas = '';
     this.terminoBusqueda = '';
-    this.numeroDocumento = ''; // Limpiar N° Documento
+    this.numeroDocumento = ''; 
   }
 }

@@ -1,12 +1,13 @@
 export interface Proveedor {
-    id?: number;           // Opcional: Solo viene del backend
+    id?: number;
     nombre: string;
-    ruc: string;
+    ruc: string;    // Guardará RUC (11) o USCC (18)
+    pais: string;   // 'PERÚ' | 'CHINA'
     contacto?: string;
     telefono?: string;
     email?: string;
     direccion?: string;
-    activo?: boolean;
-    fechaCreacion?: string;      // Opcional: Solo lectura
-    fechaActualizacion?: string; // Opcional: Solo lectura
+    activo: boolean;
+    fechaCreacion?: string;
+    fechaActualizacion?: string;
 }

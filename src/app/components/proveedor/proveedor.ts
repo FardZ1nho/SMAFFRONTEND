@@ -1,107 +1,107 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router'; 
+import { CommonModule } from '@angular/common'; // Para *ngIf, *ngFor
+import { FormsModule } from '@angular/forms'; // Para [(ngModel)]
+import { MatIconModule } from '@angular/material/icon'; // Para <mat-icon>
 import { Proveedor } from '../../models/proveedor';
 import { ProveedorService } from '../../services/proveedor-service';
-import { MatIconModule } from '@angular/material/icon';
 
+// 1. IMPORTANTE: Importamos el componente hijo
+// Asegúrate de que la ruta termine en '.component' si así se llama tu archivo
+import { ProveedorFormComponent } from './proveedor-form/proveedor-form'; 
 @Component({
   selector: 'app-proveedor',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, MatIconModule],
+  // 2. IMPORTANTE: El hijo debe estar en los imports para que funcione en el HTML
+  imports: [
+    CommonModule, 
+    FormsModule, 
+    MatIconModule, 
+    ProveedorFormComponent 
+  ],
   templateUrl: './proveedor.html',
   styleUrls: ['./proveedor.css']
 })
 export class ProveedorComponent implements OnInit {
 
+  // Lista de datos
   proveedores: Proveedor[] = [];
-  terminoBusqueda: string = ''; 
-  mensaje: string = '';
-  tipoAlerta: string = ''; 
+  
+  // Filtros
+  terminoBusqueda: string = '';
+
+  // Variables para controlar el MODAL FLOTANTE
+  mostrarModal: boolean = false;
+  idParaEditar: number | null = null; // null = Crear nuevo, número = Editar existente
 
   constructor(
     private proveedorService: ProveedorService,
-    private router: Router,
-    private cd: ChangeDetectorRef 
+    private cd: ChangeDetectorRef // Inyectamos el detector de cambios
   ) { }
 
   ngOnInit(): void {
     this.listarProveedores();
   }
 
-  // --- CARGA DE DATOS ---
+  // --- LÓGICA DE CARGA DE DATOS (FIX: Actualización automática) ---
   listarProveedores(): void {
     this.proveedorService.listar().subscribe({
       next: (data) => {
+        console.log('✅ Datos recibidos:', data);
         this.proveedores = data;
-        this.cd.detectChanges(); // Fuerza la actualización de la tabla
+        
+        // ESTO ARREGLA QUE NO SALGAN HASTA DAR CLIC
+        this.cd.detectChanges(); 
       },
       error: (e) => {
-        console.error(e);
-        this.mostrarAlerta('Error al cargar proveedores', 'danger');
+        console.error('Error al cargar proveedores:', e);
       }
     });
   }
 
-  // --- LÓGICA DE LOS BOTONES DE ACCIÓN ---
+  // --- LÓGICA DEL MODAL (ABRIR Y CERRAR) ---
 
-  // 1. Lógica para el botón "NUEVO"
-  irANuevo(): void {
-    this.router.navigate(['/proveedores/nuevo']);
+  // Se llama desde el botón "Nuevo" (sin ID) o el botón "Editar" (con ID)
+  abrirModal(id: number | null = null): void {
+    this.idParaEditar = id;
+    this.mostrarModal = true;
   }
 
-  // 2. Lógica para el botón "EDITAR" (El lápiz)
-  irAEditar(id: number): void {
-    if (id) {
-      // Esto navega a la ruta que configuramos: providers/editar/5
-      this.router.navigate(['/proveedores/editar', id]);
+  // Se llama cuando el hijo emite el evento (onCerrar)
+  cerrarModal(seGuardoCambios: boolean): void {
+    this.mostrarModal = false; // Oculta el modal
+    this.idParaEditar = null;  // Resetea el ID
+    
+    // Si el formulario nos dice "true" (se guardó algo), recargamos la lista
+    if (seGuardoCambios) {
+      this.listarProveedores();
     }
   }
 
-  // 3. Lógica para el botón "ELIMINAR" (La basura)
+  // --- OTRAS ACCIONES ---
+
   eliminar(id: number): void {
-    // Confirmación simple (puedes cambiarlo por SweetAlert si prefieres)
     if (confirm('¿Estás seguro de que deseas eliminar este proveedor?')) {
-      
       this.proveedorService.eliminar(id).subscribe({
         next: () => {
-          // ÉXITO: Eliminamos el proveedor de la lista visualmente
-          this.proveedores = this.proveedores.filter(p => p.id !== id);
-          this.cd.detectChanges(); // Actualizamos la tabla
-          this.mostrarAlerta('Proveedor eliminado correctamente', 'success');
+          this.listarProveedores(); // Recargamos la lista tras eliminar
         },
-        error: (e) => {
-          console.error(e);
-          this.mostrarAlerta('No se pudo eliminar el proveedor', 'danger');
-        }
+        error: (e) => console.error('Error al eliminar:', e)
       });
     }
   }
 
-  // --- FILTROS Y BÚSQUEDA ---
+  // --- FILTRO DE BÚSQUEDA ---
   get proveedoresFiltrados(): Proveedor[] {
-    if (!this.proveedores) return [];
     if (!this.terminoBusqueda) return this.proveedores;
-
+    
     const termino = this.terminoBusqueda.toLowerCase().trim();
-
+    
     return this.proveedores.filter(p => {
       const nombre = p.nombre ? p.nombre.toLowerCase() : '';
-      const ruc = p.ruc ? p.ruc : '';
-      const email = p.email ? p.email.toLowerCase() : '';
-      const telefono = p.telefono ? p.telefono : '';
-
-      return nombre.includes(termino) || 
-             ruc.includes(termino) || 
-             email.includes(termino) ||
-             telefono.includes(termino);
+      const ruc = p.ruc ? p.ruc.toLowerCase() : '';
+      const pais = p.pais ? p.pais.toLowerCase() : ''; // Agregado: búsqueda por país
+      
+      return nombre.includes(termino) || ruc.includes(termino) || pais.includes(termino);
     });
-  }
-
-  mostrarAlerta(msg: string, tipo: string): void {
-    this.mensaje = msg;
-    this.tipoAlerta = tipo;
-    setTimeout(() => { this.mensaje = ''; }, 3000);
   }
 }

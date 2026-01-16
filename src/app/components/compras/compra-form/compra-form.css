@@ -1,29 +1,28 @@
 /* ================= VARIABLES GLOBALES ================= */
 :host {
-  --primary: #2563eb;       /* Azul Principal */
-  --bg-body: #f5f5f5;       /* Fondo Gris Claro */
-  --text-main: #1e293b;     /* Texto Oscuro */
-  --text-sub: #64748b;      /* Texto Secundario */
-  --border: #e2e8f0;        /* Bordes */
+  --primary: #2563eb;       
+  --bg-body: #f5f5f5;       
+  --text-main: #1e293b;     
+  --text-sub: #64748b;      
+  --border: #e2e8f0;        
   --white: #ffffff;
-  --danger: #dc2626;        /* Color Rojo para eliminar */
-  --success-bg: #eff6ff;    /* Fondo azul claro para botones de acción */
-  --success-text: #1d4ed8;  /* Texto azul fuerte para botones de acción */
+  --danger: #dc2626;        
+  --success-bg: #eff6ff;    
+  --success-text: #1d4ed8;  
 }
 
-/* ================= CONTENEDOR PRINCIPAL (PANTALLA COMPLETA) ================= */
+/* ================= CONTENEDOR PRINCIPAL ================= */
 .compra-container {
   padding: 24px;
   background-color: var(--bg-body);
   min-height: 100vh;
   font-family: 'Roboto', 'Segoe UI', sans-serif;
-  /* CAMBIO CLAVE: Ocupar todo el ancho disponible */
   width: 100%;
   max-width: none; 
   box-sizing: border-box;
 }
 
-/* ================= HEADER SUPERIOR (TÍTULO Y BOTÓN ATRÁS) ================= */
+/* ================= HEADER SUPERIOR ================= */
 .header-action-row {
   display: flex;
   align-items: center;
@@ -76,7 +75,6 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-/* Título estándar de sección (sin botón al lado) */
 .card h3 {
   font-size: 14px;
   font-weight: 700;
@@ -90,24 +88,21 @@
   align-items: center;
 }
 
-/* ================= NUEVO: ENCABEZADO DE SECCIÓN CON BOTÓN ================= */
 .section-header-with-action {
   display: flex;
   align-items: center;
-  justify-content: space-between; /* Título a la izq, Botón a la der */
+  justify-content: space-between; 
   border-bottom: 1px solid #f1f5f9;
   margin: 0 0 20px 0;
   padding-bottom: 12px;
 }
 
-/* Reseteamos el estilo del h3 cuando está dentro del contenedor flexible */
 .section-header-with-action h3 {
   margin: 0;
   padding-bottom: 0;
   border-bottom: none;
 }
 
-/* Estilo del botón pequeño "Nuevo Producto" */
 .btn-tiny-action {
   display: flex;
   align-items: center;
@@ -124,7 +119,7 @@
 }
 
 .btn-tiny-action:hover {
-  background-color: #dbeafe; /* Azul un poco más oscuro */
+  background-color: #dbeafe; 
   color: #1e40af;
 }
 
@@ -134,34 +129,13 @@
   height: 18px;
 }
 
-/* ================= GRID SISTEMA (COLUMNAS) ================= */
-.config-grid-rows {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
+/* ================= GRID SISTEMA ================= */
+.config-grid-rows { display: flex; flex-direction: column; gap: 20px; }
+.config-row { display: grid; gap: 20px; }
+.four-cols { grid-template-columns: repeat(4, 1fr); }
+.custom-grid-2 { grid-template-columns: 2fr 1fr 1fr; }
 
-.config-row {
-  display: grid;
-  gap: 20px;
-}
-
-/* Distribución de 4 columnas iguales */
-.four-cols {
-  grid-template-columns: repeat(4, 1fr);
-}
-
-/* Distribución especial: 50% - 25% - 25% */
-.custom-grid-2 {
-  grid-template-columns: 2fr 1fr 1fr;
-}
-
-.grid-input {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  width: 100%;
-}
+.grid-input { display: flex; flex-direction: column; gap: 6px; width: 100%; }
 
 .section-title {
   font-size: 12px;
@@ -170,280 +144,142 @@
   text-transform: uppercase;
 }
 
-/* ================= INPUTS SMAF (ESTILO GENERAL) ================= */
+/* ================= ✅ BOTÓN DE ACCIÓN TIPO LINK (NUEVO) ================= */
+.label-with-action {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.label-with-action .section-title {
+  margin-bottom: 0;
+}
+
+/* Botón de Texto Elegante */
+.btn-text-action {
+  background: transparent;
+  border: none;
+  color: var(--primary); /* Azul corporativo */
+  font-size: 12px;       /* Tamaño legible */
+  font-weight: 600;      /* Un poco negrita */
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;              /* Espacio entre icono y texto */
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.btn-text-action:hover {
+  background-color: #eff6ff; /* Fondo muy suave al pasar el mouse */
+  text-decoration: none;
+}
+
+.btn-text-action mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  font-weight: bold;
+}
+
+/* ================= INPUTS SMAF ================= */
 .form-control-smaf {
-  width: 100%;
-  height: 42px;
-  padding: 0 12px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  font-size: 14px;
-  background-color: var(--white);
-  color: var(--text-main);
-  box-sizing: border-box;
-  transition: all 0.2s;
+  width: 100%; height: 42px; padding: 0 12px;
+  border: 1px solid var(--border); border-radius: 8px;
+  font-size: 14px; background-color: var(--white); color: var(--text-main);
+  box-sizing: border-box; transition: all 0.2s;
 }
 
 .form-control-smaf:focus {
-  outline: none;
-  border-color: var(--primary);
+  outline: none; border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
-/* Área de texto */
-textarea.form-control-smaf {
-  height: auto;
-  padding: 12px;
-  font-family: inherit;
-  resize: vertical;
-}
+textarea.form-control-smaf { height: auto; padding: 12px; font-family: inherit; resize: vertical; }
+.full-width { width: 100%; }
+.sm-input { height: 32px; padding: 0 8px; font-size: 13px; }
 
-/* Utilidad ancho completo */
-.full-width {
-  width: 100%;
-}
-
-/* Input pequeño para usar dentro de la tabla */
-.sm-input {
-  height: 32px;
-  padding: 0 8px;
-  font-size: 13px;
-}
-
-/* ================= BUSCADOR DE PRODUCTOS (GRANDE) ================= */
-.search-section {
-  position: relative;
-  max-width: 800px; /* Un poco más ancho para pantallas grandes */
-  margin-bottom: 24px;
-}
-
-.search-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
+/* ================= BUSCADOR DE PRODUCTOS ================= */
+.search-section { position: relative; max-width: 800px; margin-bottom: 24px; }
+.search-wrapper { position: relative; display: flex; align-items: center; }
 
 .search-input-lg {
-  width: 100%;
-  height: 48px;
-  padding-left: 44px;
-  padding-right: 16px;
-  border: 2px solid var(--border);
-  border-radius: 10px;
-  font-size: 15px;
-  transition: border-color 0.2s;
-  box-sizing: border-box;
+  width: 100%; height: 48px; padding-left: 44px; padding-right: 16px;
+  border: 2px solid var(--border); border-radius: 10px; font-size: 15px;
+  transition: border-color 0.2s; box-sizing: border-box;
 }
 
-.search-input-lg:focus {
-  outline: none;
-  border-color: var(--primary);
-}
+.search-input-lg:focus { outline: none; border-color: var(--primary); }
+.search-icon { position: absolute; left: 12px; color: var(--text-sub); pointer-events: none; }
 
-.search-icon {
-  position: absolute;
-  left: 12px;
-  color: var(--text-sub);
-  pointer-events: none;
-}
-
-/* Lista desplegable de resultados */
 .search-results {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background: white;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  margin-top: 4px;
-  padding: 0;
-  list-style: none;
-  z-index: 100;
-  max-height: 250px;
-  overflow-y: auto;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  position: absolute; top: 100%; left: 0; right: 0;
+  background: white; border: 1px solid var(--border); border-radius: 8px;
+  margin-top: 4px; padding: 0; list-style: none; z-index: 100;
+  max-height: 250px; overflow-y: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
-.search-results li {
-  padding: 10px 16px;
-  border-bottom: 1px solid #f1f5f9;
-  cursor: pointer;
-}
-
-.search-results li:hover {
-  background-color: #f8fafc;
-}
-
-.result-name {
-  font-weight: 600;
-  color: var(--text-main);
-  font-size: 14px;
-}
-
-.result-code {
-  font-size: 12px;
-  color: var(--text-sub);
-}
+.search-results li { padding: 10px 16px; border-bottom: 1px solid #f1f5f9; cursor: pointer; }
+.search-results li:hover { background-color: #f8fafc; }
+.result-name { font-weight: 600; color: var(--text-main); font-size: 14px; }
+.result-code { font-size: 12px; color: var(--text-sub); }
 
 /* ================= TABLA DE DETALLES ================= */
-.table-container {
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  overflow: hidden; /* Para bordes redondeados */
-}
-
-.custom-table {
-  width: 100%;
-  border-collapse: collapse;
-}
+.table-container { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.custom-table { width: 100%; border-collapse: collapse; }
 
 .custom-table th {
-  background: #f8fafc;
-  color: var(--text-sub);
-  font-weight: 700;
-  font-size: 11px;
-  text-transform: uppercase;
-  padding: 12px 16px;
-  text-align: left;
-  border-bottom: 1px solid var(--border);
+  background: #f8fafc; color: var(--text-sub); font-weight: 700;
+  font-size: 11px; text-transform: uppercase; padding: 12px 16px;
+  text-align: left; border-bottom: 1px solid var(--border);
 }
 
 .custom-table td {
-  padding: 8px 16px;
-  border-bottom: 1px solid var(--border);
-  vertical-align: middle;
-  font-size: 14px;
-  color: var(--text-main);
+  padding: 8px 16px; border-bottom: 1px solid var(--border);
+  vertical-align: middle; font-size: 14px; color: var(--text-main);
 }
 
 .fw-bold { font-weight: 600; }
 .text-sub { color: var(--text-sub); font-size: 12px; }
 
-/* Botón Eliminar Fila */
 .btn-delete {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--text-sub);
-  transition: color 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px;
+  background: none; border: none; cursor: pointer; color: var(--text-sub);
+  transition: color 0.2s; display: flex; align-items: center;
+  justify-content: center; padding: 4px;
 }
 
-.btn-delete:hover {
-  color: var(--danger);
-  background-color: #fef2f2;
-  border-radius: 4px;
-}
+.btn-delete:hover { color: var(--danger); background-color: #fef2f2; border-radius: 4px; }
+.btn-delete mat-icon { font-size: 20px; width: 20px; height: 20px; }
 
-.btn-delete mat-icon {
-  font-size: 20px;
-  width: 20px;
-  height: 20px;
-}
+.empty-state { text-align: center; padding: 40px 20px; color: var(--text-sub); }
+.empty-icon { font-size: 32px; width: 32px; height: 32px; margin-bottom: 8px; opacity: 0.5; }
 
-/* Estado Vacío */
-.empty-state {
-  text-align: center;
-  padding: 40px 20px;
-  color: var(--text-sub);
-}
-
-.empty-icon {
-  font-size: 32px;
-  width: 32px;
-  height: 32px;
-  margin-bottom: 8px;
-  opacity: 0.5;
-}
-
-/* Fila de Totales */
-.total-row td {
-  background-color: #f8fafc;
-  border-top: 2px solid var(--border);
-  padding: 16px;
-}
-
-.label-total {
-  font-weight: 700;
-  font-size: 14px;
-  color: var(--text-main);
-}
-
-.amount-total {
-  font-weight: 700;
-  font-size: 18px;
-  color: var(--primary);
-}
+.total-row td { background-color: #f8fafc; border-top: 2px solid var(--border); padding: 16px; }
+.label-total { font-weight: 700; font-size: 14px; color: var(--text-main); }
+.amount-total { font-weight: 700; font-size: 18px; color: var(--primary); }
 
 /* ================= BOTONES DE ACCIÓN FINAL ================= */
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-top: 24px;
-}
+.form-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; }
 
 .btn-completar, .btn-borrador {
-  height: 48px;
-  padding: 0 24px;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.2s;
+  height: 48px; padding: 0 24px; border-radius: 8px;
+  font-weight: 600; font-size: 14px; cursor: pointer;
+  display: flex; align-items: center; gap: 8px; transition: all 0.2s;
 }
 
-.btn-completar {
-  background-color: var(--primary);
-  color: white;
-  border: none;
-}
+.btn-completar { background-color: var(--primary); color: white; border: none; }
+.btn-completar:hover { background-color: #1d4ed8; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3); }
 
-.btn-completar:hover {
-  background-color: #1d4ed8;
-  box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3);
-}
-
-.btn-borrador {
-  background-color: white;
-  border: 1px solid var(--border);
-  color: var(--text-sub);
-}
-
-.btn-borrador:hover {
-  background-color: #f1f5f9;
-  color: var(--text-main);
-}
+.btn-borrador { background-color: white; border: 1px solid var(--border); color: var(--text-sub); }
+.btn-borrador:hover { background-color: #f1f5f9; color: var(--text-main); }
 
 /* ================= RESPONSIVE ================= */
-@media (max-width: 900px) {
-  .four-cols, .custom-grid-2 {
-    grid-template-columns: 1fr 1fr; /* 2 columnas en tablets */
-  }
-}
-
+@media (max-width: 900px) { .four-cols, .custom-grid-2 { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 600px) {
-  .four-cols, .custom-grid-2 {
-    grid-template-columns: 1fr; /* 1 columna en móviles */
-  }
-  
-  .table-container {
-    overflow-x: auto; /* Scroll horizontal si la tabla no cabe */
-  }
-  
-  .form-actions {
-    flex-direction: column;
-  }
-  
-  .btn-completar, .btn-borrador {
-    width: 100%;
-    justify-content: center;
-  }
+  .four-cols, .custom-grid-2 { grid-template-columns: 1fr; }
+  .table-container { overflow-x: auto; }
+  .form-actions { flex-direction: column; }
+  .btn-completar, .btn-borrador { width: 100%; justify-content: center; }
 }

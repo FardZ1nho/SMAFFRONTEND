@@ -1,0 +1,51 @@
+<div class="container">
+  <div class="header">
+    <h1>Mis Cuentas y Billeteras</h1>
+    <button mat-flat-button color="primary" (click)="abrirModal()">
+      <mat-icon>add</mat-icon> Nueva Cuenta
+    </button>
+  </div>
+
+  <div class="cuentas-grid">
+    <mat-card *ngFor="let c of cuentas" class="cuenta-card" [ngClass]="getColorClass(c.banco)">
+      <div class="card-top">
+        <div class="banco-pill">{{ c.banco }}</div>
+        <button mat-icon-button [matMenuTriggerFor]="menu" class="menu-btn">
+          <mat-icon>more_vert</mat-icon>
+        </button>
+        <mat-menu #menu="matMenu">
+          <button mat-menu-item (click)="abrirModal(c)">
+            <mat-icon>edit</mat-icon> Editar
+          </button>
+          <button mat-menu-item (click)="eliminar(c.id!)">
+            <mat-icon>delete</mat-icon> Eliminar
+          </button>
+        </mat-menu>
+      </div>
+
+     <div class="card-body">
+        <h2 class="nombre-cuenta">{{ c.nombre }}</h2>
+        
+        <div class="numero">{{ c.numero }}</div>
+        
+        <div class="cci-row" *ngIf="c.cci">
+          <span class="cci-label">CCI:</span> {{ c.cci }}
+        </div>
+
+        <div class="titular" *ngIf="c.titular">{{ c.titular }}</div>
+      </div>
+
+      <div class="card-footer">
+        <span class="moneda-badge">{{ c.moneda === 'PEN' ? 'SOLES' : 'DÓLARES' }}</span>
+        <span class="estado-badge" [class.inactiva]="!c.activa">
+          {{ c.activa ? 'ACTIVA' : 'INACTIVA' }}
+        </span>
+      </div>
+    </mat-card>
+
+    <div class="empty-state" *ngIf="cuentas.length === 0">
+      <mat-icon>credit_card_off</mat-icon>
+      <p>No tienes cuentas registradas.</p>
+    </div>
+  </div>
+</div>

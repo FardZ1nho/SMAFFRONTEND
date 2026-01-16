@@ -1,116 +1,129 @@
-<div class="ventas-container">
-  
-  <div class="header-action-row">
-    <button class="btn-back" (click)="cancelar()" title="Volver a la lista">
-      <mat-icon>arrow_back</mat-icon>
-    </button>
-    
-    <div class="header-content">
-      <h1>{{ titulo }}</h1>
-      <h3>{{ esEdicion ? 'Actualice la información del proveedor seleccionado' : 'Complete el formulario para registrar un nuevo proveedor en el sistema' }}</h3>
-    </div>
+<div class="modal-header">
+  <div class="header-text">
+    <h2>{{ titulo }}</h2>
+    <p>Complete la información del proveedor {{ proveedor.pais === 'CHINA' ? 'Internacional' : 'Nacional' }}</p>
   </div>
-  <form (ngSubmit)="guardar()" #f="ngForm" class="content-wrapper">
+  <button class="btn-close-x" (click)="cancelar()" title="Cerrar">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<div class="modal-body">
+  <form (ngSubmit)="guardar()" #f="ngForm">
     
-    <div class="main-column">
+    <div class="form-section">
+      <h4 class="section-divider">
+        <mat-icon class="tiny-icon">public</mat-icon> Origen e Identificación
+      </h4>
       
-      <div class="card">
-        <h3>
-          <mat-icon style="vertical-align: middle; margin-right: 8px;">badge</mat-icon> 
-          Información Fiscal
-        </h3>
-        
-        <div class="config-grid-rows">
-          
-          <div class="config-row">
-            <div class="grid-input">
-              <label class="section-title">RUC / Documento <span style="color:red">*</span></label>
-              <input type="text" class="form-control-smaf full-width" 
-                     name="ruc" [(ngModel)]="proveedor.ruc" 
-                     placeholder="Ej: 20601234567" maxlength="11" required>
-            </div>
-            
-            <div class="grid-input">
-              <label class="section-title">Razón Social / Nombre <span style="color:red">*</span></label>
-              <input type="text" class="form-control-smaf full-width" 
-                     name="nombre" [(ngModel)]="proveedor.nombre" 
-                     placeholder="Ej: Distribuidora del Norte S.A.C." required>
-            </div>
+      <div class="form-row">
+        <div class="form-group col-4">
+          <label class="section-title">País de Origen</label>
+          <div class="input-box">
+            <mat-icon class="input-icon">flag</mat-icon>
+            <select class="form-control-smaf no-border" name="pais" [(ngModel)]="proveedor.pais">
+              <option value="PERÚ">🇵🇪 PERÚ</option>
+              <option value="CHINA">🇨🇳 CHINA</option>
+            </select>
           </div>
+        </div>
 
-          <div class="grid-input full-width">
-            <label class="section-title">Dirección Fiscal</label>
-            <input type="text" class="form-control-smaf full-width" 
+        <div class="form-group col-8">
+          <label class="section-title">
+            {{ proveedor.pais === 'PERÚ' ? 'RUC (11 Dígitos)' : 'USCC (18 Caracteres)' }} <span style="color:red">*</span>
+          </label>
+          <div class="input-box">
+            <mat-icon class="input-icon">badge</mat-icon>
+            <input type="text" class="form-control-smaf no-border" 
+                   name="ruc" [(ngModel)]="proveedor.ruc" 
+                   [placeholder]="proveedor.pais === 'PERÚ' ? 'Ej: 20601234567' : 'Ej: 913101...'"
+                   [maxlength]="proveedor.pais === 'PERÚ' ? 11 : 18" required>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row mt-3">
+        <div class="form-group col-12">
+          <label class="section-title">Razón Social / Nombre <span style="color:red">*</span></label>
+          <div class="input-box">
+            <mat-icon class="input-icon">business</mat-icon>
+            <input type="text" class="form-control-smaf no-border" 
+                   name="nombre" [(ngModel)]="proveedor.nombre" 
+                   placeholder="Nombre de la empresa" required>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row mt-3">
+        <div class="form-group col-12">
+          <label class="section-title">Dirección Fiscal</label>
+          <div class="input-box">
+            <mat-icon class="input-icon">place</mat-icon>
+            <input type="text" class="form-control-smaf no-border" 
                    name="direccion" [(ngModel)]="proveedor.direccion" 
-                   placeholder="Av. Principal 123, Distrito, Ciudad">
-          </div>
-
-        </div>
-      </div>
-
-      <div class="card">
-        <h3>
-          <mat-icon style="vertical-align: middle; margin-right: 8px;">contact_phone</mat-icon> 
-          Datos de Contacto
-        </h3>
-        
-        <div class="config-grid-rows">
-          <div class="config-row" style="grid-template-columns: 1fr 1fr 1fr;"> 
-            
-            <div class="grid-input">
-              <label class="section-title">Persona de Contacto</label>
-              <input type="text" class="form-control-smaf full-width" 
-                     name="contacto" [(ngModel)]="proveedor.contacto" 
-                     placeholder="Ej: Juan Pérez">
-            </div>
-
-            <div class="grid-input">
-              <label class="section-title">Teléfono / Celular</label>
-              <input type="text" class="form-control-smaf full-width" 
-                     name="telefono" [(ngModel)]="proveedor.telefono" 
-                     placeholder="999 000 000">
-            </div>
-
-            <div class="grid-input">
-              <label class="section-title">Correo Electrónico</label>
-              <input type="email" class="form-control-smaf full-width" 
-                     name="email" [(ngModel)]="proveedor.email" 
-                     placeholder="ventas@empresa.com">
-            </div>
-
+                   placeholder="Dirección completa">
           </div>
         </div>
       </div>
-
     </div>
 
-    <div class="side-column">
+    <div class="form-section mt-4">
+      <h4 class="section-divider">
+        <mat-icon class="tiny-icon">contact_phone</mat-icon> Contacto y Estado
+      </h4>
       
-      <div class="card resumen-section">
-        <h3>Estado y Acciones</h3>
-        
-        <div class="grid-input mb-4">
-          <label class="section-title">Estado del Proveedor</label>
-          <select class="form-control-smaf full-width" name="activo" [(ngModel)]="proveedor.activo">
-            <option [ngValue]="true">🟢 Activo</option>
-            <option [ngValue]="false">🔴 Inactivo</option>
-          </select>
+      <div class="form-row">
+        <div class="form-group col-6">
+          <label class="section-title">Persona de Contacto</label>
+          <div class="input-box">
+            <mat-icon class="input-icon">person</mat-icon>
+            <input type="text" class="form-control-smaf no-border" 
+                   name="contacto" [(ngModel)]="proveedor.contacto" 
+                   placeholder="Ej: Juan Pérez">
+          </div>
         </div>
-
-        <div class="divider"></div>
-
-        <div class="action-buttons">
-          <button type="button" class="btn-borrador full-width" (click)="cancelar()">
-            Cancelar / Volver
-          </button>
-          
-          <button type="submit" class="btn-completar full-width">
-            <mat-icon style="vertical-align: middle; font-size: 18px;">save</mat-icon> 
-            {{ btnTexto }}
-          </button>
+        <div class="form-group col-6">
+          <label class="section-title">Teléfono / Celular</label>
+          <div class="input-box">
+            <mat-icon class="input-icon">phone</mat-icon>
+            <input type="text" class="form-control-smaf no-border" 
+                   name="telefono" [(ngModel)]="proveedor.telefono" 
+                   placeholder="999 000 000">
+          </div>
         </div>
-
       </div>
+
+      <div class="form-row mt-3">
+        <div class="form-group col-8">
+          <label class="section-title">Correo Electrónico</label>
+          <div class="input-box">
+            <mat-icon class="input-icon">email</mat-icon>
+            <input type="email" class="form-control-smaf no-border" 
+                   name="email" [(ngModel)]="proveedor.email" 
+                   placeholder="ventas@empresa.com">
+          </div>
+        </div>
+
+        <div class="form-group col-4">
+          <label class="section-title">Estado</label>
+          <div class="input-box">
+             <mat-icon class="input-icon" [style.color]="proveedor.activo ? '#22c55e' : '#ef4444'">circle</mat-icon>
+             <select class="form-control-smaf no-border" name="activo" [(ngModel)]="proveedor.activo">
+                <option [ngValue]="true">Activo</option>
+                <option [ngValue]="false">Inactivo</option>
+             </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="btn-borrador" (click)="cancelar()">
+        Cancelar
+      </button>
+      <button type="submit" class="btn-completar">
+        <mat-icon>save</mat-icon> {{ btnTexto }}
+      </button>
     </div>
 
   </form>

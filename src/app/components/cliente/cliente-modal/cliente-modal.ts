@@ -131,7 +131,7 @@ export class ClienteModalComponent implements OnInit {
     tipoDocumentoControl?.updateValueAndValidity({ emitEvent: false });
   }
 
-  actualizarValidacionesPorDocumento(tipoDoc: string): void {
+actualizarValidacionesPorDocumento(tipoDoc: string): void {
     const numeroDocControl = this.clienteForm.get('numeroDocumento');
     
     if (tipoDoc === 'DNI') {
@@ -142,7 +142,9 @@ export class ClienteModalComponent implements OnInit {
     } else if (tipoDoc === 'RUC') {
       numeroDocControl?.setValidators([
         Validators.required,
-        Validators.pattern(/^(10|20)\d{9}$/)
+        // ANTES: /^(10|20)\d{9}$/
+        // AHORA: Agregamos 15 y 17 a la lista de prefijos permitidos
+        Validators.pattern(/^(10|15|17|20)\d{9}$/)
       ]);
     } else {
       numeroDocControl?.setValidators([Validators.required]);
@@ -177,7 +179,7 @@ export class ClienteModalComponent implements OnInit {
     return this.clienteForm.get('tipoCliente')?.value === 'EMPRESA';
   }
 
-  getErrorDocumento(): string {
+getErrorDocumento(): string {
     const control = this.clienteForm.get('numeroDocumento');
     const tipoDoc = this.clienteForm.get('tipoDocumento')?.value;
 
@@ -189,7 +191,8 @@ export class ClienteModalComponent implements OnInit {
         return 'El DNI debe tener exactamente 8 dígitos';
       }
       if (tipoDoc === 'RUC') {
-        return 'El RUC debe tener 11 dígitos y comenzar con 10 o 20';
+        // Actualizamos el texto para reflejar los nuevos cambios
+        return 'El RUC debe tener 11 dígitos y comenzar con 10, 15, 17 o 20';
       }
     }
     return '';

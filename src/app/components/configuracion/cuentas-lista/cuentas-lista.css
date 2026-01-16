@@ -1,0 +1,69 @@
+.container { padding: 20px; }
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+
+.cuentas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+/* Estilo Base de la Tarjeta */
+.cuenta-card {
+  border-radius: 16px;
+  color: white;
+  padding: 20px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s;
+}
+.cuenta-card:hover { transform: translateY(-3px); }
+
+/* Colores según Banco */
+.card-yape { background: linear-gradient(135deg, #742284 0%, #a73ebf 100%); } /* Morado */
+.card-plin { background: linear-gradient(135deg, #00a0e9 0%, #00c4cc 100%); } /* Celeste */
+.card-bcp { background: linear-gradient(135deg, #002a8d 0%, #0045d6 100%); } /* Azul BCP */
+.card-interbank { background: linear-gradient(135deg, #009c3b 0%, #00c74b 100%); } /* Verde */
+.card-bbva { background: linear-gradient(135deg, #004481 0%, #1973b8 100%); } /* Azul BBVA */
+.card-default { background: linear-gradient(135deg, #334155 0%, #475569 100%); } /* Gris */
+
+/* Diseño Interno */
+.card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+.banco-pill {
+  background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px;
+  font-size: 12px; font-weight: bold; letter-spacing: 1px;
+}
+.menu-btn { color: white; margin-top: -10px; margin-right: -10px; }
+
+.card-body { margin-bottom: 20px; }
+.nombre-cuenta { margin: 0; font-size: 18px; font-weight: 500; opacity: 0.9; }
+.numero { font-size: 24px; font-weight: bold; letter-spacing: 2px; margin: 10px 0; font-family: monospace; }
+.titular { font-size: 12px; opacity: 0.8; text-transform: uppercase; }
+
+.card-footer { display: flex; justify-content: space-between; align-items: center; }
+.moneda-badge { font-size: 12px; font-weight: bold; opacity: 0.8; }
+.estado-badge {
+  font-size: 10px; padding: 2px 8px; border-radius: 4px; background: rgba(255,255,255,0.3);
+}
+.estado-badge.inactiva { background: #ef4444; color: white; }
+.cci-row {
+  font-size: 13px;
+  opacity: 0.9;
+  margin-top: -5px; /* Pegadito al número principal */
+  margin-bottom: 10px;
+  font-family: monospace;
+  background: rgba(0,0,0,0.2); /* Un fondo oscurito sutil */
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.cci-label {
+  font-weight: bold;
+  opacity: 0.7;
+  margin-right: 4px;
+}
+.empty-state {
+  grid-column: 1 / -1; text-align: center; padding: 40px; color: #64748b;
+}
+.empty-state mat-icon { font-size: 48px; width: 48px; height: 48px; margin-bottom: 10px; }

@@ -1,0 +1,65 @@
+.modal-title { display: flex; align-items: center; gap: 10px; color: #1e293b; }
+
+.resumen-header {
+  display: flex; justify-content: space-around; padding: 15px 0;
+  background: #f8fafc; border-radius: 8px; margin-bottom: 20px;
+}
+.dato { display: flex; flex-direction: column; align-items: center; }
+.dato small { color: #64748b; font-weight: 500; text-transform: uppercase; font-size: 11px; }
+.monto-total { font-size: 18px; font-weight: bold; color: #334155; }
+.monto-deuda { font-size: 18px; font-weight: bold; color: #dc2626; }
+
+.lista-cuotas { margin-top: 20px; max-height: 250px; overflow-y: auto; }
+.lista-cuotas h3 { font-size: 14px; color: #64748b; margin-bottom: 10px; }
+
+/* ITEM DE CUOTA */
+.cuota-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 8px;
+  cursor: pointer; transition: all 0.2s; position: relative;
+}
+
+.cuota-item:hover { background-color: #f1f5f9; }
+.cuota-item.seleccionada { border-color: #3b82f6; background-color: #eff6ff; box-shadow: 0 0 0 2px #3b82f6 inset; }
+
+/* ESTADOS */
+.cuota-item.PAGADO { background-color: #f0fdf4; border-color: #bbf7d0; opacity: 0.8; cursor: default; }
+.cuota-item.PAGADO .badge-numero { background: #22c55e; }
+.cuota-item.PAGADO .status-text { color: #15803d; }
+
+.cuota-item.PENDIENTE { border-left: 4px solid #ef4444; }
+.cuota-item.PENDIENTE .badge-numero { background: #ef4444; }
+.cuota-item.PENDIENTE .status-text { color: #ef4444; }
+
+.cuota-item.PARCIAL { border-left: 4px solid #f59e0b; }
+.cuota-item.PARCIAL .badge-numero { background: #f59e0b; }
+.cuota-item.PARCIAL .status-text { color: #d97706; }
+
+/* DETALLES */
+.cuota-left { display: flex; align-items: center; gap: 12px; }
+.badge-numero {
+  width: 32px; height: 32px; border-radius: 50%; color: white;
+  display: flex; align-items: center; justify-content: center; font-weight: bold;
+}
+.info { display: flex; flex-direction: column; }
+.label-cuota { font-weight: 600; color: #334155; }
+.status-text { font-size: 11px; font-weight: bold; }
+
+.cuota-right { text-align: right; margin-right: 10px; }
+.monto-cuota { font-weight: bold; color: #1e293b; }
+.monto-pendiente { font-size: 11px; color: #ef4444; }
+
+.icon-check { color: #22c55e; }
+.icon-pay { color: #94a3b8; }
+
+/* AREA DE PAGO ABAJO */
+.area-pago {
+  margin-top: 20px; padding: 15px; background: #fff; 
+  border-top: 2px dashed #e2e8f0;
+}
+.pago-header { margin-bottom: 15px; font-weight: bold; color: #3b82f6; text-align: center; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.btn-pagar { width: 100%; margin-top: 10px; height: 45px; font-size: 16px; }
+
+.animate-up { animation: slideUp 0.3s ease-out; }
+@keyframes slideUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }

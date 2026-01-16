@@ -1,83 +1,119 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core'; // Agregamos ChangeDetectorRef
+import { 
+  Component, 
+  OnInit, 
+  OnChanges, 
+  SimpleChanges, 
+  Input, 
+  Output, 
+  EventEmitter, 
+  ChangeDetectorRef, 
+  ChangeDetectionStrategy // 1. Importante para rendimiento
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, ActivatedRoute, RouterModule } from '@angular/router'; // Importante: ActivatedRoute
+import { MatIconModule } from '@angular/material/icon';
+
 import { Proveedor } from '../../../models/proveedor';
 import { ProveedorService } from '../../../services/proveedor-service';
-import { MatIconModule } from '@angular/material/icon'; // Para los iconos
 
 @Component({
   selector: 'app-proveedor-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, MatIconModule],
+  imports: [CommonModule, FormsModule, MatIconModule],
   templateUrl: './proveedor-form.html',
-  styleUrls: ['./proveedor-form.css']
+  styleUrls: ['./proveedor-form.css'],
+  // ⚡ 2. ESTRATEGIA ONPUSH: Angular no "escanea" esto a menos que haya cambios reales
+  changeDetection: ChangeDetectionStrategy.OnPush 
 })
-export class ProveedorFormComponent implements OnInit {
+export class ProveedorFormComponent implements OnInit, OnChanges {
 
-  // Objeto inicial vacío
+  @Input() idProveedor: number | null = null;
+  @Output() onCerrar = new EventEmitter<boolean>();
+
   proveedor: Proveedor = {
-    nombre: '',
-    ruc: '',
-    contacto: '',
-    telefono: '',
-    email: '',
-    direccion: '',
-    activo: true
+    nombre: '', ruc: '', pais: 'PERÚ', 
+    contacto: '', telefono: '', email: '', direccion: '', activo: true
   };
 
-  esEdicion: boolean = false;
   titulo: string = 'Registrar Nuevo Proveedor';
   btnTexto: string = 'Guardar Proveedor';
+  isLoading: boolean = false; // Para evitar doble clic
 
   constructor(
     private proveedorService: ProveedorService,
-    private router: Router,
-    private activatedRoute: ActivatedRoute, // Para leer la URL
-    private cd: ChangeDetectorRef // Para forzar actualización visual
+    private cd: ChangeDetectorRef // 3. Necesario para actualizar la vista manualmente
   ) {}
 
   ngOnInit(): void {
-    // Escuchamos la URL para ver si hay un ID (ej: /editar/5)
-    this.activatedRoute.params.subscribe(params => {
-      const id = params['id'];
-      
-      if (id) {
-        console.log('🔄 Modo Edición detectado. ID:', id);
-        this.esEdicion = true;
-        this.titulo = 'Editar Información del Proveedor';
-        this.btnTexto = 'Actualizar Datos';
-        
-        // Llamamos al backend para traer los datos
-        this.cargarProveedor(id);
-      } else {
-        console.log('✨ Modo Creación (Nuevo)');
-      }
-    });
+    this.verificarEstado();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['idProveedor']) {
+      this.verificarEstado();
+    }
+  }
+
+  verificarEstado(): void {
+    if (this.idProveedor) {
+      this.titulo = 'Editar Información del Proveedor';
+      this.btnTexto = 'Actualizar Datos';
+      this.cargarProveedor(this.idProveedor);
+    } else {
+      this.titulo = 'Registrar Nuevo Proveedor';
+      this.btnTexto = 'Guardar Proveedor';
+      this.limpiarFormulario();
+      this.cd.markForCheck(); // Actualizar vista
+    }
+  }
+
+  limpiarFormulario(): void {
+    this.proveedor = {
+      nombre: '', ruc: '', pais: 'PERÚ', 
+      contacto: '', telefono: '', email: '', direccion: '', activo: true
+    };
   }
 
   cargarProveedor(id: number): void {
+    this.isLoading = true;
     this.proveedorService.obtenerPorId(id).subscribe({
       next: (data) => {
-        console.log('✅ Datos recibidos del Backend:', data);
-        this.proveedor = data; // Asignamos los datos al formulario
-        this.cd.detectChanges(); // Forzamos que se vean en pantalla
+        this.proveedor = data;
+        if (!this.proveedor.pais) this.proveedor.pais = 'PERÚ';
+        this.isLoading = false;
+        // 4. IMPORTANTÍSIMO: Avisar a Angular que llegaron datos
+        this.cd.markForCheck(); 
       },
       error: (e) => {
-        console.error('❌ Error al cargar:', e);
-        alert('No se pudo cargar la información del proveedor.');
-        this.router.navigate(['/proveedores']);
+        console.error('Error al cargar:', e);
+        this.cancelar();
       }
     });
   }
 
   guardar(): void {
+    if (this.isLoading) return;
+
+    // Validaciones
     if (!this.proveedor.nombre || !this.proveedor.ruc) {
-        alert('⚠️ Por favor complete la Razón Social y el RUC.');
-        return;
+      alert('⚠️ Por favor complete la Razón Social y la Identificación.');
+      return;
     }
 
-    if (this.esEdicion) {
+    if (/^\d+$/.test(this.proveedor.nombre.trim())) {
+      alert('⚠️ La Razón Social no puede ser solo números.');
+      return;
+    }
+
+    if (this.proveedor.pais === 'PERÚ' && !/^\d{11}$/.test(this.proveedor.ruc)) {
+      alert('🇵🇪 El RUC peruano debe tener 11 dígitos.');
+      return;
+    }
+
+    this.isLoading = true;
+    this.cd.markForCheck(); // Bloquear botón visualmente
+
+    if (this.idProveedor) {
       this.actualizar();
     } else {
       this.crear();
@@ -88,39 +124,38 @@ export class ProveedorFormComponent implements OnInit {
     this.proveedorService.crear(this.proveedor).subscribe({
       next: () => {
         alert('✅ Proveedor registrado correctamente');
-        this.router.navigate(['/proveedores']);
+        this.onCerrar.emit(true);
+        this.isLoading = false;
       },
-      error: (e) => this.manejarError(e)
+      error: (e) => {
+        this.manejarError(e);
+        this.isLoading = false;
+        this.cd.markForCheck();
+      }
     });
   }
 
   actualizar(): void {
-    // Aseguramos que el ID exista
-    if (!this.proveedor.id) return;
-
-    this.proveedorService.actualizar(this.proveedor.id, this.proveedor).subscribe({
+    this.proveedorService.actualizar(this.idProveedor!, this.proveedor).subscribe({
       next: () => {
         alert('✅ Proveedor actualizado correctamente');
-        this.router.navigate(['/proveedores']);
+        this.onCerrar.emit(true);
+        this.isLoading = false;
       },
-      error: (e) => this.manejarError(e)
+      error: (e) => {
+        this.manejarError(e);
+        this.isLoading = false;
+        this.cd.markForCheck();
+      }
     });
   }
 
   cancelar(): void {
-    this.router.navigate(['/proveedores']);
+    this.onCerrar.emit(false);
   }
 
   private manejarError(e: any): void {
-    console.error('Error completo:', e);
-    let mensaje = 'Error desconocido';
-    
-    if (e.error && e.error.message) {
-      mensaje = e.error.message;
-    } else if (e.message) {
-      mensaje = e.message;
-    }
-    
+    let mensaje = e.error?.message || e.message || 'Error desconocido';
     alert('⛔ ' + mensaje);
   }
 }

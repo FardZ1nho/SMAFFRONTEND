@@ -1,0 +1,87 @@
+<h2 mat-dialog-title class="modal-title">
+  <mat-icon>request_quote</mat-icon>
+  Plan de Pagos: {{ data.venta.nombreCliente }}
+</h2>
+
+<mat-dialog-content>
+  
+  <div class="resumen-header">
+    <div class="dato">
+      <small>Total Venta</small>
+      <span class="monto-total">{{ data.venta.moneda === 'PEN' ? 'S/' : '$' }} {{ data.venta.total | number:'1.2-2' }}</span>
+    </div>
+    <div class="dato">
+      <small>Saldo Pendiente</small>
+      <span class="monto-deuda">{{ data.venta.moneda === 'PEN' ? 'S/' : '$' }} {{ data.venta.saldoPendiente | number:'1.2-2' }}</span>
+    </div>
+  </div>
+
+  <mat-divider></mat-divider>
+
+  <div class="lista-cuotas">
+    <h3>Selecciona una cuota para pagar:</h3>
+    
+    <div class="cuota-item" *ngFor="let c of cuotasVisuales" 
+         [ngClass]="c.estado" 
+         (click)="seleccionarCuota(c)"
+         [class.seleccionada]="cuotaSeleccionada === c">
+      
+      <div class="cuota-left">
+        <div class="badge-numero">#{{ c.numero }}</div>
+        <div class="info">
+          <span class="label-cuota">Cuota {{ c.numero }}</span>
+          <span class="status-text">{{ c.estado }}</span>
+        </div>
+      </div>
+
+      <div class="cuota-right">
+        <div class="monto-cuota">
+          {{ data.venta.moneda === 'PEN' ? 'S/' : '$' }} {{ c.monto | number:'1.2-2' }}
+        </div>
+        <div class="monto-pendiente" *ngIf="c.estado !== 'PAGADO'">
+          (Falta: {{ c.pendiente | number:'1.2-2' }})
+        </div>
+      </div>
+
+      <mat-icon *ngIf="c.estado === 'PAGADO'" class="icon-check">check_circle</mat-icon>
+      <mat-icon *ngIf="c.estado !== 'PAGADO'" class="icon-pay">payments</mat-icon>
+    </div>
+  </div>
+
+  <div class="area-pago animate-up" *ngIf="cuotaSeleccionada">
+    <div class="pago-header">
+      <span>Pagando Cuota #{{ cuotaSeleccionada.numero }}</span>
+    </div>
+
+    <div class="form-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Monto a Pagar</mat-label>
+        <input matInput type="number" [(ngModel)]="montoAPagar" [max]="cuotaSeleccionada.pendiente">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Método</mat-label>
+        <mat-select [(ngModel)]="metodoPago">
+          <mat-option value="EFECTIVO">Efectivo</mat-option>
+          <mat-option value="YAPE">Yape</mat-option>
+          <mat-option value="PLIN">Plin</mat-option>
+          <mat-option value="TRANSFERENCIA">Transferencia</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" *ngIf="esPagoDigital()">
+        <mat-label>Cuenta Destino</mat-label>
+        <mat-select [(ngModel)]="cuentaId">
+          <mat-option *ngFor="let c of cuentas" [value]="c.id">
+            {{ c.banco }} - {{ c.nombre }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <button mat-flat-button color="primary" class="btn-pagar" (click)="confirmarPago()" [disabled]="!montoAPagar || montoAPagar <= 0">
+      CONFIRMAR PAGO
+    </button>
+  </div>
+
+</mat-dialog-content>

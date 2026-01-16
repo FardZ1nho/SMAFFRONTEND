@@ -46,7 +46,13 @@
 
       <div class="config-row custom-grid-2">
         <div class="grid-input">
-          <label class="section-title">Proveedor</label>
+          <div class="label-with-action">
+            <label class="section-title">Proveedor</label>
+            <button type="button" class="btn-text-action" (click)="nuevoProveedor()">
+              <mat-icon>add</mat-icon> Nuevo proveedor
+            </button>
+          </div>
+          
           <select class="form-control-smaf full-width" [(ngModel)]="compra.proveedorId">
             <option value="0">Seleccionar proveedor...</option>
             <option *ngFor="let p of proveedores" [value]="p.id">{{p.nombre}}</option>

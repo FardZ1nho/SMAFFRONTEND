@@ -1,4 +1,4 @@
-<div class="proveedor-container">
+<div class="proveedor-container" [class.blur-background]="mostrarModal">
   
   <div class="page-header">
     <div class="header-content">
@@ -7,11 +7,11 @@
       </div>
       <div>
         <h1>Gestión de Proveedores</h1>
-        <p class="subtitle">Administra la base de datos y perfiles de tus proveedores</p>
+        <p class="subtitle">Administra proveedores nacionales e internacionales</p>
       </div>
     </div>
     
-    <button class="btn-nuevo" (click)="irANuevo()">
+    <button class="btn-nuevo" (click)="abrirModal()">
       <mat-icon>add</mat-icon>
       Nuevo Proveedor
     </button>
@@ -25,7 +25,7 @@
       </label>
       <div class="input-wrapper">
         <input type="text" class="filter-input" 
-               placeholder="Nombre, documento, email o teléfono..." 
+               placeholder="Nombre, RUC, USCC o teléfono..." 
                [(ngModel)]="terminoBusqueda">
         
         <button class="btn-clear" *ngIf="terminoBusqueda" (click)="terminoBusqueda = ''">
@@ -51,8 +51,7 @@
       <table class="custom-table">
         <thead>
           <tr>
-            <th class="ps-4">Tipo</th>
-            <th>Proveedor / Razón Social</th>
+            <th class="ps-4">Origen / País</th> <th>Proveedor / Razón Social</th>
             <th>Identificación</th>
             <th>Contacto</th>
             <th>Ubicación</th>
@@ -61,10 +60,11 @@
         </thead>
         <tbody>
           <tr *ngFor="let p of proveedoresFiltrados">
+            
             <td class="ps-4">
               <span class="badge-custom" 
-                    [ngClass]="p.ruc.length === 11 ? 'badge-purple' : 'badge-blue'">
-                {{ p.ruc.length === 11 ? 'EMPRESA' : 'PERSONA' }}
+                    [ngClass]="p.pais === 'CHINA' ? 'badge-china' : 'badge-peru'">
+                {{ p.pais === 'CHINA' ? '🇨🇳 CHINA' : '🇵🇪 PERÚ' }}
               </span>
             </td>
 
@@ -75,7 +75,9 @@
             </td>
 
             <td>
-              <span class="text-sub fw-medium">{{ p.ruc.length === 11 ? 'RUC' : 'DNI' }} {{ p.ruc }}</span>
+              <span class="text-sub fw-medium">
+                {{ p.pais === 'CHINA' ? 'USCC' : 'RUC' }} {{ p.ruc }}
+              </span>
             </td>
 
             <td>
@@ -102,9 +104,11 @@
                 <button class="btn-icon btn-view" title="Ver Detalle">
                   <mat-icon>visibility</mat-icon>
                 </button>
-                <button class="btn-icon btn-edit" (click)="irAEditar(p.id!)" title="Editar">
+                
+                <button class="btn-icon btn-edit" (click)="abrirModal(p.id!)" title="Editar">
                   <mat-icon>edit</mat-icon>
                 </button>
+                
                 <button class="btn-icon btn-delete" (click)="eliminar(p.id!)" title="Eliminar">
                   <mat-icon>delete</mat-icon>
                 </button>
@@ -121,5 +125,14 @@
         </tbody>
       </table>
     </div>
+  </div>
+</div>
+
+<div class="modal-overlay" *ngIf="mostrarModal">
+  <div class="modal-content animate-in">
+    <app-proveedor-form 
+      [idProveedor]="idParaEditar" 
+      (onCerrar)="cerrarModal($event)">
+    </app-proveedor-form>
   </div>
 </div>

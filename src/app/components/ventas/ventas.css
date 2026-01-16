@@ -66,28 +66,28 @@
 /* Utilidades */
 .full-width { width: 100%; }
 .no-bottom-space { margin-bottom: 0 !important; }
+.mb-3 { margin-bottom: 16px; }
 
 /* ========== CABECERA DE VENTA (CLIENTE + CONFIG) ========== */
 .sales-header-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr; /* Mitad y mitad exactas */
+  grid-template-columns: 1fr 1fr;
   gap: 32px;
   align-items: start;
 }
 
-/* --- LADO IZQUIERDO: CLIENTE --- */
+/* LADO IZQUIERDO: CLIENTE */
 .cliente-search-container { position: relative; }
 
-/* ⭐ CORRECCIÓN BOTÓN NUEVO: MÁS PEGADO ⭐ */
 .crear-cliente-wrapper {
   display: flex;
   justify-content: flex-end;
-  margin-top: -6px; /* Sube el botón para pegarlo visualmente al input */
+  margin-top: -6px;
   margin-bottom: 8px;
 }
 
 .btn-create {
-  height: 32px; /* Más compacto */
+  height: 32px;
   font-size: 12px;
   font-weight: 500;
   line-height: 32px;
@@ -127,28 +127,13 @@
 .sel-doc { color: #166534; font-size: 13px; }
 
 
-/* --- LADO DERECHO: CONFIGURACIÓN ALINEADA --- */
-.config-grid-rows {
-  display: flex;
-  flex-direction: column;
-  gap: 16px; /* Separación vertical uniforme */
-}
-
-.config-row {
-  display: grid;
-  /* ⭐ CLAVE: Dos columnas de igual ancho (1fr 1fr) para alineación perfecta */
-  grid-template-columns: 1fr 1fr; 
-  gap: 16px; /* Separación horizontal uniforme */
-  align-items: start;
-}
-
-/* Hacemos que los inputs ocupen todo el ancho de su celda de grid */
-.field-comprobante, .field-numero, .field-moneda, .field-cambio {
-  width: 100%; 
-}
+/* LADO DERECHO: CONFIGURACIÓN ALINEADA */
+.config-grid-rows { display: flex; flex-direction: column; gap: 16px; }
+.config-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+.field-comprobante, .field-numero, .field-moneda, .field-cambio { width: 100%; }
 
 
-/* ========== SECCIÓN PRODUCTOS (BUSCADOR) ========== */
+/* ========== SECCIÓN PRODUCTOS ========== */
 .search-section { position: relative; z-index: 20; }
 
 .productos-list {
@@ -193,13 +178,7 @@
 .producto-venta-nombre { font-weight: 600; font-size: 14px; color: var(--text-main); }
 .producto-venta-codigo { font-size: 11px; color: var(--text-sub); }
 
-/* Grid Carrito */
-.producto-venta-details {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1.2fr; 
-  gap: 16px;
-  align-items: center;
-}
+.producto-venta-details { display: grid; grid-template-columns: 1fr 1fr 1fr 1.2fr; gap: 16px; align-items: center; }
 .grid-input { width: 100%; }
 
 .subtotal-display {
@@ -209,7 +188,6 @@
 .subtotal-display span { display: block; font-size: 10px; color: var(--text-sub); text-transform: uppercase; line-height: 1; margin-bottom: 2px; }
 .subtotal-display strong { font-size: 16px; color: var(--text-main); }
 
-/* Empty State */
 .empty-cart { text-align: center; padding: 60px 0; color: #94a3b8; }
 .empty-cart mat-icon { font-size: 48px; width: 48px; height: 48px; opacity: 0.5; margin-bottom: 16px; }
 
@@ -224,10 +202,7 @@
 
 .divider { height: 1px; background: var(--border); margin: 20px 0; }
 
-.resumen-row {
-  display: flex; justify-content: space-between; margin-bottom: 12px;
-  font-size: 14px; color: var(--text-sub);
-}
+.resumen-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px; color: var(--text-sub); }
 .resumen-row strong { color: var(--text-main); }
 
 .resumen-row.total {
@@ -241,41 +216,77 @@
 .btn-borrador { border: 1px solid var(--border); }
 
 
-/* =========================================================
-   ESTILOS PARA ALERTAS FLOTANTES (SNACKBAR)
-   ========================================================= */
-::ng-deep .snackbar-success { background-color: #15803d !important; color: #ffffff !important; }
-::ng-deep .snackbar-success .mat-mdc-snack-bar-action { color: #dcfce7 !important; }
+/* ========== ✅ ESTILOS NUEVOS PARA CRÉDITO ========== */
 
-::ng-deep .snackbar-error { background-color: #dc2626 !important; color: #ffffff !important; }
-::ng-deep .snackbar-error .mat-mdc-snack-bar-action { color: #fee2e2 !important; }
+.section-label-small {
+  display: block; font-size: 12px; font-weight: 700; color: #475569;
+  text-transform: uppercase; margin-bottom: 8px;
+}
 
-::ng-deep .snackbar-warning { background-color: #d97706 !important; color: #ffffff !important; }
-::ng-deep .snackbar-warning .mat-mdc-snack-bar-action { color: #fffbeb !important; }
+/* Toggle Switch */
+.toggle-container {
+  display: flex; background: #f1f5f9; padding: 4px; border-radius: 8px;
+  border: 1px solid var(--border);
+}
 
-::ng-deep .mat-mdc-snack-bar-content { font-weight: 500 !important; font-size: 14px !important; }
+.toggle-btn {
+  flex: 1; border: none; background: transparent; padding: 8px;
+  border-radius: 6px; font-weight: 600; font-size: 13px; color: #64748b;
+  cursor: pointer; transition: all 0.2s;
+}
 
+.toggle-btn.active {
+  background: white; color: var(--primary);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;
+}
+
+/* Panel de Crédito */
+.credito-panel {
+  background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;
+  padding: 16px; margin-bottom: 20px;
+  border-left: 4px solid var(--primary);
+}
+
+.credito-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+}
+
+.plan-pagos-info {
+  margin-top: 12px; padding-top: 12px; border-top: 1px dashed #cbd5e1;
+}
+
+.info-row {
+  display: flex; justify-content: space-between; font-size: 13px; color: #475569; margin-bottom: 6px;
+}
+
+.info-row.highlight {
+  color: var(--primary); font-weight: 700; font-size: 15px; margin-top: 4px;
+}
+
+.bg-white { background-color: white !important; }
+
+/* Animación */
+.animate-fade-in { animation: fadeIn 0.3s ease-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
+
+/* ========== ALERTS (SNACKBAR) ========== */
+::ng-deep .snackbar-success { background-color: #15803d !important; color: white !important; }
+::ng-deep .snackbar-error { background-color: #dc2626 !important; color: white !important; }
+::ng-deep .snackbar-warning { background-color: #d97706 !important; color: white !important; }
+::ng-deep .mat-mdc-snack-bar-content { font-weight: 500 !important; }
 
 /* ========== RESPONSIVE ========== */
 @media (max-width: 1100px) {
   .content-wrapper { grid-template-columns: 1fr; }
   .side-column { order: 2; }
   .resumen-section { position: static; }
-  
-  /* En tablets, la cabecera se pone en una sola columna */
   .sales-header-grid { grid-template-columns: 1fr; gap: 24px; }
-  
-  /* Las filas de config se rompen si es muy estrecho */
-  .config-row { grid-template-columns: 1fr; } /* Apilar inputs en móvil */
+  .config-row { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 600px) {
-  .producto-venta-details { 
-    grid-template-columns: 1fr 1fr; 
-    gap: 12px; 
-  }
-  .subtotal-display { 
-    grid-column: 1 / -1; 
-    text-align: left; display: flex; justify-content: space-between; align-items: center; 
-  }
+  .producto-venta-details { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .subtotal-display { grid-column: 1 / -1; text-align: left; display: flex; justify-content: space-between; }
+  .credito-grid { grid-template-columns: 1fr; } /* Inputs apilados en móvil */
 }

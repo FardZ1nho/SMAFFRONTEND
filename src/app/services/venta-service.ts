@@ -34,6 +34,22 @@ export class VentaService {
     return this.http.post<void>(`${this.apiUrl}/${id}/cancelar`, {});
   }
 
+  // ✅ NUEVO: Registrar amortización (pago de cuota)
+  // Backend espera: POST /ventas/{id}/pagos?monto=XXX&metodo=XXX
+ // ✅ ACTUALIZADO: Registrar amortización con cuenta opcional
+  registrarPago(id: number, monto: number, metodo: string, cuentaId?: number): Observable<Venta> {
+    let params = new HttpParams()
+      .set('monto', monto.toString())
+      .set('metodo', metodo);
+
+    // Si nos enviaron una cuenta (ej: ID del Yape), la agregamos a la URL
+    if (cuentaId) {
+      params = params.set('cuentaId', cuentaId.toString());
+    }
+
+    // Enviamos el body vacío {} porque los datos van en la URL (params)
+    return this.http.post<Venta>(`${this.apiUrl}/${id}/pagos`, {}, { params });
+  }
   // ========== CONSULTAR ==========
   
   listarTodas(): Observable<Venta[]> {

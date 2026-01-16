@@ -11,6 +11,7 @@ import { TrasladoFormComponent } from './components/movimientos/traslado-form/tr
 import { NotasCreditoListaComponent } from './components/ventas/notas-credito-lista/notas-credito-lista';
 import { ProveedorComponent } from './components/proveedor/proveedor';
 import { CompraDetalleComponent } from './components/compras/compra-detalle/compra-detalle';
+import { CuentasListaComponent } from './components/configuracion/cuentas-lista/cuentas-lista';
 
 export const routes: Routes = [
   {
@@ -61,6 +62,7 @@ export const routes: Routes = [
       }
     ]
   },
+  { path: 'configuracion/cuentas', component: CuentasListaComponent },
 
   // En tus rutas:
   {

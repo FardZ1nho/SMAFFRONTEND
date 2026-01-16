@@ -1,4 +1,8 @@
+
+
+
+
 export const environment = {
   production: true,
-  base: 'https://smafbackend.onrender.com'
+  base: 'http://localhost:8080'
 }

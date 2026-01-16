@@ -1,0 +1,67 @@
+<h2 mat-dialog-title>
+  <mat-icon>{{ esEdicion ? 'edit' : 'add_card' }}</mat-icon>
+  {{ esEdicion ? 'Editar Cuenta' : 'Nueva Cuenta' }}
+</h2>
+
+<mat-dialog-content>
+  <div class="row">
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Nombre Identificador *</mat-label>
+      <input matInput [(ngModel)]="cuenta.nombre" placeholder="Ej: Yape Ventas, BCP Ahorros">
+      <mat-hint>Cómo identificarás esta cuenta</mat-hint>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Banco / Billetera *</mat-label>
+      <mat-select [(ngModel)]="cuenta.banco">
+        <mat-option *ngFor="let b of bancos" [value]="b">{{ b }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Tipo</mat-label>
+      <mat-select [(ngModel)]="cuenta.tipo">
+        <mat-option value="DIGITAL">Digital (Yape/Plin)</mat-option>
+        <mat-option value="BANCARIA">Bancaria</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+
+
+      <mat-form-field appearance="outline">
+        <mat-label>Moneda</mat-label>
+        <mat-select [(ngModel)]="cuenta.moneda">
+          <mat-option value="PEN">Soles (S/)</mat-option>
+          <mat-option value="USD">Dólares ($)</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+   <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Número de Cuenta / Celular *</mat-label>
+      <input matInput [(ngModel)]="cuenta.numero" placeholder="Ej: 999... ó 191-234...">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width" *ngIf="cuenta.tipo === 'BANCARIA'">
+      <mat-label>CCI (Código Interbancario)</mat-label>
+      <input matInput [(ngModel)]="cuenta.cci" placeholder="Ej: 002-191-...">
+      <mat-icon matSuffix>account_balance</mat-icon>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Titular (Opcional)</mat-label>
+      <input matInput [(ngModel)]="cuenta.titular" placeholder="Nombre del dueño de la cuenta">
+    </mat-form-field>
+
+    <div class="toggle-container">
+      <mat-slide-toggle [(ngModel)]="cuenta.activa" color="primary">
+        {{ cuenta.activa ? 'Cuenta ACTIVA' : 'Cuenta INACTIVA' }}
+      </mat-slide-toggle>
+    </div>
+ 
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>Cancelar</button>
+  <button mat-flat-button color="primary" (click)="guardar()">Guardar</button>
+</mat-dialog-actions>

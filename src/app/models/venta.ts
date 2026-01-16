@@ -1,3 +1,7 @@
+// ==========================================
+// INTERFACES PRINCIPALES (Respuesta del Backend)
+// ==========================================
+
 export interface Venta {
   id: number;
   codigo: string;
@@ -5,16 +9,33 @@ export interface Venta {
   clienteId?: number;
   nombreCliente?: string;
   tipoCliente: TipoCliente;
+
+  // Tipo de Pago (Contado vs Crédito)
+  tipoPago: TipoPago; 
+
   metodoPago: MetodoPago;
 
-  // ✅ PAGO MIXTO
+  // ✅ NUEVO: Información de la Cuenta Bancaria (Para Venta Inicial/Total)
+  cuentaBancariaId?: number;
+  nombreCuentaBancaria?: string; // Ej: "Yape Patrick"
+
+  // PAGO MIXTO
   pagoEfectivo?: number;
   pagoTransferencia?: number;
 
-  // ⭐ NUEVOS CAMPOS (Moneda, Documento y Cambio)
+  // CAMPOS DE CRÉDITO
+  montoInicial?: number;
+  numeroCuotas?: number;
+  montoCuota?: number;     
+  saldoPendiente?: number; 
+
+  // HISTORIAL DE PAGOS (Amortizaciones)
+  pagos?: Pago[]; 
+
+  // Moneda, Documento y Cambio
   moneda: string;           
   tipoDocumento: string;    
-  numeroDocumento?: string; // <--- ✅ AGREGADO: Faltaba este para el N° de factura/boleta
+  numeroDocumento?: string; 
   tipoCambio: number;       
   
   subtotal: number;
@@ -25,6 +46,18 @@ export interface Venta {
   detalles: DetalleVenta[];
   fechaCreacion: Date;
   fechaActualizacion?: Date;
+}
+
+// ✅ INTERFAZ PARA EL HISTORIAL DE PAGOS (Cuotas)
+export interface Pago {
+  id: number;
+  monto: number;
+  fechaPago: string;
+  metodoPago: MetodoPago;
+  
+  // ✅ Dónde entró este pago específico
+  cuentaDestinoId?: number; 
+  nombreCuenta?: string;    
 }
 
 export interface DetalleVenta {
@@ -38,21 +71,36 @@ export interface DetalleVenta {
   subtotal: number;
 }
 
+// ==========================================
+// INTERFACES DE REQUEST (Para enviar al Backend)
+// ==========================================
+
 export interface VentaRequest {
   fechaVenta?: Date;
   clienteId?: number;
   nombreCliente?: string;
   tipoCliente: TipoCliente;
+  
+  // Obligatorio enviar si es Contado o Crédito
+  tipoPago: TipoPago;
+
   metodoPago: MetodoPago;
 
-  // ✅ PAGO MIXTO
+  // ✅ NUEVO: Seleccionar Cuenta al crear la venta (Si es Yape/Plin/Etc)
+  cuentaBancariaId?: number; 
+
+  // PAGO MIXTO
   pagoEfectivo?: number;
   pagoTransferencia?: number;
 
-  // ⭐ NUEVOS CAMPOS PARA ENVIAR AL BACKEND
+  // CAMPOS PARA SOLICITAR CRÉDITO
+  montoInicial?: number;
+  numeroCuotas?: number;
+
+  // Moneda y Documento
   moneda: string;           
   tipoDocumento: string;    
-  numeroDocumento?: string; // <--- ✅ AGREGADO: Importante para guardar el número
+  numeroDocumento?: string; 
   tipoCambio: number;       
   
   notas?: string;
@@ -66,10 +114,19 @@ export interface DetalleVentaRequest {
   descuento?: number;
 }
 
+// ==========================================
+// ENUMS
+// ==========================================
+
 export enum TipoCliente {
   COMUN = 'COMUN',
   MAYORISTA = 'MAYORISTA',
   DISTRIBUIDOR = 'DISTRIBUIDOR'
+}
+
+export enum TipoPago {
+  CONTADO = 'CONTADO',
+  CREDITO = 'CREDITO'
 }
 
 export enum MetodoPago {
@@ -83,6 +140,7 @@ export enum MetodoPago {
 
 export enum EstadoVenta {
   BORRADOR = 'BORRADOR',
+  PENDIENTE = 'PENDIENTE',
   COMPLETADA = 'COMPLETADA',
   CANCELADA = 'CANCELADA'
 }

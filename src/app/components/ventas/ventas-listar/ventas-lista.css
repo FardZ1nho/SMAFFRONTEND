@@ -20,6 +20,7 @@
     align-items: center;
     margin-bottom: 32px;
 }
+.estado-pendiente { background: #ffedd5; color: #c2410c; } /* Naranja */
 
 .title-with-icon {
     display: flex;

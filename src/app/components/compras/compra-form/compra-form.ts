@@ -2,9 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { MatIconModule } from '@angular/material/icon'; // Asegúrate de importar esto
-// 1. IMPORTACIONES PARA EL MODAL
+import { MatIconModule } from '@angular/material/icon';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 // SERVICIOS Y MODELOS
 import { CompraService } from '../../../services/compra-service'; 
@@ -15,14 +15,16 @@ import { CompraRequest } from '../../../models/compra';
 import { Proveedor } from '../../../models/proveedor'; 
 import { Almacen } from '../../../models/almacen';
 
-// IMPORTA TU COMPONENTE MODAL (Ajusta la ruta si es necesario)
+// IMPORTAR COMPONENTES MODALES
 import { ProductoModalComponent } from '../../inventario/producto-modal/producto-modal';
+// ✅ IMPORTAR DIRECTAMENTE EL FORMULARIO DE PROVEEDOR
+import { ProveedorFormComponent } from '../../proveedor/proveedor-form/proveedor-form';  
 
 @Component({
   selector: 'app-compra-form',
   standalone: true,
-  // 2. AGREGAR MatDialogModule EN LOS IMPORTS
-  imports: [CommonModule, FormsModule, MatIconModule, MatDialogModule],
+  // ✅ IMPORTANTE: Agregar ProveedorFormComponent aquí para poder abrirlo
+  imports: [CommonModule, FormsModule, MatIconModule, MatDialogModule, MatTooltipModule], 
   templateUrl: './compra-form.html',
   styleUrls: ['./compra-form.css']
 })
@@ -31,7 +33,7 @@ export class CompraFormComponent implements OnInit {
   // Cabecera de la compra
   compra: CompraRequest = {
     tipoComprobante: 'FACTURA ELECTRÓNICA',
-    serie: '',
+    serie: 'F001',
     numero: '',
     fecEmision: new Date().toISOString().split('T')[0],
     proveedorId: 0,
@@ -54,8 +56,7 @@ export class CompraFormComponent implements OnInit {
     private productoService: ProductoService,
     private almacenService: AlmacenService,
     private router: Router,
-    // 3. INYECTAR MATDIALOG
-    private dialog: MatDialog 
+    private dialog: MatDialog // Inyección del servicio de Diálogos
   ) { }
 
   ngOnInit(): void {
@@ -71,31 +72,43 @@ export class CompraFormComponent implements OnInit {
     this.almacenService.listarAlmacenesActivos().subscribe(data => this.almacenes = data);
   }
 
-  // --- LÓGICA DEL BOTÓN "NUEVO PRODUCTO" ---
-  // --- LÓGICA DEL BOTÓN "NUEVO PRODUCTO" ---
+  // --- ✅ NUEVA FUNCIÓN: ABRIR MODAL PROVEEDOR ---
+  nuevoProveedor(): void {
+    const dialogRef = this.dialog.open(ProveedorFormComponent, {
+      width: '700px',        // Ancho cómodo
+      maxWidth: '95vw',
+      disableClose: true,    // Obliga a usar botones para cerrar
+      data: { idProveedor: null } // Modo Crear
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      // Si el modal devuelve true (guardó exitosamente)
+      if (result === true) {
+        this.cargarProveedores(); // Recargamos la lista para ver el nuevo
+        // Opcional: Podrías buscar el último ID creado y seleccionarlo automáticamente
+      }
+    });
+  }
+
+  // --- LÓGICA EXISTENTE: NUEVO PRODUCTO ---
   nuevoProducto(): void {
-    // Abrimos el modal con nuevas dimensiones
     const dialogRef = this.dialog.open(ProductoModalComponent, {
-      width: '90%',           // Ocupa el 90% del ancho de la pantalla
-      maxWidth: '1200px',     // Tope máximo para pantallas gigantes
-      height: '90vh',         // Ocupa el 90% del alto (viewport height)
-      maxHeight: '95vh',      // Tope máximo de alto
-      panelClass: 'full-screen-modal', // Clase opcional por si queremos estilos extra
-      disableClose: true,     // Obliga a usar los botones para cerrar
+      width: '90%',
+      maxWidth: '1200px',
+      height: '90vh',
+      maxHeight: '95vh',
+      panelClass: 'full-screen-modal',
+      disableClose: true,
       data: { modo: 'crear' } 
     });
 
-    // Cuando se cierra el modal...
     dialogRef.afterClosed().subscribe(result => {
       if (result === true) {
-        // Enfocamos el buscador para que busque el producto recién creado
         const inputBuscador = document.querySelector('.search-input-lg') as HTMLInputElement;
         if(inputBuscador) inputBuscador.focus();
       }
     });
   }
-
-  // --- RESTO DE TU LÓGICA (Sin cambios) ---
 
   buscarProducto() {
     if (this.busquedaProducto.length > 1) {
@@ -130,7 +143,6 @@ export class CompraFormComponent implements OnInit {
   }
 
   guardarCompra() {
-    // 1. Validaciones básicas
     if (this.compra.proveedorId === 0) {
       alert("⚠️ Por favor, seleccione un proveedor.");
       return;
@@ -140,7 +152,6 @@ export class CompraFormComponent implements OnInit {
       return;
     }
 
-    // 2. Mapear items de la UI al formato del Request que espera Java
     this.compra.detalles = this.itemsAgregados.map(item => ({
       productoId: item.productoId,
       almacenId: Number(item.almacenId),
@@ -148,10 +159,8 @@ export class CompraFormComponent implements OnInit {
       precioUnitario: item.precioUnitario
     }));
 
-    // 🕵️‍♂️ EL CHIVATO: Mira esto en la consola antes de que se envíe
     console.log('📤 ENVIANDO COMPRA AL BACKEND:', this.compra);
 
-    // 3. Enviar al servicio
     this.compraService.registrarCompra(this.compra).subscribe({
       next: (respuesta) => {
         console.log('✅ RESPUESTA DEL BACKEND:', respuesta);

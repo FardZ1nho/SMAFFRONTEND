@@ -1,261 +1,180 @@
+/* ================= VARIABLES ================= */
 :host {
-  --primary: #2563eb;       /* Azul Inventario */
-  --bg-body: #f8fafc;       /* Fondo Gris Claro */
-  --text-main: #1e293b;     /* Texto Oscuro */
-  --text-sub: #64748b;      /* Texto Gris */
-  --border-color: #e2e8f0;
+  --primary: #2563eb;
+  --bg-body: #f1f5f9;
+  --text-main: #1e293b;
+  --text-sub: #64748b;
+  --border: #e2e8f0;
+  --white: #ffffff;
+  --danger: #dc2626;
 }
 
 .proveedor-container {
   padding: 24px;
   background-color: var(--bg-body);
   min-height: 100vh;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  box-sizing: border-box;
 }
 
-/* --- HEADER --- */
+/* ================= HEADER & TOOLBAR ================= */
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 32px;
+  margin-bottom: 24px;
 }
 
-.header-content {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
+.header-content { display: flex; gap: 16px; align-items: center; }
 
 .icon-box {
-  background: white;
+  width: 48px; height: 48px;
+  background: white; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
   color: var(--primary);
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  font-size: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
-.page-header h1 {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--text-main);
-  margin: 0;
-}
+.page-header h1 { font-size: 24px; font-weight: 700; color: var(--text-main); margin: 0; }
+.subtitle { color: var(--text-sub); margin: 0; font-size: 14px; }
 
-.subtitle {
-  color: var(--text-sub);
-  font-size: 14px;
-  margin: 0;
-}
-
-/* --- BOTÓN NUEVO (Estilo exacto Inventario) --- */
 .btn-nuevo {
-  background-color: var(--primary);
-  color: white;
-  border: none;
-  border-radius: 10px;
-  font-weight: 600;
-  padding: 0 20px;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  transition: background 0.2s;
-  box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+  background-color: var(--primary); color: white; border: none;
+  padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer;
+  display: flex; align-items: center; gap: 8px; transition: background 0.2s;
+  box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3);
 }
+.btn-nuevo:hover { background-color: #1d4ed8; }
 
-.btn-nuevo:hover {
-  background-color: #1d4ed8;
-}
-
-/* --- TOOLBAR --- */
+/* TOOLBAR */
 .toolbar {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 24px;
-  align-items: flex-end;
+  display: flex; justify-content: space-between; align-items: center;
+  background: white; padding: 16px 24px; border-radius: 12px;
+  border: 1px solid var(--border); margin-bottom: 24px;
 }
 
-.search-container {
-  flex: 1;
-  max-width: 500px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
+.search-container { display: flex; align-items: center; gap: 12px; flex: 1; max-width: 500px; }
+.search-label { font-size: 12px; font-weight: 700; color: var(--text-sub); display: flex; align-items: center; }
 
-.search-label {
-  font-size: 13px;
-  font-weight: 700;
-  color: #475569;
-  text-transform: uppercase;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.input-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
+.input-wrapper { position: relative; flex: 1; display: flex; align-items: center; }
 .filter-input {
-  width: 100%;
-  height: 44px;
-  padding: 10px 12px;
-  border: 1.5px solid var(--border-color);
-  border-radius: 8px;
-  font-size: 14px;
-  background-color: white;
-  outline: none;
-  transition: border-color 0.2s;
+  width: 100%; height: 40px; padding: 0 36px 0 12px;
+  border: 1px solid var(--border); border-radius: 8px; font-size: 14px;
 }
-
-.filter-input:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-}
+.filter-input:focus { outline: none; border-color: var(--primary); }
 
 .btn-clear {
-  position: absolute;
-  right: 10px;
-  background: none;
-  border: none;
-  color: #94a3b8;
-  cursor: pointer;
-  font-size: 1.2rem;
+  position: absolute; right: 8px; background: none; border: none;
+  cursor: pointer; color: var(--text-sub); display: flex; align-items: center;
 }
 
-.actions {
-  display: flex;
-  gap: 10px;
-}
-
+.actions { display: flex; gap: 8px; }
 .btn-tool {
-  height: 44px;
-  padding: 0 16px;
-  border-radius: 8px;
-  border: 1.5px solid var(--border-color);
-  background: white;
-  color: var(--text-main);
-  font-weight: 600;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
+  background: white; border: 1px solid var(--border); color: var(--text-sub);
+  height: 40px; padding: 0 16px; border-radius: 8px; font-weight: 600;
+  font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px;
 }
+.btn-tool:hover { background: #f8fafc; color: var(--text-main); }
 
-/* --- TABLA (Estilo Material Design pero con HTML estándar) --- */
+/* ================= TABLE ================= */
 .main-card {
-  background: white;
-  border-radius: 16px;
-  border: 1px solid var(--border-color);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  overflow: hidden;
+  background: white; border-radius: 12px; border: 1px solid var(--border);
+  overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
-.table-container {
-  width: 100%;
-  overflow-x: auto;
-}
-
-.custom-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
+.custom-table { width: 100%; border-collapse: collapse; }
 .custom-table th {
-  background: #f1f5f9;
-  color: var(--text-sub);
-  font-weight: 700;
-  font-size: 11px;
-  text-transform: uppercase;
-  padding: 16px;
-  text-align: left;
-  border-bottom: 1px solid var(--border-color);
+  background: #f8fafc; color: var(--text-sub); font-weight: 700;
+  font-size: 11px; text-transform: uppercase; padding: 16px; text-align: left;
+  border-bottom: 1px solid var(--border);
 }
-
 .custom-table td {
-  padding: 16px;
-  border-bottom: 1px solid var(--border-color);
-  vertical-align: middle;
-  font-size: 14px;
-  color: var(--text-main);
+  padding: 16px; border-bottom: 1px solid var(--border);
+  vertical-align: middle; color: var(--text-main); font-size: 14px;
 }
+.custom-table tr:hover { background-color: #f8fafc; }
 
-.custom-table tr:hover {
-  background-color: #f8fafc;
-}
-
-/* --- BADGES Y TEXTOS --- */
-.badge-custom {
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-weight: 700;
-  font-size: 11px;
-}
-
-.badge-purple { background-color: #f3e8ff; color: #9333ea; }
-.badge-blue { background-color: #eff6ff; color: #2563eb; }
-
+/* UTILS & BADGES */
 .fw-bold { font-weight: 600; }
 .text-main { color: var(--text-main); }
-.text-sub { color: var(--text-sub); }
+.text-sub { color: var(--text-sub); font-size: 12px; }
+.fw-medium { font-weight: 500; }
+.ps-4 { padding-left: 1.5rem !important; }
+.pe-4 { padding-right: 1.5rem !important; }
+.text-center { text-align: center; }
 
-.contact-info { display: flex; flex-direction: column; gap: 4px; }
-.contact-row { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-sub); }
-.icon-tiny { font-size: 12px; opacity: 0.7; }
+.badge-custom {
+  display: inline-flex; align-items: center; padding: 4px 10px;
+  border-radius: 20px; font-size: 11px; font-weight: 700; border: 1px solid transparent;
+}
+.badge-peru { background: #fff1f2; color: #be123c; border-color: #fecdd3; }
+.badge-china { background: #fff7ed; color: #c2410c; border-color: #fed7aa; }
 
-/* --- BOTONES DE ACCIÓN (Ojo, Lápiz, Basura) --- */
-.action-buttons {
+.contact-row { display: flex; align-items: center; gap: 6px; font-size: 13px; margin-bottom: 2px; }
+.truncate-text { display: block; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ACTION BUTTONS */
+.action-buttons { display: flex; justify-content: center; gap: 4px; }
+.btn-icon {
+  width: 32px; height: 32px; border-radius: 6px; border: none;
+  background: transparent; color: var(--text-sub); cursor: pointer;
+  display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+}
+.btn-view:hover { background: #eff6ff; color: var(--primary); }
+.btn-edit:hover { background: #fff7ed; color: #f59e0b; }
+.btn-delete:hover { background: #fef2f2; color: var(--danger); }
+
+.empty-state { text-align: center; padding: 48px; color: var(--text-sub); }
+
+/* =================================================================
+   🚀 MODAL FLOTANTE ULTRA-RÁPIDO (OPTIMIZADO)
+   ================================================================= */
+
+/* 1. EL FONDO (Overlay) */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  
+  /* ⚡ OPTIMIZACIÓN 1: Usar color sólido con transparencia, SIN BLUR */
+  background-color: rgba(0, 0, 0, 0.5); 
+  
+  /* ⚡ OPTIMIZACIÓN 2: Avisar al navegador que esto cambiará */
+  will-change: opacity;
+  
+  z-index: 9999;
   display: flex;
   justify-content: center;
-  gap: 8px;
-}
-
-/* Ajuste para iconos de Material Design */
-.btn-icon mat-icon {
-  font-size: 20px;       /* Tamaño del icono */
-  width: 20px;           /* Ancho del contenedor */
-  height: 20px;          /* Alto del contenedor */
-  vertical-align: middle;
-  line-height: 1;
-}
-
-.btn-icon {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 8px;          /* Un poco más de espacio para el clic */
-  transition: transform 0.2s, opacity 0.2s;
-  display: flex;         /* Centra el icono perfectamente */
   align-items: center;
-  justify-content: center;
+  animation: fadeIn 0.15s ease-out forwards; /* Animación rápida */
 }
 
-.btn-icon:hover { opacity: 0.7; }
-.btn-view { color: #2563eb; }
-.btn-edit { color: #059669; }
-.btn-delete { color: #dc2626; }
-
-/* --- EMPTY STATE --- */
-.empty-state {
-  text-align: center;
-  padding: 60px 20px;
-  color: var(--text-sub);
+/* 2. EL CONTENIDO */
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  
+  /* ⚡ OPTIMIZACIÓN 3: Sombra simple, menos costosa que sombras difusas grandes */
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  
+  width: 100%;
+  max-width: 700px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  
+  /* ⚡ OPTIMIZACIÓN 4: Aceleración por Hardware */
+  transform: translateZ(0);
+  will-change: transform, opacity;
+  
+  animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-.empty-icon {
-  font-size: 48px;
-  opacity: 0.3;
-  display: block;
-  margin-bottom: 16px;
+/* 3. ANIMACIONES CORTAS Y PRECISAS */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.96) translateZ(0); }
+  to { opacity: 1; transform: scale(1) translateZ(0); }
 }

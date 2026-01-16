@@ -7,32 +7,22 @@
   </div>
 
   <div class="content-wrapper">
-    
+
     <div class="main-column">
-      
+
       <div class="card sales-header-card">
         <div class="sales-header-grid">
-          
+
           <div class="col-cliente">
             <h3 class="section-title">Información del Cliente</h3>
-            
+
             <div class="cliente-search-container">
               <mat-form-field appearance="outline" class="full-width no-bottom-space">
                 <mat-label>Buscar Cliente *</mat-label>
                 <mat-icon matPrefix>search</mat-icon>
-                <input 
-                  matInput 
-                  [(ngModel)]="busquedaCliente" 
-                  (input)="buscarClientes()"
-                  placeholder="DNI, RUC o Nombre..."
-                  autocomplete="off"
-                >
-                <button 
-                  mat-icon-button 
-                  matSuffix 
-                  *ngIf="clienteSeleccionado" 
-                  (click)="limpiarCliente()"
-                >
+                <input matInput [(ngModel)]="busquedaCliente" (input)="buscarClientes()"
+                  placeholder="DNI, RUC o Nombre..." autocomplete="off">
+                <button mat-icon-button matSuffix *ngIf="clienteSeleccionado" (click)="limpiarCliente()">
                   <mat-icon>close</mat-icon>
                 </button>
               </mat-form-field>
@@ -44,11 +34,7 @@
               </div>
 
               <div class="clientes-dropdown" *ngIf="mostrarListaClientes && clientesFiltrados.length > 0">
-                <div 
-                  class="cliente-item" 
-                  *ngFor="let c of clientesFiltrados" 
-                  (click)="seleccionarCliente(c)"
-                >
+                <div class="cliente-item" *ngFor="let c of clientesFiltrados" (click)="seleccionarCliente(c)">
                   <div class="cliente-item-info">
                     <mat-icon>person</mat-icon>
                     <div>
@@ -72,7 +58,7 @@
           <div class="col-config">
             <h3 class="section-title">Datos de Emisión</h3>
             <div class="config-grid-rows">
-              
+
               <div class="config-row">
                 <mat-form-field appearance="outline" class="field-comprobante">
                   <mat-label>Comprobante</mat-label>
@@ -86,12 +72,7 @@
                 <mat-form-field appearance="outline" class="field-numero">
                   <mat-label>N° Documento</mat-label>
                   <mat-icon matPrefix>tag</mat-icon>
-                  <input 
-                    matInput 
-                    [(ngModel)]="numeroDocumento" 
-                    placeholder="Ej: F001-0023"
-                    autocomplete="off"
-                  >
+                  <input matInput [(ngModel)]="numeroDocumento" placeholder="Ej: F001-0023" autocomplete="off">
                 </mat-form-field>
               </div>
 
@@ -106,14 +87,8 @@
 
                 <mat-form-field appearance="outline" class="field-cambio">
                   <mat-label>T. Cambio</mat-label>
-                  <input 
-                    matInput 
-                    type="number" 
-                    [(ngModel)]="tipoCambio" 
-                    (input)="onTipoCambioChange()" 
-                    step="0.01"
-                    (focus)="$any($event.target).select()"
-                  >
+                  <input matInput type="number" [(ngModel)]="tipoCambio" (input)="onTipoCambioChange()" step="0.01"
+                    (focus)="$any($event.target).select()">
                 </mat-form-field>
               </div>
 
@@ -127,21 +102,12 @@
         <h3>Agregar Productos</h3>
         <mat-form-field class="search-field full-width" appearance="outline">
           <mat-icon matPrefix>search</mat-icon>
-          <input 
-            matInput 
-            placeholder="Buscar por nombre o SKU..."
-            [(ngModel)]="terminoBusqueda"
-            (input)="buscarProductos()"
-            autocomplete="off"
-          >
+          <input matInput placeholder="Buscar por nombre o SKU..." [(ngModel)]="terminoBusqueda"
+            (input)="buscarProductos()" autocomplete="off">
         </mat-form-field>
 
         <div class="productos-list" *ngIf="terminoBusqueda && productosFiltrados.length > 0">
-          <div 
-            class="producto-item"
-            *ngFor="let producto of productosFiltrados"
-            (click)="agregarProducto(producto)"
-          >
+          <div class="producto-item" *ngFor="let producto of productosFiltrados" (click)="agregarProducto(producto)">
             <div class="producto-info">
               <span class="producto-nombre">{{ producto.nombre }}</span>
               <span class="producto-codigo">{{ producto.codigo }}</span>
@@ -156,10 +122,10 @@
 
       <div class="card productos-venta-section">
         <h3>Detalle de Venta</h3>
-        
+
         <div class="productos-venta-container" *ngIf="productosEnVenta.length > 0">
           <div class="producto-venta-item" *ngFor="let item of productosEnVenta; let i = index">
-            
+
             <div class="producto-venta-header">
               <div class="producto-venta-info">
                 <div class="producto-icon">
@@ -170,12 +136,7 @@
                   <div class="producto-venta-codigo">{{ item.producto?.codigo || '---' }}</div>
                 </div>
               </div>
-              <button 
-                mat-icon-button 
-                color="warn"
-                (click)="eliminarProducto(i)"
-                matTooltip="Quitar producto"
-              >
+              <button mat-icon-button color="warn" (click)="eliminarProducto(i)" matTooltip="Quitar producto">
                 <mat-icon>delete</mat-icon>
               </button>
             </div>
@@ -183,38 +144,20 @@
             <div class="producto-venta-details">
               <mat-form-field appearance="outline" class="grid-input">
                 <mat-label>Cant.</mat-label>
-                <input 
-                  matInput 
-                  type="number"
-                  [(ngModel)]="item.cantidad"
-                  (ngModelChange)="onCantidadChange(item)"
-                  min="1"
-                  (focus)="$any($event.target).select()"
-                >
+                <input matInput type="number" [(ngModel)]="item.cantidad" (ngModelChange)="onCantidadChange(item)"
+                  min="1" (focus)="$any($event.target).select()">
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="grid-input">
                 <mat-label>Precio Unit.</mat-label>
-                <input 
-                  matInput 
-                  type="number"
-                  [(ngModel)]="item.precioUnitario"
-                  (ngModelChange)="onPrecioChange(item)"
-                  step="0.01"
-                  (focus)="$any($event.target).select()"
-                >
+                <input matInput type="number" [(ngModel)]="item.precioUnitario" (ngModelChange)="onPrecioChange(item)"
+                  step="0.01" (focus)="$any($event.target).select()">
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="grid-input">
                 <mat-label>Desc. %</mat-label>
-                <input 
-                  matInput 
-                  type="number"
-                  [(ngModel)]="item.descuento"
-                  (ngModelChange)="onDescuentoChange(item)"
-                  min="0" max="100"
-                  (focus)="$any($event.target).select()"
-                >
+                <input matInput type="number" [(ngModel)]="item.descuento" (ngModelChange)="onDescuentoChange(item)"
+                  min="0" max="100" (focus)="$any($event.target).select()">
               </mat-form-field>
 
               <div class="subtotal-display">
@@ -232,13 +175,60 @@
         </div>
       </div>
 
-    </div> <div class="side-column">
-      
+    </div>
+
+    <div class="side-column">
+
       <div class="card resumen-section">
         <h3>Resumen y Pago</h3>
 
+        <div class="modalidad-selector mb-3">
+          <label class="section-label-small">Modalidad de Pago</label>
+          <div class="toggle-container">
+            <button class="toggle-btn" [class.active]="tipoPago === eTipoPago.CONTADO"
+              (click)="tipoPago = eTipoPago.CONTADO; onTipoPagoChange()">
+              Contado
+            </button>
+            <button class="toggle-btn" [class.active]="tipoPago === eTipoPago.CREDITO"
+              (click)="tipoPago = eTipoPago.CREDITO; onTipoPagoChange()">
+              Crédito
+            </button>
+          </div>
+        </div>
+
+        <div *ngIf="tipoPago === eTipoPago.CREDITO" class="credito-panel animate-fade-in">
+          <div class="credito-grid">
+            <mat-form-field appearance="outline" class="dense-input bg-white">
+              <mat-label>Inicial</mat-label>
+              <span matPrefix>{{ moneda === 'PEN' ? 'S/' : '$' }}&nbsp;</span>
+              <input matInput type="number" [(ngModel)]="montoInicial" (input)="calcularCredito()"
+                (focus)="$any($event.target).select()">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="dense-input bg-white">
+              <mat-label>N° Cuotas</mat-label>
+              <input matInput type="number" [(ngModel)]="numeroCuotas" (input)="calcularCredito()" min="1" step="1"
+                (focus)="$any($event.target).select()">
+              <span matSuffix style="font-size: 12px; margin-left: 4px;">meses</span>
+            </mat-form-field>
+          </div>
+
+          <div class="plan-pagos-info">
+            <div class="info-row">
+              <span>Saldo a financiar:</span>
+              <strong>{{ moneda === 'PEN' ? 'S/' : '$' }} {{ saldoPendiente.toFixed(2) }}</strong>
+            </div>
+            <div class="info-row highlight">
+              <span>Cuota mensual:</span>
+              <strong>{{ moneda === 'PEN' ? 'S/' : '$' }} {{ montoCuota.toFixed(2) }}</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
         <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Método de Pago</mat-label>
+          <mat-label>{{ tipoPago === eTipoPago.CREDITO ? 'Método para la Inicial' : 'Método de Pago' }}</mat-label>
           <mat-select [(ngModel)]="metodoPago">
             <mat-option *ngFor="let m of metodosPago" [value]="m.value">
               {{ m.label }}
@@ -246,28 +236,29 @@
           </mat-select>
         </mat-form-field>
 
+        <mat-form-field appearance="outline" class="full-width animate-fade-in" *ngIf="esPagoDigital()">
+          <mat-label>Seleccionar Cuenta Destino</mat-label>
+          <mat-icon matPrefix>account_balance_wallet</mat-icon>
+          <mat-select [(ngModel)]="cuentaSeleccionadaId">
+            <mat-option *ngFor="let c of cuentas" [value]="c.id">
+              {{ c.banco }} - {{ c.nombre }} ({{ c.moneda }})
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="!cuentaSeleccionadaId">Requerido para este método</mat-error>
+        </mat-form-field>
+
         <div *ngIf="esPagoMixto()" class="pago-mixto-container">
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Monto Transferencia</mat-label>
-            <input 
-              matInput 
-              type="number" 
-              [(ngModel)]="pagoTransferencia" 
-              (input)="validarMontoMixto('T')"
-              (focus)="$any($event.target).select()" 
-            >
+            <input matInput type="number" [(ngModel)]="pagoTransferencia" (input)="validarMontoMixto('T')"
+              (focus)="$any($event.target).select()">
             <span matSuffix>{{ moneda === 'PEN' ? 'S/' : '$' }}</span>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Monto Efectivo</mat-label>
-            <input 
-              matInput 
-              type="number" 
-              [(ngModel)]="pagoEfectivo" 
-              (input)="validarMontoMixto('E')"
-              (focus)="$any($event.target).select()"
-            >
+            <input matInput type="number" [(ngModel)]="pagoEfectivo" (input)="validarMontoMixto('E')"
+              (focus)="$any($event.target).select()">
             <span matSuffix>{{ moneda === 'PEN' ? 'S/' : '$' }}</span>
           </mat-form-field>
         </div>
@@ -293,27 +284,19 @@
         </div>
 
         <div class="action-buttons">
-          <button 
-            mat-raised-button 
-            color="primary" 
-            class="btn-completar"
-            (click)="completarVenta()" 
-            [disabled]="productosEnVenta.length === 0 || !clienteSeleccionado || isSaving"
-          >
+          <button mat-raised-button color="primary" class="btn-completar" (click)="completarVenta()"
+            [disabled]="productosEnVenta.length === 0 || !clienteSeleccionado || isSaving">
             <mat-spinner *ngIf="isSaving" diameter="20"></mat-spinner>
             <span *ngIf="!isSaving">{{ esEdicion ? 'Actualizar y Completar' : 'Completar Venta' }}</span>
           </button>
-          
-          <button 
-            mat-stroked-button 
-            class="btn-borrador"
-            (click)="guardarComoBorrador()" 
-            [disabled]="productosEnVenta.length === 0 || isSaving"
-          >
+
+          <button mat-stroked-button class="btn-borrador" (click)="guardarComoBorrador()"
+            [disabled]="productosEnVenta.length === 0 || isSaving">
             {{ esEdicion ? 'Actualizar Borrador' : 'Guardar Borrador' }}
           </button>
         </div>
       </div>
 
-    </div> </div>
+    </div>
+  </div>
 </div>

@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { CompraRequest, CompraResponse } from '../models/compra';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
@@ -9,7 +10,7 @@ import { CompraRequest, CompraResponse } from '../models/compra';
 export class CompraService {
 
   // Asegúrate de que el puerto (8080) sea el correcto de tu backend
-  private apiUrl = 'http://localhost:8080/compras';
+  private apiUrl = `${environment.base}/compras`;
 
   constructor(private http: HttpClient) { }
 

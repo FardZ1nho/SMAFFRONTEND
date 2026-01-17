@@ -7,11 +7,15 @@ import {
   Output, 
   EventEmitter, 
   ChangeDetectorRef, 
-  ChangeDetectionStrategy // 1. Importante para rendimiento
+  ChangeDetectionStrategy,
+  Optional, // 👈 Importante para que no falle si no es modal
+  Inject    // 👈 Importante para recibir datos del modal
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
+// 👇 IMPORTACIONES NECESARIAS PARA EL MODAL
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 
 import { Proveedor } from '../../../models/proveedor';
 import { ProveedorService } from '../../../services/proveedor-service';
@@ -22,7 +26,6 @@ import { ProveedorService } from '../../../services/proveedor-service';
   imports: [CommonModule, FormsModule, MatIconModule],
   templateUrl: './proveedor-form.html',
   styleUrls: ['./proveedor-form.css'],
-  // ⚡ 2. ESTRATEGIA ONPUSH: Angular no "escanea" esto a menos que haya cambios reales
   changeDetection: ChangeDetectionStrategy.OnPush 
 })
 export class ProveedorFormComponent implements OnInit, OnChanges {
@@ -37,14 +40,22 @@ export class ProveedorFormComponent implements OnInit, OnChanges {
 
   titulo: string = 'Registrar Nuevo Proveedor';
   btnTexto: string = 'Guardar Proveedor';
-  isLoading: boolean = false; // Para evitar doble clic
+  isLoading: boolean = false;
 
   constructor(
     private proveedorService: ProveedorService,
-    private cd: ChangeDetectorRef // 3. Necesario para actualizar la vista manualmente
+    private cd: ChangeDetectorRef,
+    // 👇 1. INYECTAR EL CONTROLADOR DEL DIÁLOGO (Opcional por si se usa sin modal)
+    @Optional() public dialogRef: MatDialogRef<ProveedorFormComponent>,
+    // 👇 2. RECIBIR DATOS SI SE ABRE COMO MODAL
+    @Optional() @Inject(MAT_DIALOG_DATA) public data: any
   ) {}
 
   ngOnInit(): void {
+    // 👇 Si viene data del modal, la usamos
+    if (this.data && this.data.idProveedor !== undefined) {
+      this.idProveedor = this.data.idProveedor;
+    }
     this.verificarEstado();
   }
 
@@ -63,7 +74,7 @@ export class ProveedorFormComponent implements OnInit, OnChanges {
       this.titulo = 'Registrar Nuevo Proveedor';
       this.btnTexto = 'Guardar Proveedor';
       this.limpiarFormulario();
-      this.cd.markForCheck(); // Actualizar vista
+      this.cd.markForCheck();
     }
   }
 
@@ -81,7 +92,6 @@ export class ProveedorFormComponent implements OnInit, OnChanges {
         this.proveedor = data;
         if (!this.proveedor.pais) this.proveedor.pais = 'PERÚ';
         this.isLoading = false;
-        // 4. IMPORTANTÍSIMO: Avisar a Angular que llegaron datos
         this.cd.markForCheck(); 
       },
       error: (e) => {
@@ -111,7 +121,7 @@ export class ProveedorFormComponent implements OnInit, OnChanges {
     }
 
     this.isLoading = true;
-    this.cd.markForCheck(); // Bloquear botón visualmente
+    this.cd.markForCheck();
 
     if (this.idProveedor) {
       this.actualizar();
@@ -124,7 +134,14 @@ export class ProveedorFormComponent implements OnInit, OnChanges {
     this.proveedorService.crear(this.proveedor).subscribe({
       next: () => {
         alert('✅ Proveedor registrado correctamente');
-        this.onCerrar.emit(true);
+        
+        // 👇 3. LÓGICA DE CIERRE HÍBRIDA
+        if (this.dialogRef) {
+          this.dialogRef.close(true); // Cierra el modal si existe
+        } else {
+          this.onCerrar.emit(true); // Emite evento si es componente hijo
+        }
+
         this.isLoading = false;
       },
       error: (e) => {
@@ -139,7 +156,14 @@ export class ProveedorFormComponent implements OnInit, OnChanges {
     this.proveedorService.actualizar(this.idProveedor!, this.proveedor).subscribe({
       next: () => {
         alert('✅ Proveedor actualizado correctamente');
-        this.onCerrar.emit(true);
+        
+        // 👇 3. LÓGICA DE CIERRE HÍBRIDA
+        if (this.dialogRef) {
+          this.dialogRef.close(true);
+        } else {
+          this.onCerrar.emit(true);
+        }
+
         this.isLoading = false;
       },
       error: (e) => {
@@ -151,7 +175,12 @@ export class ProveedorFormComponent implements OnInit, OnChanges {
   }
 
   cancelar(): void {
-    this.onCerrar.emit(false);
+    // 👇 3. LÓGICA DE CIERRE HÍBRIDA
+    if (this.dialogRef) {
+      this.dialogRef.close(false); // Cierra modal sin guardar
+    } else {
+      this.onCerrar.emit(false); // Emite evento
+    }
   }
 
   private manejarError(e: any): void {

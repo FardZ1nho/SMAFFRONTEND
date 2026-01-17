@@ -274,7 +274,16 @@ textarea.form-control-smaf { height: auto; padding: 12px; font-family: inherit; 
 
 .btn-borrador { background-color: white; border: 1px solid var(--border); color: var(--text-sub); }
 .btn-borrador:hover { background-color: #f1f5f9; color: var(--text-main); }
+.search-results li {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer; /* ✅ Esto le indica al usuario que es clickable */
+  transition: background-color 0.2s;
+}
 
+.search-results li:hover {
+  background-color: #f0f9ff; /* Efecto visual al pasar el mouse */
+}
 /* ================= RESPONSIVE ================= */
 @media (max-width: 900px) { .four-cols, .custom-grid-2 { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 600px) {

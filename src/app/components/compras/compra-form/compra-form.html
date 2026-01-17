@@ -1,5 +1,5 @@
 <div class="compra-container">
-  
+
   <div class="header-action-row">
     <button class="btn-back" (click)="cancelar()" title="Volver">
       <mat-icon>arrow_back</mat-icon>
@@ -12,12 +12,12 @@
 
   <div class="card mb-4">
     <h3>
-      <mat-icon style="vertical-align: middle; margin-right: 8px;">receipt_long</mat-icon> 
+      <mat-icon style="vertical-align: middle; margin-right: 8px;">receipt_long</mat-icon>
       Información del Comprobante
     </h3>
 
     <div class="config-grid-rows">
-      
+
       <div class="config-row four-cols">
         <div class="grid-input">
           <label class="section-title">Tipo Comprobante</label>
@@ -27,7 +27,7 @@
             <option value="GUIA DE REMISION">GUIA DE REMISION</option>
           </select>
         </div>
-        
+
         <div class="grid-input">
           <label class="section-title">Serie <span style="color:red">*</span></label>
           <input type="text" class="form-control-smaf full-width" [(ngModel)]="compra.serie" placeholder="F001">
@@ -52,7 +52,7 @@
               <mat-icon>add</mat-icon> Nuevo proveedor
             </button>
           </div>
-          
+
           <select class="form-control-smaf full-width" [(ngModel)]="compra.proveedorId">
             <option value="0">Seleccionar proveedor...</option>
             <option *ngFor="let p of proveedores" [value]="p.id">{{p.nombre}}</option>
@@ -75,21 +75,23 @@
 
       <div class="grid-input full-width">
         <label class="section-title">Observaciones</label>
-        <textarea class="form-control-smaf full-width" rows="2" [(ngModel)]="compra.observaciones" placeholder="Detalles adicionales de la compra..."></textarea>
+        <textarea class="form-control-smaf full-width" rows="2" [(ngModel)]="compra.observaciones"
+          placeholder="Detalles adicionales de la compra..."></textarea>
       </div>
 
     </div>
   </div>
 
- <div class="card">
-    
+  <div class="card">
+
     <div class="section-header-with-action">
       <h3>
-        <mat-icon style="vertical-align: middle; margin-right: 8px;">shopping_cart</mat-icon> 
+        <mat-icon style="vertical-align: middle; margin-right: 8px;">shopping_cart</mat-icon>
         Detalle de Productos
       </h3>
-      
-      <button class="btn-tiny-action" (click)="nuevoProducto()" title="Registrar un producto que no existe en el catálogo">
+
+      <button class="btn-tiny-action" (click)="nuevoProducto()"
+        title="Registrar un producto que no existe en el catálogo">
         <mat-icon>add_circle</mat-icon>
         Nuevo Producto
       </button>
@@ -99,9 +101,10 @@
       <div class="search-wrapper">
         <mat-icon class="search-icon">search</mat-icon>
         <input type="text" class="search-input-lg" 
-               placeholder="Buscar producto por nombre o código para agregar..."
-               [(ngModel)]="busquedaProducto" (input)="buscarProducto()">
-        
+       placeholder="Buscar producto por nombre o código para agregar..."
+       [(ngModel)]="busquedaProducto" 
+       (ngModelChange)="buscarProducto()">
+
         <ul class="search-results shadow-sm" *ngIf="productosFiltrados.length > 0">
           <li *ngFor="let p of productosFiltrados" (click)="agregarProducto(p)">
             <div class="result-name">{{p.nombre}}</div>
@@ -157,7 +160,7 @@
             </td>
           </tr>
         </tbody>
-        
+
         <tfoot *ngIf="itemsAgregados.length > 0">
           <tr class="total-row">
             <td colspan="4" class="text-end label-total">TOTAL A PAGAR:</td>

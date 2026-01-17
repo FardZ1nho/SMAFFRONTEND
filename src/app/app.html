@@ -1,14 +1,18 @@
 <app-topbar *ngIf="mostrarMenu()" (toggleMenu)="toggleSidebar()"></app-topbar>
-<app-sidebar *ngIf="mostrarMenu()" [isCollapsed]="isSidebarCollapsed"></app-sidebar>
 
-<!-- Contenedor para páginas CON menú -->
+<app-sidebar 
+    *ngIf="mostrarMenu()" 
+    [isCollapsed]="isSidebarCollapsed"
+    (toggleCollapse)="toggleSidebar()"> </app-sidebar>
+
 <div class="main-content" 
      *ngIf="mostrarMenu()" 
      [class.expanded]="isSidebarCollapsed">
+  
   <router-outlet></router-outlet>
+
 </div>
 
-<!-- Contenedor para páginas SIN menú (login) -->
 <div class="auth-content" *ngIf="!mostrarMenu()">
   <router-outlet></router-outlet>
 </div>

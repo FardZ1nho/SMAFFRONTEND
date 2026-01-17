@@ -1,153 +1,163 @@
 <div class="modal-container">
+  
   <div class="modal-header">
-    <h2>{{ esEdicion ? 'Editar Producto' : 'Registrar Nuevo Producto' }}</h2>
-    <button mat-icon-button type="button" (click)="cancelar()">
+    <div class="title-group">
+      <h2>{{ esEdicion ? 'Editar Producto' : 'Nuevo Producto' }}</h2>
+      <p class="subtitle">Complete la información del inventario</p>
+    </div>
+    <button mat-icon-button class="btn-close" type="button" (click)="cancelar()">
       <mat-icon>close</mat-icon>
     </button>
   </div>
 
   <div class="modal-content" *ngIf="!isLoading">
-    <form [formGroup]="productoForm" class="producto-form" 
+    <form [formGroup]="productoForm" class="producto-form"
           (keydown.enter)="$any($event.target).tagName !== 'TEXTAREA' && $event.preventDefault()">
           
       <div class="form-row">
-        <mat-form-field appearance="outline" class="full-width">
+        <mat-form-field appearance="outline" class="full-width" subscriptSizing="dynamic">
           <mat-label>Nombre del Producto</mat-label>
-          <input matInput formControlName="nombre" placeholder="Ej. Peine metálico">
-          <mat-error *ngIf="nombre?.hasError('required')">Nombre requerido</mat-error>
-          <mat-error *ngIf="nombre?.hasError('minlength')">Mínimo 3 caracteres</mat-error>
+          <input matInput formControlName="nombre" placeholder="Ej. Peine metálico profesional">
+          <mat-icon matSuffix style="color: #94a3b8;">edit</mat-icon>
+          <mat-error *ngIf="nombre?.hasError('required')">Requerido</mat-error>
         </mat-form-field>
 
-        <mat-form-field appearance="outline" class="half-width">
+        <mat-form-field appearance="outline" class="half-width" subscriptSizing="dynamic">
           <mat-label>Código SKU</mat-label>
           <input matInput formControlName="codigo" placeholder="Ej. H0043">
+          <mat-icon matSuffix style="color: #94a3b8;">qr_code</mat-icon>
         </mat-form-field>
       </div>
 
       <div class="form-row">
-        <mat-form-field appearance="outline" class="categoria-field">
+        <mat-form-field appearance="outline" class="categoria-field" subscriptSizing="dynamic">
           <mat-label>Categoría</mat-label>
           <mat-select formControlName="idCategoria">
             <mat-option *ngFor="let cat of categorias" [value]="cat.id">
               {{ cat.nombre }}
             </mat-option>
           </mat-select>
-          <mat-error *ngIf="idCategoria?.hasError('required')">Seleccione categoría</mat-error>
         </mat-form-field>
-
-        <div class="imagen-container">
-          <div class="imagen-preview" (click)="fileInput.click()">
-            <mat-icon *ngIf="!imagenPreview">add_photo_alternate</mat-icon>
-            <img *ngIf="imagenPreview" [src]="imagenPreview" alt="Preview">
-          </div>
-          <input #fileInput type="file" accept="image/*" (change)="onImageSelect($event)" style="display: none">
-        </div>
       </div>
 
       <div class="form-row">
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Descripción</mat-label>
-          <textarea matInput formControlName="descripcion" rows="3"></textarea>
+        <mat-form-field appearance="outline" class="full-width" subscriptSizing="dynamic">
+          <mat-label>Descripción (Opcional)</mat-label>
+          <textarea matInput formControlName="descripcion" rows="3" placeholder="Detalles adicionales..."></textarea>
         </mat-form-field>
       </div>
 
       <div class="section-divider">
-        <h3><mat-icon>warehouse</mat-icon> Gestión de Stock</h3>
+        <div class="icon-box"><mat-icon>warehouse</mat-icon></div>
+        <h3>Gestión de Stock</h3>
       </div>
 
-      <div class="almacen-asignacion-container">
-        <div class="form-row almacen-row">
-          <mat-form-field appearance="outline" class="almacen-select">
-            <mat-label>Almacén</mat-label>
+      <div class="almacen-asignacion-card">
+        
+        <div class="stock-grid">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>Seleccionar Almacén</mat-label>
             <mat-select [(ngModel)]="almacenSeleccionado" [ngModelOptions]="{standalone: true}">
-              <mat-option *ngFor="let alm of almacenes" [value]="alm.id">
-                {{ alm.nombre }}
-              </mat-option>
+              <mat-option *ngFor="let alm of almacenes" [value]="alm.id">{{ alm.nombre }}</mat-option>
             </mat-select>
           </mat-form-field>
 
-          <mat-form-field appearance="outline" class="stock-input">
-            <mat-label>Stock</mat-label>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>Cantidad</mat-label>
             <input matInput type="number" [(ngModel)]="stockAAgregar" [ngModelOptions]="{standalone: true}" min="0">
           </mat-form-field>
+        </div>
 
-          <mat-form-field appearance="outline" class="ubicacion-input">
-            <mat-label>Ubicación (Ej. A1)</mat-label>
+        <div class="stock-grid">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>Ubicación (Ej. Pasillo A-1)</mat-label>
             <input matInput [(ngModel)]="ubicacionFisicaAAgregar" [ngModelOptions]="{standalone: true}">
+            <mat-icon matSuffix style="color: #94a3b8; font-size: 18px;">place</mat-icon>
           </mat-form-field>
 
-          <button mat-mini-fab color="primary" type="button" (click)="agregarStockAlmacen()" matTooltip="Agregar/Actualizar Stock">
-            <mat-icon>add</mat-icon>
+          <button mat-flat-button color="primary" class="btn-add-stock" type="button" (click)="agregarStockAlmacen()">
+            <mat-icon>add_circle</mat-icon> Agregar al Almacén
           </button>
         </div>
 
-        <div class="almacenes-asignados" *ngIf="stockPorAlmacenes.length > 0">
+        <div class="almacenes-list" *ngIf="stockPorAlmacenes.length > 0">
           <div class="almacen-item" *ngFor="let item of stockPorAlmacenes; let i = index">
             <div class="almacen-info">
-              <mat-icon>store</mat-icon>
-              <div>
-                <strong>{{ item.almacenNombre }}</strong>
-                <span class="stock-detalle">Stock: {{ item.stock }} | Ubic: {{ item.ubicacionFisica || '-' }}</span>
+              <mat-icon style="color: #3b82f6;">store</mat-icon>
+              <div style="display: flex; flex-direction: column;">
+                <strong style="font-size: 14px; color: #334155;">{{ item.almacenNombre }}</strong>
+                <span style="font-size: 11px; color: #64748b;">Ubicación: {{ item.ubicacionFisica || 'General' }}</span>
               </div>
             </div>
-            <button mat-icon-button color="warn" type="button" (click)="eliminarStockAlmacen(i)">
-              <mat-icon>delete</mat-icon>
-            </button>
-          </div>
-          <div class="stock-total-resumen">
-            <strong>Total Global: {{ stockTotal }}</strong>
+            
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span class="stock-badge">+{{ item.stock }} un.</span>
+              <button mat-icon-button color="warn" type="button" (click)="eliminarStockAlmacen(i)">
+                <mat-icon>delete_outline</mat-icon>
+              </button>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="section-divider">
-        <h3><mat-icon>attach_money</mat-icon> Precios y Costos</h3>
+        <div *ngIf="stockPorAlmacenes.length === 0" style="text-align: center; margin-top: 15px; color: #94a3b8; font-size: 13px; font-style: italic;">
+          Seleccione un almacén y cantidad para asignar stock inicial.
+        </div>
+      </div>
+<div class="section-divider">
+        <div class="icon-box"><mat-icon>payments</mat-icon></div>
+        <h3>Precios y Costos</h3>
       </div>
 
       <div class="form-row">
-        <mat-form-field appearance="outline" class="full-width">
+        <mat-form-field appearance="outline" class="full-width" subscriptSizing="dynamic">
           <mat-label>Moneda</mat-label>
           <mat-select formControlName="moneda">
-            <mat-option *ngFor="let m of monedas" [value]="m.codigo">{{ m.nombre }}</mat-option>
+            <mat-option *ngFor="let m of monedas" [value]="m.codigo">
+              <span style="font-weight: bold;">{{ m.codigo }}</span> - {{ m.nombre }}
+            </mat-option>
           </mat-select>
         </mat-form-field>
       </div>
 
       <div class="form-row">
-        <mat-form-field appearance="outline" class="third-width">
-          <mat-label>Precio China</mat-label>
-          <input matInput type="number" formControlName="precioChina" step="0.01">
+        
+        <mat-form-field appearance="outline" class="third-width" subscriptSizing="dynamic">
+          <mat-label>Precio Compra</mat-label>
+          <span matPrefix style="margin-right: 5px; color: #64748b;">$</span>
+          <input matInput type="number" formControlName="precioChina" placeholder="0.00">
         </mat-form-field>
-        <mat-form-field appearance="outline" class="third-width">
-          <mat-label>Costo Total</mat-label>
-          <input matInput type="number" formControlName="costoTotal" step="0.01">
+
+        <mat-form-field appearance="outline" class="third-width" subscriptSizing="dynamic">
+          <mat-label>Costo Unit.</mat-label>
+          <span matPrefix style="margin-right: 5px; color: #64748b;">$</span>
+          <input matInput type="number" formControlName="costoTotal" placeholder="0.00">
         </mat-form-field>
-        <mat-form-field appearance="outline" class="third-width">
+
+        <mat-form-field appearance="outline" class="third-width" subscriptSizing="dynamic">
           <mat-label>Precio Venta</mat-label>
-          <input matInput type="number" formControlName="precioVenta" step="0.01">
+          <span matPrefix style="margin-right: 5px; color: #64748b;">$</span>
+          <input matInput type="number" formControlName="precioVenta" style="font-weight: bold; color: #059669;" placeholder="0.00">
         </mat-form-field>
+
       </div>
 
       <div class="form-row">
-        <mat-form-field appearance="outline" class="half-width">
-          <mat-label>Stock Mínimo (Alerta)</mat-label>
+        <mat-form-field appearance="outline" class="full-width" subscriptSizing="dynamic">
+          <mat-label>Alerta Stock Mínimo</mat-label>
           <input matInput type="number" formControlName="stockMinimo">
+          <mat-icon matSuffix style="color: #f59e0b;">warning_amber</mat-icon>
         </mat-form-field>
-      </div>
-
-      <div class="modal-footer">
-        <button mat-stroked-button type="button" (click)="cancelar()" [disabled]="isSaving">Cancelar</button>
-        <button mat-raised-button color="primary" type="button" (click)="guardarProducto()" [disabled]="isSaving">
-          <mat-spinner *ngIf="isSaving" diameter="20"></mat-spinner>
-          <span *ngIf="!isSaving">{{ esEdicion ? 'Actualizar' : 'Guardar' }}</span>
-        </button>
       </div>
 
     </form>
   </div>
 
-  <div class="loading-container" *ngIf="isLoading">
-    <mat-spinner diameter="50"></mat-spinner>
-    <p>Cargando datos...</p>
+  <div class="modal-footer" *ngIf="!isLoading">
+    <button mat-button class="btn-cancel" type="button" (click)="cancelar()">Cancelar</button>
+    <button mat-flat-button color="primary" class="btn-save" type="button" (click)="guardarProducto()" [disabled]="isSaving">
+      <mat-icon *ngIf="!isSaving" style="margin-right: 8px;">save</mat-icon>
+      <mat-spinner *ngIf="isSaving" diameter="20" style="margin-right: 8px; display: inline-block; vertical-align: middle;"></mat-spinner>
+      {{ esEdicion ? 'Guardar Cambios' : 'Registrar Producto' }}
+    </button>
   </div>
 </div>

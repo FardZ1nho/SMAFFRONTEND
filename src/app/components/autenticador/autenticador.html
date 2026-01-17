@@ -1,32 +1,59 @@
 <div class="login-container">
-  <div class="sidebar-left orange"></div>
-  <div class="sidebar-left blue"></div>
-  <div class="sidebar-left gray"></div>
+  
+  <div class="bg-shape shape-orange"></div>
+  <div class="bg-shape shape-blue"></div>
 
   <div class="login-card">
-    <div class="logo-container">
-      <!-- ⭐ CORREGIDO: Agregar el nombre del archivo -->
-      <img src="assets/logo-smaf.png" alt="SMAF Logo" class="logo-image">
+    
+    <div class="brand-bar">
+      <span class="bar orange"></span>
+      <span class="bar blue"></span>
+      <span class="bar gray"></span>
     </div>
 
-    <form class="login-form" (ngSubmit)="login()">
-      <div class="form-group">
-        <label>Usuario</label>
-        <input type="text" [(ngModel)]="username" name="username" required>
+    <div class="card-content">
+      <div class="logo-container">
+        <img src="assets/logo-smaf.png" alt="SMAF Logo" class="logo-image">
       </div>
 
-      <div class="form-group">
-        <label>Contraseña</label>
-        <input type="password" [(ngModel)]="password" name="password" required>
+      <div class="welcome-text">
+        <h3>Bienvenido</h3>
+        <p>Ingresa tus credenciales para continuar</p>
       </div>
 
-      <button type="submit" class="login-button">
-        INGRESAR
-      </button>
-    </form>
+      <form class="login-form" (ngSubmit)="login()">
+        
+        <div class="input-group">
+          <label>Usuario</label>
+          <div class="input-wrapper">
+            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <input type="text" [(ngModel)]="username" name="username" placeholder="Ej. admin" required>
+          </div>
+        </div>
 
-    <div class="version-info">
-      Versión Beta 1.0
+        <div class="input-group">
+          <label>Contraseña</label>
+          <div class="input-wrapper">
+            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+            <input type="password" [(ngModel)]="password" name="password" placeholder="••••••••" required>
+          </div>
+        </div>
+
+        <button type="submit" class="login-button">
+          INGRESAR
+        </button>
+      </form>
+
+      <div class="version-info">
+        SMAF System &copy; 2026 <br>
+        <span class="badge-beta">Versión 1.0</span>
+      </div>
     </div>
   </div>
 </div>

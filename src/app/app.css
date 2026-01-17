@@ -1,47 +1,64 @@
-/* Contenedor principal con menú */
+/* ===================================
+   CONTENEDOR PRINCIPAL
+   =================================== */
 .main-content {
   margin-top: 0;
-  margin-left: 200px;
-  padding: 20px;
-  background-color: #e8e8e8;
-  min-height: calc(100vh - 50px);
-  transition: margin-left 0.3s ease;
+  /* 1. DEBE SER 260px (Mismo ancho que la sidebar abierta) */
+  margin-left: 260px; 
+  padding: 30px; /* Un poco más de aire */
+  /* 2. COLOR SOFT UI (Gris azulado muy suave) */
+  background-color: #f8fafc; 
+  min-height: 100vh;
+  transition: margin-left 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  position: relative;
+  display: block;
 }
 
+/* Cuando la sidebar se colapsa, el contenido se expande */
 .main-content.expanded {
-  margin-left: 0;
+  /* 3. DEBE SER 80px (Mismo ancho que la sidebar cerrada) */
+  margin-left: 80px; 
 }
 
-/* Estilos globales para el modal de detalle */
+/* ===================================
+   LOGIN / AUTH
+   =================================== */
+.auth-content {
+  width: 100%;
+  height: 100vh;
+  background-color: #ffffff;
+}
+
+/* ===================================
+   RESPONSIVE
+   =================================== */
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0 !important; /* En móvil ocupa todo */
+    padding: 15px;
+  }
+  
+  .main-content.expanded {
+    margin-left: 0 !important;
+  }
+}
+
+/* ===================================
+   TUS ESTILOS DE MODALES (Se mantienen igual)
+   =================================== */
 .detalle-modal-panel .mat-mdc-dialog-container {
   padding: 0 !important;
   border-radius: 24px !important;
   overflow: hidden !important;
 }
-
 .detalle-modal-panel .mat-mdc-dialog-surface {
   border-radius: 24px !important;
 }
-
-/* Contenedor para páginas sin menú (login) */
-.auth-content {
-  width: 100%;
-  height: 100vh;
-}
-
-/* Estilos para el modal de producto */
 .producto-modal .mat-mdc-dialog-container {
   padding: 0 !important;
   overflow: hidden !important;
 }
-
 .producto-modal .mat-mdc-dialog-surface {
   border-radius: 12px !important;
   overflow: hidden !important;
-}
-
-@media (max-width: 768px) {
-  .main-content {
-    margin-left: 0;
-  }
 }

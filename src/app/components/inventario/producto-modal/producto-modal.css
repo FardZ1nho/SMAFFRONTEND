@@ -1,226 +1,163 @@
 /* ===================================
-   ESTILOS GENERALES DEL MODAL
+   VARS & GENERAL
    =================================== */
+:host {
+  --primary-soft: #eff6ff;
+  --primary-color: #2563eb;
+  --text-dark: #1e293b;
+  --text-gray: #64748b;
+  --border-radius-lg: 20px;
+  --border-radius-md: 12px;
+}
 
 .modal-container {
   display: flex;
   flex-direction: column;
   height: 100%;
   max-height: 90vh;
+  background-color: #fff;
+  font-family: 'Inter', sans-serif;
 }
 
+/* ===================================
+   HEADER
+   =================================== */
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 24px;
-  border-bottom: 1px solid #e0e0e0;
+  padding: 24px 32px;
   background: #fff;
+  z-index: 10;
 }
 
-.modal-header h2 {
+.title-group h2 {
   margin: 0;
   font-size: 24px;
-  font-weight: 600;
-  color: #333;
+  font-weight: 700;
+  color: var(--text-dark);
+  letter-spacing: -0.5px;
 }
 
+.subtitle {
+  margin: 4px 0 0 0;
+  font-size: 13px;
+  color: var(--text-gray);
+}
+
+.btn-close {
+  background: #f1f5f9;
+  color: var(--text-gray);
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+.btn-close:hover {
+  background: #e2e8f0;
+  color: #ef4444;
+}
+
+/* ===================================
+   CONTENT & SCROLL
+   =================================== */
 .modal-content {
   flex: 1;
   overflow-y: auto;
-  padding: 24px;
+  padding: 10px 32px 30px 32px;
 }
-
-.modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  padding: 16px 24px;
-  border-top: 1px solid #e0e0e0;
-  background: #fff;
-}
+/* Scrollbar bonita */
+.modal-content::-webkit-scrollbar { width: 6px; }
+.modal-content::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
 
 /* ===================================
    FORMULARIO
    =================================== */
-
 .producto-form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 25px;
 }
 
 .form-row {
   display: flex;
-  gap: 16px;
+  gap: 20px;
   align-items: flex-start;
 }
 
-.full-width {
-  flex: 1;
-  width: 100%;
-}
-
-.half-width {
-  flex: 1;
-  min-width: 200px;
-}
-
-.third-width {
-  flex: 1;
-  min-width: 150px;
-}
-
-.categoria-field {
-  flex: 2;
-  min-width: 250px;
-}
+.full-width { flex: 1; width: 100%; }
+.half-width { flex: 1; min-width: 200px; }
+.third-width { flex: 1; min-width: 140px; }
+.categoria-field { flex: 2; min-width: 250px; }
 
 /* ===================================
-   SECCIÓN DIVIDIDA
+   DIVISORES DE SECCIÓN
    =================================== */
-
 .section-divider {
-  margin: 24px 0 16px 0;
-  padding-bottom: 12px;
-  border-bottom: 2px solid #e0e0e0;
+  margin: 30px 0 15px 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
+.icon-box {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--primary-soft);
+  color: var(--primary-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 .section-divider h3 {
   margin: 0;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
-  color: #1976d2;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.section-divider h3 mat-icon {
-  font-size: 24px;
-  color: #1976d2;
+  color: var(--text-dark);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 /* ===================================
-   BOTONES
+   GESTIÓN DE STOCK (TARJETA GRIS)
    =================================== */
-
-.btn-nueva-categoria {
-  height: 56px;
-  white-space: nowrap;
+.almacen-asignacion-card {
+  background: #f8fafc; /* Fondo gris suave */
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 24px;
 }
 
-.btn-agregar-almacen {
-  margin-top: 4px;
-  height: 56px;
-  min-width: 120px;
-}
-
-/* ===================================
-   IMAGEN
-   =================================== */
-
-.imagen-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.imagen-preview {
-  width: 120px;
-  height: 120px;
-  border: 2px dashed #ccc;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  transition: all 0.3s;
-}
-
-.imagen-preview:hover {
-  border-color: #1976d2;
-  background: #f5f5f5;
-}
-
-.imagen-preview mat-icon {
-  font-size: 48px;
-  width: 48px;
-  height: 48px;
-  color: #999;
-}
-
-.imagen-preview img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.imagen-preview .add-icon {
-  position: absolute;
-  bottom: 8px;
-  right: 8px;
-  background: #1976d2;
-  color: white;
-  border-radius: 50%;
-  font-size: 20px;
-  width: 28px;
-  height: 28px;
-  padding: 4px;
-}
-
-/* ===================================
-   GESTIÓN DE ALMACENES
-   =================================== */
-
-.almacen-asignacion-container {
-  background: #f9fafb;
-  padding: 20px;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
-  margin-bottom: 20px;
-}
-
-.almacen-row {
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
+/* Grid para organizar los inputs (2 columnas) */
+.stock-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr; /* Columna 1 ancha, Columna 2 estrecha */
+  gap: 16px;
   margin-bottom: 16px;
-  flex-wrap: wrap;
 }
 
-.almacen-select {
-  flex: 2;
-  min-width: 200px;
-}
-
-.stock-input {
-  flex: 1;
-  min-width: 120px;
-}
-
-.ubicacion-input {
-  flex: 1.5;
-  min-width: 150px;
-}
-
-/* Almacenes Asignados */
-
-.almacenes-asignados {
-  background: white;
-  border-radius: 8px;
-  padding: 16px;
-  margin-top: 16px;
-  border: 1px solid #e5e7eb;
-}
-
-.almacenes-asignados h4 {
-  margin: 0 0 12px 0;
-  color: #374151;
-  font-size: 15px;
+/* Botón Agregar Stock */
+.btn-add-stock {
+  width: 100%;
+  height: 50px; /* Misma altura visual que los inputs */
+  border-radius: 12px;
   font-weight: 600;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);
+  margin-top: 4px; /* Ajuste para alinear con inputs */
+}
+
+/* --- Lista de Almacenes --- */
+.almacenes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 20px;
 }
 
 .almacen-item {
@@ -228,172 +165,128 @@
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  margin-bottom: 8px;
-  transition: all 0.2s ease;
-}
-
-.almacen-item:hover {
-  background: #f3f4f6;
-  border-color: #d1d5db;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #f1f5f9;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
 }
 
 .almacen-info {
   display: flex;
   gap: 12px;
   align-items: center;
-  flex: 1;
 }
 
-.almacen-info mat-icon {
-  color: #1976d2;
-  font-size: 24px;
-  width: 24px;
-  height: 24px;
-}
-
-.almacen-detalles {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.almacen-detalles strong {
-  color: #1f2937;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.stock-detalle {
-  color: #6b7280;
-  font-size: 13px;
-  line-height: 1.4;
-}
-
-.stock-detalle strong {
-  color: #1976d2;
-  font-weight: 600;
+.stock-badge {
+  background: #dcfce7;
+  color: #166534;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 /* Resumen Total */
-
 .stock-total-resumen {
+  margin-top: 15px;
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 10px;
-  padding: 14px 16px;
-  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-  border-radius: 8px;
-  margin-top: 12px;
-  color: #1565c0;
-  font-size: 16px;
-  font-weight: 600;
-  border: 1px solid #90caf9;
-}
-
-.stock-total-resumen mat-icon {
-  font-size: 24px;
-  width: 24px;
-  height: 24px;
-}
-
-.almacenes-count {
-  color: #455a64;
-  font-size: 13px;
-  font-weight: 500;
-  margin-left: auto;
-  background: white;
-  padding: 4px 12px;
+  padding: 12px 20px;
+  background: linear-gradient(90deg, #1e293b 0%, #334155 100%);
   border-radius: 12px;
-}
-
-/* Sin Almacenes */
-
-.sin-almacenes {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px;
-  background: #fff8e1;
-  border: 1px dashed #ffb300;
-  border-radius: 8px;
-  color: #f57c00;
-}
-
-.sin-almacenes mat-icon {
-  font-size: 24px;
-  width: 24px;
-  height: 24px;
-  flex-shrink: 0;
-}
-
-.sin-almacenes p {
-  margin: 0;
+  color: white;
   font-size: 14px;
-  line-height: 1.5;
+  box-shadow: 0 4px 12px rgba(30, 41, 59, 0.2);
 }
 
 /* ===================================
-   LOADING
+   FOOTER
    =================================== */
-
-.loading-container {
+.modal-footer {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 40px;
+  justify-content: flex-end;
+  gap: 16px;
+  padding: 20px 32px;
+  background: #fff;
+  border-top: 1px solid #f1f5f9;
+}
+
+.btn-cancel {
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 30px !important;
+  color: var(--text-gray) !important;
+}
+
+.btn-save {
+  border-radius: 30px !important;
+  padding: 0 30px !important;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
 }
 
 /* ===================================
-   RESPONSIVE
+   OVERRIDES DE MATERIAL (CORREGIDO Y VISIBLE)
    =================================== */
 
-@media (max-width: 768px) {
-  .form-row {
-    flex-direction: column;
-  }
-
-  .almacen-row {
-    flex-direction: column;
-  }
-
-  .half-width,
-  .third-width,
-  .almacen-select,
-  .stock-input,
-  .ubicacion-input {
-    min-width: 100%;
-  }
-
-  .btn-agregar-almacen {
-    width: 100%;
-  }
-
-  .modal-content {
-    padding: 16px;
-  }
-
-  .section-divider h3 {
-    font-size: 16px;
-  }
-}
-
-/* ===================================
-   MATERIAL OVERRIDES
-   =================================== */
-
-::ng-deep .mat-mdc-form-field {
-  width: 100%;
-}
-
+/* 1. Fondo blanco y bordes redondos para el input */
 ::ng-deep .mat-mdc-text-field-wrapper {
-  background-color: white;
+  background-color: #ffffff !important;
+  border-radius: 12px !important;
 }
 
-::ng-deep .mat-mdc-form-field-hint {
-  font-size: 12px;
-  color: #6b7280;
+/* 2. Estilizar el Borde Original (No ocultarlo) */
+/* Parte Izquierda del borde */
+::ng-deep .mdc-notched-outline__leading {
+  border-top-left-radius: 12px !important;
+  border-bottom-left-radius: 12px !important;
+  border-color: #e2e8f0 !important; /* Gris suave */
+  border-width: 1px !important;
+}
+/* Parte Derecha del borde */
+::ng-deep .mdc-notched-outline__trailing {
+  border-top-right-radius: 12px !important;
+  border-bottom-right-radius: 12px !important;
+  border-color: #e2e8f0 !important;
+  border-width: 1px !important;
+}
+/* Parte Central (donde va el texto) */
+::ng-deep .mdc-notched-outline__notch {
+  border-color: #e2e8f0 !important;
+  border-width: 1px !important;
+  border-left: none !important; /* Sin líneas verticales internas */
+  border-right: none !important;
+}
+
+/* 3. Color del Título (Label) */
+::ng-deep .mdc-floating-label {
+  color: #64748b !important; /* Gris legible */
+  font-weight: 500;
+}
+/* Cuando está enfocado (Azul) */
+::ng-deep .mat-mdc-form-field.mat-focused .mdc-floating-label {
+  color: #3b82f6 !important;
+}
+::ng-deep .mat-mdc-form-field.mat-focused .mdc-notched-outline__leading,
+::ng-deep .mat-mdc-form-field.mat-focused .mdc-notched-outline__notch,
+::ng-deep .mat-mdc-form-field.mat-focused .mdc-notched-outline__trailing {
+  border-color: #3b82f6 !important; /* Borde azul al escribir */
+  border-width: 2px !important;
+}
+
+/* 4. Quitar fondo gris al hacer hover */
+::ng-deep .mat-mdc-form-field:hover .mat-mdc-text-field-wrapper {
+  background-color: #f8fafc !important; /* Gris muy sutil al pasar mouse */
+}
+
+/* 5. Ajustar altura para que se vea elegante */
+::ng-deep .mat-mdc-form-field-infix {
+  padding-top: 14px !important;
+  padding-bottom: 14px !important;
+  min-height: 52px !important;
+}
+
+/* 6. CORRECCIÓN: Asegurar que el input de texto sea visible */
+::ng-deep .mat-mdc-input-element {
+  color: #1e293b !important; /* Texto oscuro */
 }

@@ -1,105 +1,212 @@
-/* Fondo general */
+/* =========================================
+   FONDO Y CONTENEDOR (Estilo Dark Corporate)
+   ========================================= */
 .login-container {
   height: 100vh;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #f4f4f4, #eaeaea);
+  /* Fondo Azul Corporativo Profundo */
+  background: radial-gradient(circle at 10% 20%, #003366 0%, #001a33 90%);
   position: relative;
   overflow: hidden;
+  font-family: 'Inter', sans-serif;
 }
 
-/* Barras laterales */
-.sidebar-left {
+/* Formas decorativas difusas (Glow Effect) */
+.bg-shape {
   position: absolute;
-  top: 0;
-  height: 100%;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.4;
+  z-index: 1;
 }
 
-.sidebar-left.orange { background: #ff6600; width: 60px; left: 40px; }
-.sidebar-left.blue   { background: #003366; width: 60px; left: 100px; }
-.sidebar-left.gray   { background: #d0d0d0; width: 60px; left: 160px; }
+.shape-orange {
+  width: 300px;
+  height: 300px;
+  background: #ff6600;
+  top: -50px;
+  right: -50px;
+}
 
-/* Card principal */
+.shape-blue {
+  width: 400px;
+  height: 400px;
+  background: #2563eb;
+  bottom: -100px;
+  left: -100px;
+}
+
+/* =========================================
+   TARJETA DE LOGIN
+   ========================================= */
 .login-card {
   background: #ffffff;
   width: 100%;
-  max-width: 420px;
-  padding: 40px 50px 45px;
-  border-radius: 16px;
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.12);
-  text-align: center;
+  
+  /* ⭐ CAMBIO: De 400px a 480px para que sea más ancho */
+  max-width: 480px; 
+  
+  border-radius: 20px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+  position: relative;
   z-index: 10;
+  overflow: hidden;
+  animation: slideUp 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* Barra superior tricolor (Tus colores) */
+.brand-bar {
+  display: flex;
+  height: 6px;
+  width: 100%;
+}
+.brand-bar .bar { flex: 1; height: 100%; }
+.brand-bar .orange { background: #ff6600; }
+.brand-bar .blue { background: #003366; }
+.brand-bar .gray { background: #d0d0d0; }
+
+.card-content {
+  padding: 40px;
 }
 
 /* Logo */
 .logo-container {
   display: flex;
   justify-content: center;
-  align-items: center;
-  margin-bottom: 15px;
-  padding-top: 0px;
+  margin-bottom: 20px;
 }
 
 .logo-image {
-  max-width: 180px;
+  max-width: 160px; /* Un poco más sutil */
   height: auto;
-  display: block;
 }
 
-/* Inputs */
-.form-group {
-  margin-bottom: 22px;
+/* Texto de bienvenida */
+.welcome-text {
+  text-align: center;
+  margin-bottom: 30px;
+}
+.welcome-text h3 {
+  margin: 0;
+  color: #003366;
+  font-size: 22px;
+  font-weight: 700;
+}
+.welcome-text p {
+  margin: 5px 0 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+/* =========================================
+   FORMULARIO E INPUTS (Soft UI)
+   ========================================= */
+.input-group {
+  margin-bottom: 20px;
   text-align: left;
 }
 
-.form-group label {
+.input-group label {
   font-size: 13px;
   font-weight: 600;
-  color: #444;
-  margin-bottom: 6px;
+  color: #334155;
+  margin-bottom: 8px;
   display: block;
 }
 
-.form-group input {
-  width: 100%;
-  padding: 14px 16px;
-  border-radius: 10px;
-  border: 1px solid #dcdcdc;
-  font-size: 14px;
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon {
+  position: absolute;
+  left: 14px;
+  width: 20px;
+  height: 20px;
+  color: #94a3b8;
   transition: 0.3s;
 }
 
-.form-group input:focus {
+.input-wrapper input {
+  width: 100%;
+  padding: 14px 16px 14px 44px; /* Espacio para el icono */
+  border-radius: 12px;
+  border: 2px solid #f1f5f9; /* Borde muy sutil por defecto */
+  background: #f8fafc; /* Fondo gris muy clarito */
+  font-size: 14px;
+  color: #1e293b;
+  transition: all 0.3s ease;
+}
+
+.input-wrapper input:focus {
   border-color: #003366;
-  box-shadow: 0 0 0 3px rgba(0, 51, 102, 0.15);
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(0, 51, 102, 0.1); /* Glow azul */
   outline: none;
 }
 
-/* Botón */
+.input-wrapper input:focus + .input-icon,
+.input-wrapper input:focus ~ .input-icon {
+  color: #003366; /* El icono se pinta de azul al enfocar */
+}
+
+/* =========================================
+   BOTÓN (Gradiente sutil)
+   ========================================= */
 .login-button {
   width: 100%;
-  padding: 14px;
+  padding: 16px;
   margin-top: 10px;
-  background: #003366;
+  /* Gradiente sutil usando tus colores */
+  background: linear-gradient(135deg, #003366 0%, #004b8a 100%);
   color: #fff;
   border: none;
-  border-radius: 30px;
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 1.5px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 1px;
   cursor: pointer;
-  transition: 0.3s ease;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 51, 102, 0.3);
 }
 
 .login-button:hover {
-  background: #004b8a;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 15px rgba(0, 51, 102, 0.4);
 }
 
-/* Versión */
+.login-button:active {
+  transform: translateY(0);
+}
+
+/* =========================================
+   FOOTER
+   ========================================= */
 .version-info {
-  margin-top: 25px;
-  font-size: 11px;
-  color: #888;
+  margin-top: 30px;
+  font-size: 12px;
+  color: #94a3b8;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.badge-beta {
+  background: #fff7ed;
+  color: #c2410c; /* Un naranja oscuro para texto */
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 700;
+  border: 1px solid #ffedd5;
+}
+
+/* Animación de entrada */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
 }

@@ -288,7 +288,6 @@ export class ProductoModalComponent implements OnInit {
       });
   }
 
-  onImageSelect(event: any) { /* lógica imagen */ }
   cancelar() { this.dialogRef.close(); }
 
   // Getters

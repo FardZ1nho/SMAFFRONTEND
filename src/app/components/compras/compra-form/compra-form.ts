@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -56,7 +56,8 @@ export class CompraFormComponent implements OnInit {
     private productoService: ProductoService,
     private almacenService: AlmacenService,
     private router: Router,
-    private dialog: MatDialog // Inyección del servicio de Diálogos
+    private dialog: MatDialog, // Inyección del servicio de Diálogos
+    private cdr: ChangeDetectorRef // 👈 2. INYECTAR AQUÍ
   ) { }
 
   ngOnInit(): void {
@@ -72,20 +73,29 @@ export class CompraFormComponent implements OnInit {
     this.almacenService.listarAlmacenesActivos().subscribe(data => this.almacenes = data);
   }
 
-  // --- ✅ NUEVA FUNCIÓN: ABRIR MODAL PROVEEDOR ---
-  nuevoProveedor(): void {
+nuevoProveedor(): void {
     const dialogRef = this.dialog.open(ProveedorFormComponent, {
-      width: '700px',        // Ancho cómodo
+      width: '700px',
       maxWidth: '95vw',
-      disableClose: true,    // Obliga a usar botones para cerrar
-      data: { idProveedor: null } // Modo Crear
+      disableClose: true,
+      data: { idProveedor: null }
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      // Si el modal devuelve true (guardó exitosamente)
       if (result === true) {
-        this.cargarProveedores(); // Recargamos la lista para ver el nuevo
-        // Opcional: Podrías buscar el último ID creado y seleccionarlo automáticamente
+        // Recargamos la lista
+        this.proveedorService.listarActivos().subscribe(data => {
+           this.proveedores = data;
+           
+           // 👇 Seleccionar automáticamente el último creado (Truco Pro)
+           if (this.proveedores.length > 0) {
+             // Asumiendo que el último de la lista es el nuevo, o podrías buscar por ID si el backend lo devuelve
+             const ultimo = this.proveedores[this.proveedores.length - 1];
+             this.compra.proveedorId = ultimo.id!;
+           }
+
+           this.cdr.detectChanges(); // 👈 4. ¡DESPIERTA ANGULAR!
+        });
       }
     });
   }
@@ -110,13 +120,23 @@ export class CompraFormComponent implements OnInit {
     });
   }
 
-  buscarProducto() {
-    if (this.busquedaProducto.length > 1) {
-      this.productoService.buscarProductos(this.busquedaProducto).subscribe(data => {
-        this.productosFiltrados = data;
+  // ... resto del código ...
+
+buscarProducto() {
+    const termino = this.busquedaProducto.trim();
+
+    if (termino.length >= 3) { 
+      this.productoService.buscarProductos(termino).subscribe({
+        next: (data) => {
+          this.productosFiltrados = data;
+          this.cdr.detectChanges(); // 👈 3. ¡DESPIERTA ANGULAR!
+        },
+        error: (err) => console.error(err)
       });
     } else {
       this.productosFiltrados = [];
+      // Opcional: También aquí por si borras rápido
+      this.cdr.detectChanges(); 
     }
   }
 
@@ -129,10 +149,18 @@ export class CompraFormComponent implements OnInit {
       precioUnitario: prod.precioVenta || 0,
       almacenId: this.almacenes.length > 0 ? this.almacenes[0].id : null
     };
+    
     this.itemsAgregados.push(nuevoItem);
+    
+    // ✅ ESTO ASEGURA EL "CLIC ÚNICO":
+    // Al seleccionar, borramos el texto y vaciamos la lista inmediatamente
     this.busquedaProducto = '';
-    this.productosFiltrados = [];
+    this.productosFiltrados = []; 
+    
+    // Opcional: Devolver el foco al input por si quiere buscar otro rápido
+    // document.querySelector('.search-input-lg')?.focus();
   }
+  // ... resto del código ...
 
   eliminarItem(index: number) {
     this.itemsAgregados.splice(index, 1);

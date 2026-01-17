@@ -10,7 +10,10 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatMenuModule } from '@angular/material/menu';
 
+// Asegúrate de que las rutas a tus servicios/modelos sean correctas
 import { ProductoService } from '../../services/producto-service';
 import { Producto } from '../../models/producto';
 import { ProductoModalComponent } from './producto-modal/producto-modal';
@@ -31,7 +34,9 @@ import { ProductoDetalleModalComponent } from './producto-detalle-modal/producto
     MatTooltipModule,
     MatProgressSpinnerModule,
     MatDialogModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    MatDividerModule,
+    MatMenuModule
   ],
   templateUrl: './inventario.html',
   styleUrl: './inventario.css'
@@ -89,7 +94,7 @@ export class InventarioComponent implements OnInit {
       maxWidth: '95vw',
       disableClose: false,
       panelClass: 'producto-modal',
-      data: { modo: 'crear' } // Indicamos que es creación
+      data: { modo: 'crear' }
     });
 
     dialogRef.afterClosed().subscribe(result => {
@@ -100,23 +105,19 @@ export class InventarioComponent implements OnInit {
     });
   }
 
-  // ⭐⭐⭐ AQUÍ ESTABA EL PROBLEMA: AHORA SÍ ABRE EL MODAL ⭐⭐⭐
   editarProducto(producto: Producto): void {
-    console.log('✏️ Editando producto:', producto);
-    
     const dialogRef = this.dialog.open(ProductoModalComponent, {
       width: '1000px',
       maxWidth: '95vw',
       disableClose: false,
       panelClass: 'producto-modal',
       data: { 
-        producto: producto, // Pasamos el objeto producto completo
+        producto: producto,
         modo: 'editar' 
       }
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      // Si el modal retorna true (éxito), recargamos la tabla
       if (result) {
         this.cargarProductos();
         this.mostrarMensaje('✅ Producto actualizado correctamente', 'success');
@@ -134,7 +135,6 @@ export class InventarioComponent implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      // Si se editó o eliminó desde el detalle, recargamos
       if (result && (result.accion === 'editado' || result.accion === 'eliminado')) {
         this.cargarProductos();
         const mensaje = result.accion === 'editado' 
@@ -168,7 +168,6 @@ export class InventarioComponent implements OnInit {
     this.productoService.eliminarProducto(producto.id).subscribe({
       next: () => {
         this.mostrarMensaje('✅ Producto eliminado exitosamente', 'success');
-        // Eliminamos localmente para que se sienta más rápido
         this.productos = this.productos.filter(p => p.id !== producto.id);
         this.productosFiltrados.data = this.productos;
         this.cdr.detectChanges();

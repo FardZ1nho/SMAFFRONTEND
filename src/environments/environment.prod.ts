@@ -1,4 +1,5 @@
+// src/environments/environment.ts
 export const environment = {
-  production: true,
-  base: 'https://localhost:8080'
+  production: true,  // ⭐ Cambiar a true
+  base: 'https://smafbackend.onrender.com'  // ⭐ Cambiar a la URL de producción
 }

@@ -1,0 +1,105 @@
+<div class="cobranzas-container">
+  
+  <div class="page-header">
+    <div class="header-content">
+      <div class="icon-box red-icon">
+        <mat-icon>money_off</mat-icon>
+      </div>
+      <div>
+        <h1>Cuentas por Cobrar</h1>
+        <p class="subtitle">Gestión de clientes deudores y créditos pendientes</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card total-debt">
+      <div class="stat-label">Total por Cobrar</div>
+      <div class="stat-value">S/ {{ totalPorCobrar | number:'1.2-2' }}</div>
+      <div class="stat-desc">Capital pendiente de retorno</div>
+    </div>
+    <div class="stat-card clients-count">
+      <div class="stat-label">Clientes Deudores</div>
+      <div class="stat-value">{{ clientesDeudores }}</div>
+      <div class="stat-desc">Facturas pendientes: {{ deudas.length }}</div>
+    </div>
+  </div>
+
+  <div class="search-bar card">
+    <mat-icon>search</mat-icon>
+    <input type="text" placeholder="Buscar deudor por nombre o comprobante..." 
+           [(ngModel)]="filtroTexto" (keyup)="filtrar()">
+  </div>
+
+  <div class="table-card card">
+    <div class="table-responsive">
+      <table mat-table [dataSource]="dataSource">
+
+        <ng-container matColumnDef="cliente">
+          <th mat-header-cell *matHeaderCellDef> CLIENTE DEUDOR </th>
+          <td mat-cell *matCellDef="let row">
+            <div class="client-info">
+              <span class="client-name">{{ row.nombreCliente || 'Cliente General' }}</span>
+              <span class="client-type">RUC/DNI: {{ row.numeroDocumentoCliente || '---' }}</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="comprobante">
+          <th mat-header-cell *matHeaderCellDef> FACTURA </th>
+          <td mat-cell *matCellDef="let row">
+            <span class="ticket-badge">#{{ row.codigo }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="fecha">
+          <th mat-header-cell *matHeaderCellDef> FECHA VENTA </th>
+          <td mat-cell *matCellDef="let row" class="text-muted">
+            {{ row.fechaVenta | date:'dd/MM/yyyy' }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="total">
+          <th mat-header-cell *matHeaderCellDef class="text-right"> TOTAL ORIGINAL </th>
+          <td mat-cell *matCellDef="let row" class="text-right">
+            S/ {{ row.total | number:'1.2-2' }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="abonado">
+          <th mat-header-cell *matHeaderCellDef class="text-center" style="width: 15%;"> PROGRESO PAGO </th>
+          <td mat-cell *matCellDef="let row" class="text-center">
+            <div class="progress-wrapper">
+              <span class="progress-text">{{ getPorcentajePagado(row) | number:'1.0-0' }}%</span>
+              <mat-progress-bar mode="determinate" [value]="getPorcentajePagado(row)"></mat-progress-bar>
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="saldo">
+          <th mat-header-cell *matHeaderCellDef class="text-right"> DEUDA ACTUAL </th>
+          <td mat-cell *matCellDef="let row" class="text-right">
+            <span class="debt-amount">S/ {{ row.saldoPendiente | number:'1.2-2' }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="acciones">
+          <th mat-header-cell *matHeaderCellDef class="text-center"> COBRAR </th>
+          <td mat-cell *matCellDef="let row" class="text-center">
+            <button mat-flat-button color="primary" class="btn-cobrar" (click)="registrarCobro(row)">
+              <mat-icon>payments</mat-icon> Cobrar
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="row-hover"></tr>
+      </table>
+
+      <div *ngIf="dataSource.data.length === 0 && !cargando" class="empty-state">
+        <mat-icon>check_circle_outline</mat-icon>
+        <p>¡Excelente! No tienes deudas pendientes por cobrar.</p>
+      </div>
+    </div>
+  </div>
+</div>

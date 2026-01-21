@@ -1,0 +1,152 @@
+<div class="modal-header">
+  <h2>Gestionar Importación</h2>
+  <span class="invoice-badge">{{ data.compra.serie }}-{{ data.compra.numero }}</span>
+</div>
+
+<mat-dialog-content class="modal-content">
+  
+  <div class="layout-grid-3-col">
+
+    <div class="column-section">
+      <h3><mat-icon>public</mat-icon> Origen y Transporte</h3>
+      
+      <div class="row-2">
+        <mat-form-field appearance="outline" class="dense">
+          <mat-label>País Origen</mat-label>
+          <input matInput [(ngModel)]="form.paisOrigen" placeholder="Ej: China">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="dense">
+          <mat-label>Incoterm</mat-label>
+          <mat-select [(ngModel)]="form.incoterm">
+            <mat-option *ngFor="let i of incoterms" [value]="i">{{i}}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <div class="row-2">
+        <mat-form-field appearance="outline" class="dense">
+          <mat-label>Puerto Salida</mat-label>
+          <input matInput [(ngModel)]="form.puertoEmbarque">
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="dense">
+          <mat-label>Puerto Llegada</mat-label>
+          <input matInput [(ngModel)]="form.puertoLlegada">
+        </mat-form-field>
+      </div>
+
+      <mat-divider style="margin: 12px 0;"></mat-divider>
+
+      <mat-form-field appearance="outline" class="dense full-width">
+        <mat-label>Tipo Transporte</mat-label>
+        <mat-select [(ngModel)]="form.tipoTransporte">
+          <mat-option *ngFor="let t of tiposTransporte" [value]="t">
+            <mat-icon style="margin-right: 8px;">
+              {{ t === 'MARITIMO' ? 'directions_boat' : (t === 'AEREO' ? 'flight' : 'local_shipping') }}
+            </mat-icon>
+            {{t}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="dense full-width">
+        <mat-label>Naviera / Aerolínea</mat-label>
+        <input matInput [(ngModel)]="form.navieraAerolinea">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="dense full-width">
+        <mat-label>N° Contenedor</mat-label>
+        <input matInput [(ngModel)]="form.numeroContenedor">
+      </mat-form-field>
+    </div>
+
+    <div class="column-section">
+      <h3><mat-icon>visibility</mat-icon> Seguimiento</h3>
+      
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Tracking / BL / Guía</mat-label>
+        <input matInput [(ngModel)]="form.trackingNumber">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>N° DUA / DAM</mat-label>
+        <input matInput [(ngModel)]="form.numeroDua">
+      </mat-form-field>
+
+      <div class="row-2">
+        <mat-form-field appearance="outline">
+          <mat-label>ETA (Llegada)</mat-label>
+          <input matInput [matDatepicker]="picker1" [(ngModel)]="form.fechaEstimadaLlegada">
+          <mat-datepicker-toggle matIconSuffix [for]="picker1"></mat-datepicker-toggle>
+          <mat-datepicker #picker1></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Nacionalización</mat-label>
+          <input matInput [matDatepicker]="picker2" [(ngModel)]="form.fechaNacionalizacion">
+          <mat-datepicker-toggle matIconSuffix [for]="picker2"></mat-datepicker-toggle>
+          <mat-datepicker #picker2></mat-datepicker>
+        </mat-form-field>
+      </div>
+
+      <div class="status-box">
+        <label style="display:block; margin-bottom:8px; font-weight:600; color:#475569">Estado Actual del Flujo:</label>
+        <mat-form-field appearance="fill" class="full-width no-bottom">
+          <mat-select [(ngModel)]="form.estado">
+            <mat-option *ngFor="let e of estados" [value]="e">{{ getLabelEstado(e) }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+    </div>
+
+    <div class="column-section costs-panel">
+      <h3><mat-icon>attach_money</mat-icon> Costos y Prorrateo</h3>
+      
+      <div class="cost-group">
+        <span class="group-label">Internacionales</span>
+        <mat-form-field appearance="outline" class="dense full-width cost-input">
+          <span matPrefix>$ &nbsp;</span>
+          <mat-label>Flete Internacional</mat-label>
+          <input matInput type="number" [(ngModel)]="form.costoFlete">
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="dense full-width cost-input">
+          <span matPrefix>$ &nbsp;</span>
+          <mat-label>Seguro</mat-label>
+          <input matInput type="number" [(ngModel)]="form.costoSeguro">
+        </mat-form-field>
+      </div>
+
+      <div class="cost-group">
+        <span class="group-label">Nacionales</span>
+        <mat-form-field appearance="outline" class="dense full-width cost-input">
+          <span matPrefix>S/ &nbsp;</span>
+          <mat-label>Impuestos Aduanas</mat-label>
+          <input matInput type="number" [(ngModel)]="form.impuestosAduanas">
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="dense full-width cost-input">
+          <span matPrefix>S/ &nbsp;</span>
+          <mat-label>Gastos Op. (Agente/Almacén)</mat-label>
+          <input matInput type="number" [(ngModel)]="form.gastosOperativos">
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="dense full-width cost-input">
+          <span matPrefix>S/ &nbsp;</span>
+          <mat-label>Transporte Local</mat-label>
+          <input matInput type="number" [(ngModel)]="form.costoTransporteLocal">
+        </mat-form-field>
+      </div>
+
+      <div class="total-summary">
+        Total Costos Extra: 
+        <strong>{{ calcularTotalExtras() | number:'1.2-2' }}</strong>
+      </div>
+    </div>
+
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancelar()">Cancelar</button>
+  <button mat-flat-button color="primary" (click)="guardar()" [disabled]="isSaving">
+    {{ isSaving ? 'Guardando...' : 'Guardar Cambios' }}
+  </button>
+</mat-dialog-actions>

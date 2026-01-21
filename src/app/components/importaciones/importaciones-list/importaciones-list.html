@@ -1,0 +1,174 @@
+<div class="page-container">
+  
+  <div class="page-header animate-fade-in">
+    <div class="header-content">
+      <div class="icon-box">
+        <mat-icon>public</mat-icon>
+      </div>
+      <div>
+        <h1>Gestión de Importaciones</h1>
+        <p class="subtitle">Seguimiento logístico, DUA y costeo de productos importados</p>
+      </div>
+    </div>
+    
+    <button mat-stroked-button class="btn-secondary" routerLink="/compras/nueva">
+      <mat-icon>add</mat-icon> Nueva Factura Comercial
+    </button>
+  </div>
+
+  <div class="filters-bar card animate-fade-in">
+    <div class="search-wrapper">
+      <mat-icon>search</mat-icon>
+      <input type="text" placeholder="Buscar por DUA, tracking, proveedor o factura..." 
+             [(ngModel)]="filtroTexto" (input)="filtrar()">
+      <button class="btn-clear" *ngIf="filtroTexto" (click)="limpiarBusqueda()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <div class="actions-group">
+      <button mat-button class="btn-tool" [class.active-filter]="mostrarFiltros" (click)="toggleFiltros()">
+        <mat-icon>{{ mostrarFiltros ? 'filter_list_off' : 'filter_list' }}</mat-icon>
+        {{ mostrarFiltros ? 'Ocultar Filtros' : 'Filtros' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="advanced-filters card animate-fade-in" *ngIf="mostrarFiltros">
+    <div class="filters-grid">
+      <div class="filter-item">
+        <label>Estado del Envío</label>
+        <select [(ngModel)]="filtroEstado" (change)="filtrar()">
+          <option value="TODOS">Todos los estados</option>
+          <option *ngFor="let est of estados" [value]="est">{{ getLabelEstado(est) }}</option>
+        </select>
+      </div>
+      <div class="filter-item">
+        <label>Transporte</label>
+        <select [(ngModel)]="filtroTransporte" (change)="filtrar()">
+          <option value="TODOS">Cualquier medio</option>
+          <option *ngFor="let tr of transportes" [value]="tr">{{ tr }}</option>
+        </select>
+      </div>
+      <div class="filter-item date-range-wrapper">
+        <label>Fecha Estimada Llegada (ETA)</label>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="dense-datepicker">
+          <mat-date-range-input [rangePicker]="picker">
+            <input matStartDate placeholder="Desde" [(ngModel)]="filtroFechaInicio" (dateChange)="filtrar()">
+            <input matEndDate placeholder="Hasta" [(ngModel)]="filtroFechaFin" (dateChange)="filtrar()">
+          </mat-date-range-input>
+          <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+          <mat-date-range-picker #picker></mat-date-range-picker>
+        </mat-form-field>
+      </div>
+    </div>
+    <div class="filters-footer">
+      <button mat-button color="warn" (click)="limpiarFiltros()">
+        <mat-icon>restart_alt</mat-icon> Restablecer todo
+      </button>
+    </div>
+  </div>
+
+  <div class="table-card card animate-fade-in delay-1">
+    
+    <div class="loading-overlay" *ngIf="loading">
+      <p>Cargando datos...</p>
+    </div>
+
+    <div class="table-responsive" *ngIf="!loading">
+      <table class="soft-table">
+        <thead>
+          <tr>
+            <th class="col-estado">ESTADO</th>
+            <th class="col-logistica">LOGÍSTICA</th>
+            <th class="col-proveedor">PROVEEDOR / FACTURA</th>
+            <th class="col-seguimiento">SEGUIMIENTO</th>
+            <th class="col-money">VALOR FOB</th>
+            <th class="col-money">COSTOS IMP.</th>
+            <th class="col-money">COSTO TOTAL</th>
+            <th class="col-actions">ACCIONES</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of importacionesFiltradas">
+            
+            <td class="col-estado">
+              <span class="status-badge" [ngClass]="getClassEstado(item.estado)">
+                {{ getLabelEstado(item.estado) }}
+              </span>
+              <div class="date-info" *ngIf="item.fechaEstimadaLlegada">
+                ETA: {{ item.fechaEstimadaLlegada | date:'dd/MM' }}
+              </div>
+            </td>
+
+            <td class="col-logistica">
+              <div class="logistics-cell">
+                <mat-icon class="transport-icon" [title]="item.tipoTransporte">
+                  {{ getIconoTransporte(item.tipoTransporte) }}
+                </mat-icon>
+                <div class="logistics-info">
+                  <span class="origin">{{ item.paisOrigen || 'ND' }}</span>
+                  <span class="incoterm" *ngIf="item.incoterm">{{ item.incoterm }}</span>
+                </div>
+              </div>
+            </td>
+
+            <td class="col-proveedor">
+              <div class="cell-primary">{{ item.compra.nombreProveedor }}</div>
+              <div class="cell-secondary">
+                <mat-icon class="tiny-icon">description</mat-icon>
+                {{ item.compra.serie }}-{{ item.compra.numero }}
+              </div>
+            </td>
+
+            <td class="col-seguimiento">
+              <div *ngIf="item.numeroDua" class="dua-info highlight-dua">
+                <span class="label">DUA:</span> {{ item.numeroDua }}
+              </div>
+              <div *ngIf="item.trackingNumber" class="tracking-info">
+                <span class="label">Track:</span> {{ item.trackingNumber }}
+              </div>
+              <div *ngIf="!item.numeroDua && !item.trackingNumber" class="placeholder-text">
+                -- Pendiente --
+              </div>
+            </td>
+
+            <td class="col-money">
+              <div class="amount-primary">
+                {{ item.compra.moneda === 'USD' ? '$' : 'S/' }} 
+                {{ item.compra.total | number:'1.2-2' }}
+              </div>
+            </td>
+
+            <td class="col-money">
+              <div class="amount-secondary">
+                + {{ item.compra.moneda === 'USD' ? '$' : 'S/' }} 
+                {{ calcularCostosExtra(item) | number:'1.2-2' }}
+              </div>
+            </td>
+
+            <td class="col-money">
+              <div class="amount-total">
+                {{ item.compra.moneda === 'USD' ? '$' : 'S/' }} 
+                {{ (item.compra.total + calcularCostosExtra(item)) | number:'1.2-2' }}
+              </div>
+            </td>
+
+            <td class="col-actions">
+              <button mat-icon-button class="btn-edit" (click)="editarImportacion(item.id)" 
+                      matTooltip="Gestionar DUA y Costos">
+                <mat-icon>edit_note</mat-icon>
+              </button>
+            </td>
+
+          </tr>
+        </tbody>
+      </table>
+
+      <div *ngIf="importacionesFiltradas.length === 0" class="empty-state">
+        <mat-icon>travel_explore</mat-icon>
+        <p>No se encontraron importaciones con esos criterios</p>
+      </div>
+    </div>
+  </div>
+</div>

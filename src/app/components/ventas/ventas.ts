@@ -19,13 +19,13 @@ import { forkJoin } from 'rxjs';
 import { VentaService } from '../../services/venta-service';
 import { ProductoService } from '../../services/producto-service';
 import { ClienteService } from '../../services/cliente-service';
-import { CuentaBancariaService } from '../../services/cuenta-bancaria-service'; // ✅ NUEVO
+import { CuentaBancariaService } from '../../services/cuenta-bancaria-service';
 
 // Modelos
 import { Producto } from '../../models/producto';
 import { Cliente } from '../../models/cliente';
-import { CuentaBancaria } from '../../models/cuenta-bancaria'; // ✅ NUEVO
-import { VentaRequest, TipoCliente, MetodoPago, TipoPago } from '../../models/venta';
+import { CuentaBancaria } from '../../models/cuenta-bancaria';
+import { VentaRequest, TipoCliente, MetodoPago, TipoPago, PagoRequest } from '../../models/venta';
 import { ClienteModalComponent } from '../cliente/cliente-modal/cliente-modal';
 
 interface ProductoEnVenta {
@@ -62,23 +62,33 @@ export class VentasComponent implements OnInit {
   mostrarListaClientes: boolean = false;
   isLoadingClientes: boolean = false;
 
-  // ✅ NUEVO: Variables para Cuentas Bancarias
+  // Cuentas Bancarias
   cuentas: CuentaBancaria[] = [];
-  cuentaSeleccionadaId?: number; 
 
   // --- Formulario de Venta ---
   nombreCliente: string = '';
   tipoCliente: TipoCliente = TipoCliente.COMUN;
   fechaVenta: Date = new Date();
   
-  // VARIABLES DE PAGO Y CRÉDITO
+  // VARIABLES DE PAGO
   tipoPago: TipoPago = TipoPago.CONTADO;
-  metodoPago: MetodoPago = MetodoPago.EFECTIVO;
   
-  montoInicial: number = 0;
+  // LISTA DE PAGOS Y OBJETO TEMPORAL
+  listaPagos: PagoRequest[] = [];
+  
+  pagoActual: PagoRequest = {
+    metodoPago: MetodoPago.EFECTIVO,
+    monto: 0,
+    moneda: 'PEN',
+    cuentaBancariaId: undefined,
+    referencia: ''
+  };
+
+  // Crédito
   numeroCuotas: number = 1;
   montoCuota: number = 0;     
   saldoPendiente: number = 0; 
+  totalPagadoAcumulado: number = 0;
 
   notas: string = '';
 
@@ -92,31 +102,27 @@ export class VentasComponent implements OnInit {
     { value: 'NOTA', label: 'Nota de Venta' }
   ];
 
-  // --- Configuración de Moneda ---
+  // --- Configuración de Moneda VENTA ---
   moneda: string = 'PEN';
   tipoCambio: number = 3.80;
   
-  // --- Pago Mixto ---
-  pagoEfectivo: number | null = 0;
-  pagoTransferencia: number | null = 0;
-
   // --- Totales ---
   subtotal: number = 0;
   igv: number = 0;
   total: number = 0;
   isSaving: boolean = false;
 
-  metodosPago = [
+  metodosPagoDisponibles = [
     { value: MetodoPago.EFECTIVO, label: 'Efectivo' },
     { value: MetodoPago.TARJETA, label: 'Tarjeta' },
     { value: MetodoPago.TRANSFERENCIA, label: 'Transferencia' },
     { value: MetodoPago.YAPE, label: 'Yape' },
-    { value: MetodoPago.PLIN, label: 'Plin' },
-    { value: MetodoPago.MIXTO, label: 'Mixto (Efectivo + Transferencia)' }
+    { value: MetodoPago.PLIN, label: 'Plin' }
   ];
+  
   public eTipoPago = TipoPago;
 
-  // --- Edición de Borrador ---
+  // --- Edición ---
   esEdicion: boolean = false;
   ventaId: number | null = null;
 
@@ -124,7 +130,7 @@ export class VentasComponent implements OnInit {
     private ventaService: VentaService,
     private productoService: ProductoService,
     private clienteService: ClienteService,
-    private cuentaService: CuentaBancariaService, // ✅ INYECTADO
+    private cuentaService: CuentaBancariaService,
     private router: Router,
     private route: ActivatedRoute,
     private cdr: ChangeDetectorRef,
@@ -134,11 +140,8 @@ export class VentasComponent implements OnInit {
 
   ngOnInit(): void {
     this.isLoadingProductos = true;
-
-    // ✅ Cargar Cuentas Bancarias Activas
     this.cuentaService.listarActivas().subscribe(data => this.cuentas = data);
 
-    // Carga paralela de productos y clientes
     const cargaProductos$ = this.productoService.listarProductosActivos();
     const cargaClientes$ = this.clienteService.listarClientesActivos();
 
@@ -156,6 +159,7 @@ export class VentasComponent implements OnInit {
           this.cargarDatosVenta(this.ventaId);
         } else {
           this.isLoadingProductos = false;
+          this.pagoActual.moneda = this.moneda;
         }
       },
       error: (err) => {
@@ -171,46 +175,34 @@ export class VentasComponent implements OnInit {
     this.isLoadingProductos = true;
     this.ventaService.obtenerVenta(id).subscribe({
       next: (venta: any) => {
-        // Recuperar Cliente
         let idCliente = venta.clienteId || (venta.cliente ? venta.cliente.id : null);
         const clienteEncontrado = this.clientes.find(c => String(c.id) === String(idCliente));
-
-        if (clienteEncontrado) {
-          this.seleccionarCliente(clienteEncontrado);
-        } else if (venta.nombreCliente) {
+        if (clienteEncontrado) this.seleccionarCliente(clienteEncontrado);
+        else if (venta.nombreCliente) {
           this.nombreCliente = venta.nombreCliente;
-          this.busquedaCliente = venta.nombreCliente;
-          this.clienteSeleccionado = { id: idCliente || 0, nombreCompleto: venta.nombreCliente, numeroDocumento: '---' } as any;
+          this.clienteSeleccionado = { id: idCliente || 0, nombreCompleto: venta.nombreCliente } as any;
         }
 
-        // Datos Generales
         this.fechaVenta = new Date(venta.fechaVenta);
-        this.metodoPago = venta.metodoPago;
         this.notas = venta.notas || '';
         this.moneda = venta.moneda || 'PEN';
         this.tipoCambio = venta.tipoCambio || 3.80;
-        
-        // Recuperar Datos de Documento y Pago
-        if (venta.tipoDocumento) this.tipoDocumento = venta.tipoDocumento;
+        this.tipoDocumento = venta.tipoDocumento || 'FACTURA';
         this.numeroDocumento = venta.numeroDocumento || '';
         
-        // RECUPERAR DATOS DE CRÉDITO
         this.tipoPago = venta.tipoPago || TipoPago.CONTADO;
-        this.montoInicial = venta.montoInicial || 0;
         this.numeroCuotas = venta.numeroCuotas || 1;
 
-        // ✅ RECUPERAR CUENTA BANCARIA
-        if (venta.cuentaBancariaId) {
-            this.cuentaSeleccionadaId = venta.cuentaBancariaId;
-        } else if (venta.cuentaBancaria && venta.cuentaBancaria.id) {
-            this.cuentaSeleccionadaId = venta.cuentaBancaria.id;
+        if (venta.pagos && venta.pagos.length > 0) {
+            this.listaPagos = venta.pagos.map((p: any) => ({
+                metodoPago: p.metodoPago,
+                monto: p.monto,
+                moneda: p.moneda,
+                cuentaBancariaId: p.cuentaDestinoId || (p.cuentaDestino ? p.cuentaDestino.id : undefined),
+                referencia: p.referencia
+            }));
         }
 
-        // Recuperar Pagos Mixtos
-        this.pagoEfectivo = venta.pagoEfectivo || 0;
-        this.pagoTransferencia = venta.pagoTransferencia || 0;
-
-        // Recuperar Productos
         if (venta.detalles) {
           this.productosEnVenta = venta.detalles.map((detalle: any) => {
             const productoCatalogo = this.productos.find(p => String(p.id) === String(detalle.productoId));
@@ -238,41 +230,51 @@ export class VentasComponent implements OnInit {
     });
   }
 
-  // --- NOTIFICACIONES ---
   mostrarNotificacion(mensaje: string, tipo: 'success' | 'warning' | 'error'): void {
     this.snackBar.open(mensaje, 'Cerrar', {
       duration: 3000,
-      horizontalPosition: 'center',
-      verticalPosition: 'bottom',
-      panelClass: [`snackbar-${tipo}`]
+      panelClass: [`snackbar-${tipo}`],
+      verticalPosition: 'bottom'
     });
   }
 
-  // --- MODAL NUEVO CLIENTE ---
+  // --- CLIENTE Y MODALES ---
   abrirNuevoCliente(): void {
-    const dialogRef = this.dialog.open(ClienteModalComponent, {
-      width: '700px',
-      disableClose: true,
-      data: { cliente: null }
-    });
-
+    const dialogRef = this.dialog.open(ClienteModalComponent, { width: '700px', disableClose: true, data: { cliente: null } });
     dialogRef.afterClosed().subscribe(nuevoCliente => {
       if (nuevoCliente) {
         this.clientes.push(nuevoCliente);
         this.seleccionarCliente(nuevoCliente);
-        this.cdr.detectChanges();
       }
     });
   }
 
+  seleccionarCliente(cliente: Cliente): void {
+    this.clienteSeleccionado = cliente;
+    this.busquedaCliente = `${cliente.nombreCompleto} - ${cliente.numeroDocumento}`;
+    this.nombreCliente = cliente.nombreCompleto;
+    this.mostrarListaClientes = false;
+  }
+  
+  limpiarCliente(): void { this.clienteSeleccionado = null; this.busquedaCliente = ''; this.nombreCliente = ''; }
+  buscarClientes(): void { 
+    if (!this.busquedaCliente.trim()) { this.clientesFiltrados = []; this.mostrarListaClientes = false; return; }
+    const termino = this.busquedaCliente.toLowerCase();
+    this.clientesFiltrados = this.clientes.filter(c =>
+      c.nombreCompleto.toLowerCase().includes(termino) || c.numeroDocumento?.toLowerCase().includes(termino)
+    );
+    this.mostrarListaClientes = this.clientesFiltrados.length > 0;
+  } 
+
   // --- LÓGICA MONEDA ---
-  onTipoCambioChange() {
-    if (this.tipoCambio <= 0) this.tipoCambio = 1;
+  cambiarMoneda(nuevaMoneda: string) {
+    this.moneda = nuevaMoneda;
+    this.pagoActual.moneda = nuevaMoneda;
     this.recalcularTodoElCarrito();
   }
 
-  cambiarMoneda(nuevaMoneda: string) {
-    this.moneda = nuevaMoneda;
+  onTipoCambioChange() {
+    if (this.tipoCambio <= 0) this.tipoCambio = 1;
     this.recalcularTodoElCarrito();
   }
 
@@ -294,109 +296,29 @@ export class VentasComponent implements OnInit {
     return precioOriginal;
   }
 
-  // --- GESTIÓN CARRITO CON VALIDACIONES ---
+  // --- GESTIÓN PRODUCTOS ---
   agregarProducto(producto: Producto): void {
-    // 1. Validación Stock Agotado
-    if (producto.stockActual <= 0) {
-      this.mostrarNotificacion(`❌ El producto "${producto.nombre}" está AGOTADO.`, 'error');
-      return;
-    }
-
-    const existe = this.productosEnVenta.find(p => p.producto.id === producto.id);
-
-    if (existe) {
-      // 2. Validación Tope de Stock
-      if (existe.cantidad >= producto.stockActual) {
-        this.mostrarNotificacion(`⚠️ Stock máximo alcanzado (${producto.stockActual}).`, 'warning');
-        return;
-      }
-      existe.cantidad++;
-      this.calcularSubtotalProducto(existe);
-      this.mostrarNotificacion(`Agregado (+1): ${producto.nombre}`, 'success');
-    } else {
-      // Agregar nuevo
-      const precioFinal = this.convertirPrecio(producto);
-      this.productosEnVenta.push({
-        producto: producto,
-        cantidad: 1,
-        precioUnitario: precioFinal,
-        descuento: 0,
-        subtotal: precioFinal
-      });
-
-      // 3. Alerta Stock Bajo
-      if (producto.stockActual <= (producto.stockMinimo || 5)) {
-        this.mostrarNotificacion(`⚠️ Advertencia: Stock bajo en "${producto.nombre}" (${producto.stockActual} restantes).`, 'warning');
-      }
-    }
-    this.calcularTotales();
-    this.terminoBusqueda = '';
+     if (producto.stockActual <= 0) { this.mostrarNotificacion('Stock Agotado', 'error'); return; }
+     
+     const existe = this.productosEnVenta.find(p => p.producto.id === producto.id);
+     if (existe) {
+       if (existe.cantidad >= producto.stockActual) {
+          this.mostrarNotificacion('Stock máximo alcanzado', 'warning'); return;
+       }
+       existe.cantidad++;
+       this.calcularSubtotalProducto(existe);
+     } else {
+       const precioFinal = this.convertirPrecio(producto);
+       this.productosEnVenta.push({
+         producto: producto, cantidad: 1, precioUnitario: precioFinal, descuento: 0, subtotal: precioFinal
+       });
+     }
+     this.calcularTotales();
+     this.terminoBusqueda = '';
   }
 
   eliminarProducto(index: number): void {
     this.productosEnVenta.splice(index, 1);
-    this.calcularTotales();
-  }
-
-  // --- BÚSQUEDAS ---
-  buscarProductos(): void {
-    if (!this.terminoBusqueda.trim()) {
-      this.productosFiltrados = this.productos;
-      return;
-    }
-    const termino = this.terminoBusqueda.toLowerCase();
-    this.productosFiltrados = this.productos.filter(p =>
-      p.nombre.toLowerCase().includes(termino) || p.codigo.toLowerCase().includes(termino)
-    );
-  }
-
-  buscarClientes(): void {
-    if (!this.busquedaCliente.trim()) {
-      this.clientesFiltrados = [];
-      this.mostrarListaClientes = false;
-      return;
-    }
-    const termino = this.busquedaCliente.toLowerCase();
-    this.clientesFiltrados = this.clientes.filter(c =>
-      c.nombreCompleto.toLowerCase().includes(termino) || c.numeroDocumento?.toLowerCase().includes(termino)
-    );
-    this.mostrarListaClientes = this.clientesFiltrados.length > 0;
-  }
-
-  seleccionarCliente(cliente: Cliente): void {
-    this.clienteSeleccionado = cliente;
-    this.busquedaCliente = `${cliente.nombreCompleto} - ${cliente.numeroDocumento}`;
-    this.nombreCliente = cliente.nombreCompleto;
-    this.mostrarListaClientes = false;
-  }
-
-  limpiarCliente(): void {
-    this.clienteSeleccionado = null;
-    this.busquedaCliente = '';
-    this.nombreCliente = '';
-  }
-
-  // --- CÁLCULOS PRODUCTOS ---
-  onCantidadChange(item: ProductoEnVenta): void {
-    if (!item.cantidad || item.cantidad < 1) item.cantidad = 1;
-    
-    // Validación manual de stock
-    if (item.cantidad > item.producto.stockActual) {
-      item.cantidad = item.producto.stockActual;
-      this.mostrarNotificacion(`⚠️ Cantidad ajustada al stock máximo (${item.producto.stockActual}).`, 'warning');
-    }
-
-    this.calcularSubtotalProducto(item);
-    this.calcularTotales();
-  }
-
-  onPrecioChange(item: ProductoEnVenta): void {
-    this.calcularSubtotalProducto(item);
-    this.calcularTotales();
-  }
-
-  onDescuentoChange(item: ProductoEnVenta): void {
-    this.calcularSubtotalProducto(item);
     this.calcularTotales();
   }
 
@@ -405,108 +327,118 @@ export class VentasComponent implements OnInit {
     if (item.descuento > 0) subtotal -= (subtotal * (item.descuento / 100));
     item.subtotal = Number(subtotal.toFixed(2));
   }
+  
+  onCantidadChange(item: ProductoEnVenta) { 
+      if(item.cantidad > item.producto.stockActual) item.cantidad = item.producto.stockActual;
+      this.calcularSubtotalProducto(item); this.calcularTotales(); 
+  }
+  onPrecioChange(item: ProductoEnVenta) { this.calcularSubtotalProducto(item); this.calcularTotales(); }
+  onDescuentoChange(item: ProductoEnVenta) { this.calcularSubtotalProducto(item); this.calcularTotales(); }
+  buscarProductos() { 
+    if (!this.terminoBusqueda.trim()) { this.productosFiltrados = this.productos; return; }
+    const termino = this.terminoBusqueda.toLowerCase();
+    this.productosFiltrados = this.productos.filter(p =>
+      p.nombre.toLowerCase().includes(termino) || p.codigo.toLowerCase().includes(termino)
+    );
+  }
 
   // ============================================
-  // ✅ LÓGICA DE CRÉDITO Y TOTALES
+  // ✅ GESTIÓN DE PAGOS MÚLTIPLES
   // ============================================
 
-  onTipoPagoChange(): void {
-    if (this.tipoPago === TipoPago.CONTADO) {
-      // Reseteo valores crédito
-      this.montoInicial = 0;
-      this.numeroCuotas = 1;
-      this.saldoPendiente = 0;
-      this.montoCuota = 0;
-    } else {
-      // Default crédito
-      this.montoInicial = 0;
-      this.numeroCuotas = 1;
+  esPagoDigital(metodo: MetodoPago): boolean {
+    return [MetodoPago.YAPE, MetodoPago.PLIN, MetodoPago.TRANSFERENCIA, MetodoPago.TARJETA].includes(metodo);
+  }
+
+  agregarPagoALista(): void {
+    if (this.pagoActual.monto <= 0) {
+      this.mostrarNotificacion('El monto debe ser mayor a 0', 'warning');
+      return;
     }
+    if (this.esPagoDigital(this.pagoActual.metodoPago) && !this.pagoActual.cuentaBancariaId) {
+      this.mostrarNotificacion('Seleccione la cuenta de destino', 'warning');
+      return;
+    }
+
+    this.listaPagos.push({ ...this.pagoActual });
+
+    this.pagoActual.monto = 0;
+    this.pagoActual.referencia = '';
     this.calcularTotales();
   }
 
-  calcularCredito(): void {
-    // Validaciones
-    if (this.montoInicial < 0) this.montoInicial = 0;
-    if (this.montoInicial > this.total) {
-      this.montoInicial = this.total; // Tope es el total
-    }
-    if (!this.numeroCuotas || this.numeroCuotas < 1) this.numeroCuotas = 1;
-
-    // Cálculo
-    this.saldoPendiente = Number((this.total - this.montoInicial).toFixed(2));
-    if (this.saldoPendiente > 0) {
-      this.montoCuota = Number((this.saldoPendiente / this.numeroCuotas).toFixed(2));
-    } else {
-      this.montoCuota = 0;
-    }
+  eliminarPagoDeLista(index: number): void {
+    this.listaPagos.splice(index, 1);
+    this.calcularTotales();
   }
 
+  calcularTotalPagadoAcumulado(): number {
+    let total = 0;
+    for (const p of this.listaPagos) {
+      if (p.moneda === this.moneda) {
+        total += p.monto;
+      } else {
+        if (this.moneda === 'PEN' && p.moneda === 'USD') {
+          total += (p.monto * this.tipoCambio);
+        } else if (this.moneda === 'USD' && p.moneda === 'PEN') {
+          total += (p.monto / this.tipoCambio);
+        }
+      }
+    }
+    return Number(total.toFixed(2));
+  }
+
+  // ============================================
+  // CÁLCULO DE TOTALES Y CRÉDITO
+  // ============================================
+
   calcularTotales(): void {
-    // 1. Sumar productos
     this.total = Number(this.productosEnVenta.reduce((sum, p) => sum + p.subtotal, 0).toFixed(2));
     this.subtotal = Number((this.total / 1.18).toFixed(2));
     this.igv = Number((this.total - this.subtotal).toFixed(2));
     
-    // 2. Si es pago mixto, recalcular distribuciones
-    if (this.esPagoMixto()) this.validarMontoMixto('T');
+    this.totalPagadoAcumulado = this.calcularTotalPagadoAcumulado();
 
-    // 3. Recalcular crédito si estamos en ese modo
     if (this.tipoPago === TipoPago.CREDITO) {
-      this.calcularCredito();
-    }
-  }
+        this.saldoPendiente = Number((this.total - this.totalPagadoAcumulado).toFixed(2));
+        if (this.saldoPendiente < 0) this.saldoPendiente = 0;
 
-  validarMontoMixto(campo: 'E' | 'T') {
-    const valT = this.pagoTransferencia || 0;
-    const valE = this.pagoEfectivo || 0;
-
-    if (campo === 'T') {
-      if (valT > this.total) this.pagoTransferencia = this.total;
-      this.pagoEfectivo = Number((this.total - (this.pagoTransferencia || 0)).toFixed(2));
+        if (this.numeroCuotas > 0 && this.saldoPendiente > 0) {
+            this.montoCuota = Number((this.saldoPendiente / this.numeroCuotas).toFixed(2));
+        } else {
+            this.montoCuota = 0;
+        }
     } else {
-      if (valE > this.total) this.pagoEfectivo = this.total;
-      this.pagoTransferencia = Number((this.total - (this.pagoEfectivo || 0)).toFixed(2));
+        this.saldoPendiente = 0;
+        this.montoCuota = 0;
     }
   }
 
-  esPagoMixto(): boolean { return this.metodoPago === MetodoPago.MIXTO; }
-
-  // ✅ HELPER: Determina si se debe mostrar el selector de cuentas
-  esPagoDigital(): boolean {
-    return [MetodoPago.YAPE, MetodoPago.PLIN, MetodoPago.TRANSFERENCIA, MetodoPago.TARJETA].includes(this.metodoPago);
+  // ✅ AQUÍ ESTÁ EL MÉTODO QUE FALTABA
+  calcularCredito(): void {
+    this.calcularTotales();
   }
 
-  // --- PREPARAR DATOS (REQUEST) ---
-  private prepararRequest(): any {
-    const esMixto = this.metodoPago === 'MIXTO';
+  onTipoPagoChange() {
+    this.numeroCuotas = 1;
+    this.calcularTotales();
+  }
+
+  // --- ACCIONES FINALES ---
+
+  prepararRequest(): VentaRequest {
     return {
       fechaVenta: this.fechaVenta,
       clienteId: this.clienteSeleccionado?.id,
       nombreCliente: this.nombreCliente,
       tipoCliente: this.tipoCliente,
-      
-      // CAMPOS DE PAGO Y CRÉDITO
       tipoPago: this.tipoPago,
-      // Si es contado, enviamos el total como inicial para consistencia lógica en backend
-      montoInicial: this.tipoPago === TipoPago.CREDITO ? this.montoInicial : this.total,
+      pagos: this.listaPagos,
       numeroCuotas: this.tipoPago === TipoPago.CREDITO ? this.numeroCuotas : 0,
-
-      metodoPago: this.metodoPago,
-      
-      // ✅ ENVIAR CUENTA BANCARIA ID
-      // Si es pago digital, enviamos lo que seleccionó. Si es Efectivo, enviamos null.
-      cuentaBancariaId: this.esPagoDigital() ? this.cuentaSeleccionadaId : null,
-
-      pagoEfectivo: esMixto ? (this.pagoEfectivo || 0) : 0,
-      pagoTransferencia: esMixto ? (this.pagoTransferencia || 0) : 0,
-      
       moneda: this.moneda,
       tipoCambio: this.tipoCambio,
-      
       tipoDocumento: this.tipoDocumento,
-      numeroDocumento: this.numeroDocumento, 
-
+      numeroDocumento: this.numeroDocumento,
       notas: this.notas,
       detalles: this.productosEnVenta.map(p => ({
         productoId: p.producto.id,
@@ -517,22 +449,20 @@ export class VentasComponent implements OnInit {
     };
   }
 
-  // --- ACCIONES FINALES ---
   completarVenta(): void {
     if (this.productosEnVenta.length === 0 || !this.clienteSeleccionado) return;
     
-    // Validación extra para Crédito
-    if (this.tipoPago === TipoPago.CREDITO) {
-      if (this.numeroCuotas <= 0) {
-        this.mostrarNotificacion('Debe haber al menos 1 cuota', 'warning');
-        return;
-      }
+    if (this.listaPagos.length === 0) {
+         this.mostrarNotificacion('Debe agregar al menos un pago', 'warning');
+         return;
     }
 
-    // ✅ Validación: Si es pago digital, DEBE haber cuenta seleccionada
-    if (this.esPagoDigital() && !this.cuentaSeleccionadaId) {
-        this.mostrarNotificacion('❌ Seleccione una cuenta destino para el pago', 'error');
-        return;
+    if (this.tipoPago === TipoPago.CONTADO) {
+        if (this.totalPagadoAcumulado < (this.total - 0.10)) {
+            const falta = (this.total - this.totalPagadoAcumulado).toFixed(2);
+            this.mostrarNotificacion(`Pago incompleto. Faltan ${falta} ${this.moneda}`, 'error');
+            return;
+        }
     }
 
     if (!confirm('¿Estás seguro de emitir esta venta?')) return;
@@ -540,29 +470,23 @@ export class VentasComponent implements OnInit {
     this.isSaving = true;
     const request = this.prepararRequest();
 
+    const observer = {
+        next: () => {
+            this.mostrarNotificacion('✅ Venta registrada exitosamente', 'success');
+            this.isSaving = false;
+            this.router.navigate(['/ventas/lista']);
+        },
+        error: (err: any) => {
+            this.isSaving = false;
+            const msg = err.error?.message || 'Error al procesar venta';
+            this.mostrarNotificacion(msg, 'error');
+        }
+    };
+
     if (this.esEdicion && this.ventaId) {
-      this.ventaService.actualizarVenta(this.ventaId, request).subscribe({
-        next: () => {
-          this.ventaService.completarVenta(this.ventaId!).subscribe({
-            next: () => {
-              this.mostrarNotificacion('✅ Venta completada exitosamente', 'success');
-              this.isSaving = false;
-              this.router.navigate(['/ventas/lista']);
-            },
-            error: () => { this.isSaving = false; this.mostrarNotificacion('Error al completar', 'error'); }
-          });
-        },
-        error: () => { this.isSaving = false; this.mostrarNotificacion('Error al actualizar', 'error'); }
-      });
+      this.ventaService.actualizarVenta(this.ventaId, request).subscribe(observer);
     } else {
-      this.ventaService.crearVenta(request).subscribe({
-        next: () => {
-          this.mostrarNotificacion('✅ Venta registrada exitosamente', 'success');
-          this.isSaving = false;
-          this.router.navigate(['/ventas/lista']);
-        },
-        error: () => { this.isSaving = false; this.mostrarNotificacion('Error al registrar venta', 'error'); }
-      });
+      this.ventaService.crearVenta(request).subscribe(observer);
     }
   }
 
@@ -571,47 +495,33 @@ export class VentasComponent implements OnInit {
     this.isSaving = true;
     const request = this.prepararRequest();
 
-    if (this.esEdicion && this.ventaId) {
-      this.ventaService.actualizarVenta(this.ventaId, request).subscribe({
+    const observer = {
         next: () => {
-          this.mostrarNotificacion('✅ Borrador actualizado', 'success');
-          this.router.navigate(['/ventas/lista']);
-        },
-        error: () => { this.isSaving = false; this.mostrarNotificacion('Error al actualizar', 'error'); }
-      });
-    } else {
-      this.ventaService.guardarBorrador(request).subscribe({
-        next: () => {
-          this.mostrarNotificacion('✅ Borrador guardado', 'success');
-          this.limpiarFormulario();
-          this.isSaving = false;
+            this.mostrarNotificacion('✅ Borrador guardado', 'success');
+            this.isSaving = false;
+            if(!this.esEdicion) this.limpiarFormulario();
         },
         error: () => { this.isSaving = false; this.mostrarNotificacion('Error al guardar borrador', 'error'); }
-      });
+    };
+
+    if (this.esEdicion && this.ventaId) {
+       this.ventaService.actualizarVenta(this.ventaId, request).subscribe(observer);
+    } else {
+       this.ventaService.guardarBorrador(request).subscribe(observer);
     }
   }
 
   limpiarFormulario(): void {
     this.productosEnVenta = [];
+    this.listaPagos = [];
     this.clienteSeleccionado = null;
     this.busquedaCliente = '';
     this.total = 0;
     this.subtotal = 0;
     this.igv = 0;
-    
-    // Reseteo nuevos campos
+    this.totalPagadoAcumulado = 0;
     this.tipoPago = TipoPago.CONTADO;
-    this.montoInicial = 0;
-    this.numeroCuotas = 1;
-    this.saldoPendiente = 0;
-
-    // Reseteo cuenta
-    this.cuentaSeleccionadaId = undefined;
-
-    this.pagoEfectivo = 0;
-    this.pagoTransferencia = 0;
     this.notas = '';
-    this.terminoBusqueda = '';
-    this.numeroDocumento = ''; 
+    this.numeroDocumento = '';
   }
 }

@@ -1,0 +1,101 @@
+<div class="modal-container">
+  
+  <div class="modal-header">
+    <div class="header-info">
+      <div class="icon-box">
+        <mat-icon>store</mat-icon>
+      </div>
+      <div>
+        <h2>{{ data.almacen.nombre }}</h2>
+        <p class="subtitle">{{ data.almacen.direccion || 'Sin dirección registrada' }}</p>
+      </div>
+    </div>
+    <button mat-icon-button (click)="cerrar()">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-box">
+      <span class="label">Total SKUs</span>
+      <span class="value">{{ totalProductos }}</span>
+    </div>
+    <div class="stat-box highlight">
+      <span class="label">Total Unidades</span>
+      <span class="value">{{ totalUnidades }}</span>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="search-wrapper">
+      <mat-icon>search</mat-icon>
+      <input type="text" 
+             placeholder="Buscar producto por nombre o SKU..." 
+             [(ngModel)]="filtroTexto" 
+             (input)="aplicarFiltros()">
+      <button class="btn-clear" *ngIf="filtroTexto" (click)="filtroTexto=''; aplicarFiltros()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <div class="filter-wrapper">
+      <select [(ngModel)]="filtroCategoria" (change)="aplicarFiltros()" class="filter-select">
+        <option value="TODAS">Todas las categorías</option>
+        <option *ngFor="let cat of categoriasDisponibles" [value]="cat">{{ cat }}</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="modal-body">
+    
+    <div *ngIf="cargando" class="loading-state">
+      <div class="spinner"></div>
+      <p>Cargando inventario...</p>
+    </div>
+
+    <div class="table-wrapper" *ngIf="!cargando && productosFiltrados.length > 0">
+      <table class="simple-table">
+        <thead>
+          <tr>
+            <th>SKU</th>
+            <th>Producto</th>
+            <th>Categoría</th>
+            <th class="text-center">Stock Físico</th>
+          </tr>
+        </thead>
+      <tbody>
+          <tr *ngFor="let p of productosFiltrados">
+            <td><span class="sku-badge">{{ p._codigoDisplay }}</span></td>
+            
+            <td>
+              <div class="prod-name">{{ p._nombreDisplay }}</div>
+            </td>
+            
+            <td>
+              <span class="cat-text">{{ p._categoriaDisplay }}</span>
+            </td>
+            
+            <td class="text-center">
+              <span class="stock-pill" [ngClass]="getStockClass(p._stockDisplay)">
+                {{ p._stockDisplay }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div *ngIf="!cargando && productosFiltrados.length === 0" class="empty-state">
+      <mat-icon>filter_alt_off</mat-icon>
+      <p>No se encontraron productos con estos filtros.</p>
+      <button class="btn-reset" (click)="limpiarFiltros()" *ngIf="productos.length > 0">
+        Ver todo el inventario
+      </button>
+    </div>
+
+  </div>
+
+  <div class="modal-footer">
+    <button mat-stroked-button (click)="cerrar()">Cerrar</button>
+  </div>
+</div>

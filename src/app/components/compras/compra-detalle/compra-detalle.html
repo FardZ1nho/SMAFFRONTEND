@@ -1,28 +1,19 @@
-<div style="background: #333; color: #0f0; padding: 15px; font-family: monospace; overflow: auto; max-height: 300px;">
-  <strong>DATOS RECIBIDOS:</strong>
-  <pre>{{ compra | json }}</pre>
-</div>
-
 <div class="detalle-container" *ngIf="compra; else loadingTemplate">
 
   <div class="header-action-row no-print">
-    <button class="btn-back" (click)="volver()" title="Volver a la lista">
+    <button class="btn-back" (click)="volver()" title="Volver">
       <mat-icon>arrow_back</mat-icon>
     </button>
     <div class="header-content">
-      <h1>Detalle de Compra</h1>
+      <h1>Detalle de {{ compra.tipoCompra | titlecase }}</h1>
       <h3>{{ compra.tipoComprobante }} {{ compra.serie }}-{{ compra.numero }}</h3>
     </div>
-    
-    <button class="btn-print" (click)="imprimir()">
-      <mat-icon>print</mat-icon> Imprimir
-    </button>
+    <button class="btn-print" (click)="imprimir()"><mat-icon>print</mat-icon> Imprimir</button>
   </div>
 
   <div class="content-wrapper">
     
     <div class="info-column">
-      
       <div class="card info-card">
         <h3><mat-icon>store</mat-icon> Proveedor</h3>
         <div class="info-row">
@@ -33,89 +24,73 @@
           <span class="label">RUC:</span>
           <span class="value">{{ compra.rucProveedor }}</span>
         </div>
-        <div class="info-row" *ngIf="compra.direccionProveedor">
-          <span class="label">Dirección:</span>
-          <span class="value small">{{ compra.direccionProveedor }}</span>
-        </div>
       </div>
 
       <div class="card info-card">
-        <h3><mat-icon>event</mat-icon> Datos de Emisión</h3>
+        <h3><mat-icon>event</mat-icon> Emisión</h3>
         <div class="info-row">
-          <span class="label">Fecha Emisión:</span>
-          <span class="value">{{ compra.fecEmision | date:'dd/MM/yyyy' }}</span>
+          <span class="label">Fecha:</span>
+          <span class="value">{{ compra.fechaEmision | date:'dd/MM/yyyy' }}</span>
         </div>
         <div class="info-row">
           <span class="label">Moneda:</span>
-          <span class="value">{{ compra.moneda }}</span>
-        </div>
-        <div class="info-row">
-          <span class="label">Tipo de Cambio:</span>
-          <span class="value">{{ compra.tipoCambio }}</span>
-        </div>
-        <div class="info-row mt-2" *ngIf="compra.observaciones">
-          <span class="label">Observaciones:</span>
-          <p class="value small">{{ compra.observaciones }}</p>
+          <span class="value">{{ compra.moneda }} (TC: {{compra.tipoCambio}})</span>
         </div>
       </div>
-
+      
+      <div class="card info-card" *ngIf="compra.percepcion > 0 || compra.detraccionMonto > 0">
+         <h3><mat-icon>account_balance</mat-icon> Impuestos</h3>
+         <div class="info-row" *ngIf="compra.percepcion > 0">
+           <span class="label">Percepción:</span>
+           <span class="value">{{ compra.percepcion | number:'1.2-2' }}</span>
+         </div>
+         <div class="info-row" *ngIf="compra.detraccionMonto > 0">
+           <span class="label">Detracción ({{compra.detraccionPorcentaje}}%):</span>
+           <span class="value">{{ compra.detraccionMonto | number:'1.2-2' }}</span>
+         </div>
+      </div>
     </div>
 
     <div class="products-column">
       <div class="card table-card">
-        <h3><mat-icon>shopping_cart</mat-icon> Productos Adquiridos</h3>
-        
+        <h3><mat-icon>shopping_cart</mat-icon> Items</h3>
         <div class="table-responsive">
           <table class="custom-table">
             <thead>
               <tr>
-                <th>Producto</th>
+                <th>Descripción</th>
                 <th class="text-center">Cant.</th>
                 <th class="text-right">P. Unit.</th>
-                <th class="text-right">Subtotal</th>
+                <th class="text-right">Total</th>
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let item of compra.detalles">
                 <td>
-                  <div class="prod-name">
-                    {{ item.nombreProducto || item.producto?.nombre || 'Sin Nombre' }}
-                  </div>
-                  <div class="prod-code">
-                    {{ item.codigoProducto || item.producto?.codigo || '-' }}
-                  </div>
+                  <div class="prod-name">{{ item.nombreProducto }}</div>
+                  <div class="prod-code">{{ item.codigoProducto }}</div>
                 </td>
-                
                 <td class="text-center">{{ item.cantidad }}</td>
-                
-                <td class="text-right">
-                  {{ item.precioUnitario | number:'1.2-2' }}
-                </td>
-                
-                <td class="text-right fw-bold">
-                  {{ (item.cantidad * item.precioUnitario) | number:'1.2-2' }}
-                </td>
-              </tr>
-              
-              <tr *ngIf="!compra.detalles || compra.detalles.length === 0">
-                 <td colspan="4" class="text-center" style="padding: 20px; color: red;">
-                    ⚠️ No se encontraron detalles de productos en esta compra.
-                    <br>
-                    <small>(Revisa la consola F12 para ver cómo se llama la lista que envía el backend)</small>
-                 </td>
+                <td class="text-right">{{ item.precioUnitario | number:'1.2-2' }}</td>
+                <td class="text-right fw-bold">{{ item.importeTotal | number:'1.2-2' }}</td>
               </tr>
             </tbody>
             <tfoot>
-              <tr class="total-row">
-                <td colspan="3" class="text-right label-total">TOTAL {{ compra.moneda === 'Soles' ? 'S/' : '$' }}</td>
-                <td class="text-right amount-total">
-                  {{ calcularTotal() | number:'1.2-2' }}
-                </td>
+              <tr>
+                <td colspan="3" class="text-right label-total">SUBTOTAL:</td>
+                <td class="text-right">{{ compra.subTotal | number:'1.2-2' }}</td>
+              </tr>
+              <tr>
+                <td colspan="3" class="text-right label-total">IGV:</td>
+                <td class="text-right">{{ compra.igv | number:'1.2-2' }}</td>
+              </tr>
+              <tr class="total-row-highlight">
+                <td colspan="3" class="text-right label-total-lg">TOTAL:</td>
+                <td class="text-right amount-total-lg">{{ compra.total | number:'1.2-2' }}</td>
               </tr>
             </tfoot>
           </table>
         </div>
-
       </div>
     </div>
 
@@ -123,7 +98,5 @@
 </div>
 
 <ng-template #loadingTemplate>
-  <div class="loading-container">
-    <p>Cargando información de la compra...</p>
-  </div>
+  <div class="loading-container"><p>Cargando...</p></div>
 </ng-template>

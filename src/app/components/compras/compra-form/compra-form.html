@@ -6,41 +6,47 @@
     </button>
     <div class="header-content">
       <h1>Nueva Compra</h1>
-      <h3>Registre el ingreso de mercadería al almacén</h3>
+      <h3>Registre el ingreso de mercadería o servicios</h3>
+    </div>
+  </div>
+
+  <div class="tipo-selector-row">
+    <div class="tipo-card" [class.active]="compra.tipoCompra === 'BIEN'" (click)="cambiarTipoCompra('BIEN')">
+      <mat-icon>inventory_2</mat-icon> Compra de Bienes
+    </div>
+    <div class="tipo-card" [class.active]="compra.tipoCompra === 'SERVICIO'" (click)="cambiarTipoCompra('SERVICIO')">
+      <mat-icon>engineering</mat-icon> Compra de Servicios
     </div>
   </div>
 
   <div class="card mb-4">
     <h3>
       <mat-icon style="vertical-align: middle; margin-right: 8px;">receipt_long</mat-icon>
-      Información del Comprobante
+      Datos del Comprobante
     </h3>
 
     <div class="config-grid-rows">
-
       <div class="config-row four-cols">
         <div class="grid-input">
           <label class="section-title">Tipo Comprobante</label>
           <select class="form-control-smaf full-width" [(ngModel)]="compra.tipoComprobante">
-            <option value="FACTURA ELECTRÓNICA">FACTURA ELECTRÓNICA</option>
-            <option value="BOLETA DE VENTA">BOLETA DE VENTA</option>
-            <option value="GUIA DE REMISION">GUIA DE REMISION</option>
+            <option *ngFor="let c of listaComprobantes" [value]="c.valor">{{ c.texto }}</option>
           </select>
         </div>
 
         <div class="grid-input">
-          <label class="section-title">Serie <span style="color:red">*</span></label>
+          <label class="section-title">Serie <span class="text-danger">*</span></label>
           <input type="text" class="form-control-smaf full-width" [(ngModel)]="compra.serie" placeholder="F001">
         </div>
 
         <div class="grid-input">
-          <label class="section-title">Número <span style="color:red">*</span></label>
+          <label class="section-title">Número <span class="text-danger">*</span></label>
           <input type="text" class="form-control-smaf full-width" [(ngModel)]="compra.numero" placeholder="000001">
         </div>
 
         <div class="grid-input">
           <label class="section-title">Fecha Emisión</label>
-          <input type="date" class="form-control-smaf full-width" [(ngModel)]="compra.fecEmision">
+          <input type="date" class="form-control-smaf full-width" [(ngModel)]="compra.fechaEmision">
         </div>
       </div>
 
@@ -49,10 +55,9 @@
           <div class="label-with-action">
             <label class="section-title">Proveedor</label>
             <button type="button" class="btn-text-action" (click)="nuevoProveedor()">
-              <mat-icon>add</mat-icon> Nuevo proveedor
+              <mat-icon>add</mat-icon> Nuevo
             </button>
           </div>
-
           <select class="form-control-smaf full-width" [(ngModel)]="compra.proveedorId">
             <option value="0">Seleccionar proveedor...</option>
             <option *ngFor="let p of proveedores" [value]="p.id">{{p.nombre}}</option>
@@ -62,8 +67,8 @@
         <div class="grid-input">
           <label class="section-title">Moneda</label>
           <select class="form-control-smaf full-width" [(ngModel)]="compra.moneda">
-            <option value="Soles">Soles</option>
-            <option value="Dólares">Dólares</option>
+            <option value="PEN">Soles (S/)</option>
+            <option value="USD">Dólares ($)</option>
           </select>
         </div>
 
@@ -73,37 +78,55 @@
         </div>
       </div>
 
-      <div class="grid-input full-width">
-        <label class="section-title">Observaciones</label>
-        <textarea class="form-control-smaf full-width" rows="2" [(ngModel)]="compra.observaciones"
-          placeholder="Detalles adicionales de la compra..."></textarea>
+      <div class="config-row four-cols impuesto-row">
+        
+        <div class="grid-input" *ngIf="compra.tipoCompra === 'BIEN'">
+          <label class="section-title">Percepción</label>
+          <input type="number" class="form-control-smaf full-width" [(ngModel)]="compra.percepcion"
+            (change)="recalcularTotales()" placeholder="0.00">
+        </div>
+
+        <div class="grid-input" *ngIf="compra.tipoCompra === 'SERVICIO'">
+          <label class="section-title">% Detracción</label>
+          <input type="number" class="form-control-smaf full-width" [(ngModel)]="compra.detraccionPorcentaje"
+            (change)="recalcularTotales()" placeholder="Ej. 10">
+        </div>
+
+        <div class="grid-input" *ngIf="compra.tipoCompra === 'SERVICIO'">
+          <label class="section-title">Monto Detracción</label>
+          <input type="number" class="form-control-smaf full-width bg-disabled"
+            [value]="compra.detraccionMonto | number:'1.2-2'" readonly>
+        </div>
+
+        <div class="grid-input">
+          <label class="section-title">Retención</label>
+          <input type="number" class="form-control-smaf full-width" [(ngModel)]="compra.retencion" placeholder="0.00">
+        </div>
       </div>
 
+      <div class="grid-input full-width">
+        <label class="section-title">Observaciones</label>
+        <textarea class="form-control-smaf full-width" rows="2" [(ngModel)]="compra.observaciones"></textarea>
+      </div>
     </div>
   </div>
 
   <div class="card">
-
     <div class="section-header-with-action">
       <h3>
         <mat-icon style="vertical-align: middle; margin-right: 8px;">shopping_cart</mat-icon>
-        Detalle de Productos
+        Detalle de Items
       </h3>
-
-      <button class="btn-tiny-action" (click)="nuevoProducto()"
-        title="Registrar un producto que no existe en el catálogo">
-        <mat-icon>add_circle</mat-icon>
-        Nuevo Producto
+      <button class="btn-tiny-action" (click)="nuevoProducto()">
+        <mat-icon>add_circle</mat-icon> Nuevo Item
       </button>
     </div>
 
     <div class="search-section mb-4">
       <div class="search-wrapper">
         <mat-icon class="search-icon">search</mat-icon>
-        <input type="text" class="search-input-lg" 
-       placeholder="Buscar producto por nombre o código para agregar..."
-       [(ngModel)]="busquedaProducto" 
-       (ngModelChange)="buscarProducto()">
+        <input type="text" class="search-input-lg" placeholder="Buscar item para agregar..."
+          [(ngModel)]="busquedaProducto" (ngModelChange)="buscarProducto()">
 
         <ul class="search-results shadow-sm" *ngIf="productosFiltrados.length > 0">
           <li *ngFor="let p of productosFiltrados" (click)="agregarProducto(p)">
@@ -118,12 +141,16 @@
       <table class="custom-table">
         <thead>
           <tr>
-            <th class="ps-4">Producto</th>
-            <th width="120">Cantidad</th>
-            <th width="120">Precio Unit.</th>
-            <th width="200">Almacén Destino</th>
+            <th class="ps-4">Descripción</th>
+            <th width="80">Cant.</th>
+            
+            <th width="130" title="Valor de Venta (Sin IGV)">Precio Compra<br><small>(Base)</small></th>
+            <th width="130" title="Precio de Venta (Con IGV)">Costo Unit.<br><small>(Inc. IGV)</small></th>
+
+            <th width="180" *ngIf="compra.tipoCompra === 'BIEN'">Almacén</th>
+
             <th width="120">Subtotal</th>
-            <th width="60" class="text-center">Acción</th>
+            <th width="50" class="text-center"></th>
           </tr>
         </thead>
         <tbody>
@@ -132,39 +159,71 @@
               <div class="fw-bold text-main">{{item.nombre}}</div>
               <small class="text-sub">{{item.codigo}}</small>
             </td>
+
             <td>
-              <input type="number" class="form-control-smaf sm-input" [(ngModel)]="item.cantidad">
+              <input type="number" class="form-control-smaf sm-input" [(ngModel)]="item.cantidad"
+                (change)="recalcularTotales()" min="1">
             </td>
+
             <td>
-              <input type="number" class="form-control-smaf sm-input" [(ngModel)]="item.precioUnitario">
+              <div class="input-group-sm">
+                <span class="currency-symbol">{{ getSimboloMoneda() }}</span>
+                <input type="number" class="form-control-smaf sm-input currency-input" 
+                       [(ngModel)]="item.precioUnitario"
+                       (ngModelChange)="actualizarPrecios(item, 'BASE')"
+                       placeholder="0.00">
+              </div>
             </td>
+
             <td>
+              <div class="input-group-sm">
+                <span class="currency-symbol">{{ getSimboloMoneda() }}</span>
+                <input type="number" class="form-control-smaf sm-input currency-input fw-bold" 
+                       [(ngModel)]="item.costoConIgv"
+                       (ngModelChange)="actualizarPrecios(item, 'TOTAL')"
+                       placeholder="0.00">
+              </div>
+            </td>
+
+            <td *ngIf="compra.tipoCompra === 'BIEN'">
               <select class="form-control-smaf sm-input" [(ngModel)]="item.almacenId">
                 <option *ngFor="let a of almacenes" [value]="a.id">{{a.nombre}}</option>
               </select>
             </td>
-            <td class="fw-bold text-main">
+
+            <td class="fw-bold text-main text-end pe-3">
               {{ (item.cantidad * item.precioUnitario) | number:'1.2-2' }}
             </td>
+
             <td class="text-center">
-              <button class="btn-icon btn-delete" (click)="eliminarItem(i)" title="Quitar">
+              <button class="btn-icon btn-delete" (click)="eliminarItem(i)">
                 <mat-icon>delete</mat-icon>
               </button>
-            </td>
-          </tr>
-
-          <tr *ngIf="itemsAgregados.length === 0">
-            <td colspan="6" class="empty-state">
-              <mat-icon class="empty-icon">add_shopping_cart</mat-icon>
-              <p>Busca y agrega productos para comenzar la compra.</p>
             </td>
           </tr>
         </tbody>
 
         <tfoot *ngIf="itemsAgregados.length > 0">
-          <tr class="total-row">
-            <td colspan="4" class="text-end label-total">TOTAL A PAGAR:</td>
-            <td class="amount-total">{{ calcularTotal() | number:'1.2-2' }}</td>
+          <tr>
+            <td [attr.colspan]="compra.tipoCompra === 'BIEN' ? 5 : 4" class="text-end label-total">SUBTOTAL:</td>
+            <td class="amount-sub">{{ compra.subTotal | number:'1.2-2' }}</td>
+            <td></td>
+          </tr>
+          <tr>
+            <td [attr.colspan]="compra.tipoCompra === 'BIEN' ? 5 : 4" class="text-end label-total">IGV (18%):</td>
+            <td class="amount-sub">{{ compra.igv | number:'1.2-2' }}</td>
+            <td></td>
+          </tr>
+
+          <tr *ngIf="(compra.percepcion || 0) > 0">
+            <td [attr.colspan]="compra.tipoCompra === 'BIEN' ? 5 : 4" class="text-end label-total">PERCEPCIÓN:</td>
+            <td class="amount-sub">{{ compra.percepcion | number:'1.2-2' }}</td>
+            <td></td>
+          </tr>
+
+          <tr class="total-row-final">
+            <td [attr.colspan]="compra.tipoCompra === 'BIEN' ? 5 : 4" class="text-end label-total-lg">TOTAL A PAGAR:</td>
+            <td class="amount-total-lg">{{ compra.total | number:'1.2-2' }}</td>
             <td></td>
           </tr>
         </tfoot>

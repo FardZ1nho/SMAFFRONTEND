@@ -6,8 +6,10 @@
         <mat-icon>inventory_2</mat-icon>
       </div>
       <div class="product-main-info">
-        <h2>{{ producto.nombre }}</h2>
-        <div class="badges-container">
+        <h2 *ngIf="!cargandoGeneral">{{ producto.nombre }}</h2>
+        <h2 *ngIf="cargandoGeneral" class="loading-text">Cargando...</h2>
+
+        <div class="badges-container" *ngIf="!cargandoGeneral">
           <span class="badge sku">
             <mat-icon style="font-size:14px; width:14px; height:14px;">qr_code</mat-icon>
             {{ producto.codigo }}
@@ -24,6 +26,10 @@
     </div>
 
     <div class="header-actions">
+      <button mat-icon-button class="btn-refresh" (click)="refrescarDatos()" matTooltip="Recargar datos">
+        <mat-icon [class.spin]="cargandoGeneral">sync</mat-icon>
+      </button>
+
       <button mat-flat-button class="btn-edit" (click)="editarProducto()">
         <mat-icon>edit</mat-icon> Editar
       </button>
@@ -39,7 +45,7 @@
 
   <div class="modal-body">
     
-    <div class="alert-card" *ngIf="mostrarStockBajo">
+    <div class="alert-card" *ngIf="mostrarStockBajo && !cargandoGeneral">
       <mat-icon>warning_amber</mat-icon>
       <div class="alert-content">
         <strong>Stock Bajo Detectado</strong>
@@ -63,11 +69,11 @@
               <div class="info-grid">
                 <div class="info-item">
                   <span class="label">Código SKU</span>
-                  <span class="value">{{ producto.codigo }}</span>
+                  <span class="value">{{ producto.codigo || '...' }}</span>
                 </div>
                 <div class="info-item">
                   <span class="label">Categoría</span>
-                  <span class="value">{{ producto.nombreCategoria }}</span>
+                  <span class="value">{{ producto.nombreCategoria || '...' }}</span>
                 </div>
                 <div class="info-item full-width">
                   <span class="label">Descripción</span>
@@ -80,7 +86,9 @@
                   <mat-icon>warehouse</mat-icon> Distribución en Almacenes
                 </h4>
                 
-                <div *ngIf="cargandoAlmacenes" class="loading-state">Cargando...</div>
+                <div *ngIf="cargandoAlmacenes" class="loading-state">
+                   <mat-icon class="spin-icon">sync</mat-icon> Actualizando almacenes...
+                </div>
 
                 <div class="warehouse-list" *ngIf="!cargandoAlmacenes && productosAlmacen.length > 0">
                   <div class="warehouse-item" *ngFor="let pa of productosAlmacen">
@@ -91,7 +99,7 @@
                     </div>
                   </div>
                   <div class="wh-total">
-                    Total: <strong>{{ producto.stockActual }}</strong> en {{ productosAlmacen.length }} almacén(es)
+                    Total Físico: <strong>{{ producto.stockActual }}</strong>
                   </div>
                 </div>
 
@@ -113,38 +121,57 @@
               <div class="kpi-row">
                 <div class="kpi-item">
                   <span class="kpi-label">STOCK ACTUAL</span>
-                  <span class="kpi-value primary">{{ producto.stockActual }}</span>
+                  <span class="kpi-value primary">{{ producto.stockActual || 0 }}</span>
                   <span class="kpi-unit">unidades</span>
                 </div>
                 <div class="kpi-divider"></div>
                 <div class="kpi-item">
-                  <span class="kpi-label">STOCK MÍNIMO</span>
-                  <span class="kpi-value secondary">{{ producto.stockMinimo }}</span>
+                  <span class="kpi-label">MÍNIMO</span>
+                  <span class="kpi-value secondary">{{ producto.stockMinimo || 0 }}</span>
                   <span class="kpi-unit">unidades</span>
                 </div>
               </div>
+
               <div class="financial-summary">
+                <div class="summary-title">VALORIZACIÓN DE INVENTARIO</div>
+                
                 <div class="summary-row">
-                  <span>Precio Unitario</span>
-                  <strong>{{ formatearPrecio(producto.precioVenta) }}</strong>
+                  <span>Valor al Costo</span>
+                  <strong class="text-dark">{{ formatearPrecio(valorInventarioCosto) }}</strong>
                 </div>
-                <div class="summary-row total">
-                  <span>Valor Total Stock</span>
-                  <strong>{{ formatearPrecio(valorTotal) }}</strong>
+                
+                <div class="summary-row">
+                  <span>Valor a la Venta</span>
+                  <strong class="text-success">{{ formatearPrecio(valorInventarioVenta) }}</strong>
                 </div>
               </div>
             </div>
 
             <div class="info-section">
-              <h3>Información Financiera ({{ producto.moneda || 'USD' }})</h3>
+              <div class="card-header">
+                 <mat-icon>monetization_on</mat-icon>
+                 <h3>Precios y Costos ({{ producto.moneda || 'USD' }})</h3>
+              </div>
+              
               <div class="financial-grid">
                 <div class="f-row">
-                  <span>Precio China</span>
-                  <strong>{{ formatearPrecio(producto.precioChina) }}</strong>
+                  <span>Último Precio Compra</span>
+                  <strong class="text-secondary">{{ formatearPrecio(producto.precioChina) }}</strong>
                 </div>
-                <div class="f-row">
+
+                <div class="f-row highlight-bg">
+                  <span>Costo Unit. Promedio</span>
+                  <strong class="text-dark">{{ formatearPrecio(producto.costoTotal) }}</strong>
+                </div>
+
+                <div class="f-row big-row">
                   <span>Precio Venta</span>
-                  <strong class="highlight">{{ formatearPrecio(producto.precioVenta) }}</strong>
+                  <strong class="text-primary">{{ formatearPrecio(producto.precioVenta) }}</strong>
+                </div>
+
+                <div class="f-row">
+                   <span>Margen Estimado</span>
+                   <span class="badge-margen">{{ calcularMargen() }}</span>
                 </div>
               </div>
             </div>
@@ -158,13 +185,6 @@
         <div class="empty-tab">
           <mat-icon>history</mat-icon>
           <p>Próximamente: Historial de movimientos</p>
-        </div>
-      </mat-tab>
-
-      <mat-tab label="Historial de Precios">
-        <div class="empty-tab">
-          <mat-icon>show_chart</mat-icon>
-          <p>Próximamente: Gráfica de precios</p>
         </div>
       </mat-tab>
 

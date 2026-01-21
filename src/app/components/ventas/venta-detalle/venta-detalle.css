@@ -55,7 +55,74 @@
 .totals-section { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
 .total-row { display: flex; justify-content: space-between; width: 200px; font-size: 13px; color: #64748b; }
 .total-row.main-total { font-size: 16px; font-weight: 700; color: #0f172a; border-top: 1px solid #e2e8f0; padding-top: 8px; margin-top: 4px; }
+* ESTILOS PARA LA LISTA DE PAGOS EN EL MODAL */
+.pagos-list-readonly {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+  background: #f8fafc;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
 
+.pago-row-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed #cbd5e1;
+}
+
+.pago-row-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.pago-meta {
+  display: flex;
+  flex-direction: column;
+}
+
+.pago-method {
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+}
+
+.pago-cuenta {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.pago-amount {
+  font-weight: 700;
+  color: #1e293b;
+  font-size: 13px;
+}
+
+/* Alerta de Saldo */
+.saldo-alert {
+  margin-top: 12px;
+  padding: 8px;
+  background-color: #fef2f2;
+  border: 1px solid #fca5a5;
+  color: #b91c1c;
+  border-radius: 6px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+}
+
+.badge-tipo {
+  background: #eff6ff;
+  color: var(--primary);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+}
 /* NOTAS */
 .notas-section { margin-top: 20px; background: #fffbeb; padding: 12px; border-radius: 6px; border: 1px solid #fcd34d; font-size: 13px; }
 .notas-section p { margin: 4px 0 0 0; color: #92400e; }

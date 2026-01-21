@@ -1,4 +1,5 @@
 <div class="compras-container">
+  
   <div class="page-header">
     <div class="header-content">
       <div class="icon-box">
@@ -9,36 +10,35 @@
         <p class="subtitle">Registro de todas las facturas, boletas y precios de compra</p>
       </div>
     </div>
-    <button mat-raised-button color="primary" class="btn-nuevo" (click)="irANuevaCompra()">
+    <button mat-raised-button class="btn-nuevo" (click)="irANuevaCompra()">
       <mat-icon>add</mat-icon>
       Nueva Compra
     </button>
   </div>
 
   <div class="toolbar">
-    <div class="filter-group search-container">
+    <div class="search-container">
       <label class="search-label">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-          stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="11" cy="11" r="8"></circle>
-          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-        </svg>
+        <mat-icon style="font-size: 16px; width: 16px; height: 16px;">search</mat-icon>
         Buscar:
       </label>
       <div class="input-wrapper">
-        <input type="text" class="filter-input" placeholder="Buscar por número de factura o proveedor..." 
+        <input type="text" class="filter-input" placeholder="Buscar por número, serie o RUC..." 
                [(ngModel)]="terminoBusqueda" (input)="filtrar()">
-        <button class="btn-clear" *ngIf="terminoBusqueda" (click)="terminoBusqueda = ''; filtrar()">
+        <button class="btn-clear" *ngIf="terminoBusqueda" (click)="limpiarBusqueda()">
           <mat-icon>close</mat-icon>
         </button>
       </div>
     </div>
 
     <div class="actions">
-      <button mat-stroked-button class="btn-tool">
-        <mat-icon>filter_list</mat-icon>
-        Filtros
+      <button mat-stroked-button class="btn-tool" 
+              [class.active-filter-btn]="mostrarFiltros"
+              (click)="toggleFiltros()">
+        <mat-icon>{{ mostrarFiltros ? 'filter_list_off' : 'filter_list' }}</mat-icon>
+        {{ mostrarFiltros ? 'Ocultar Filtros' : 'Filtros' }}
       </button>
+      
       <button mat-stroked-button class="btn-tool">
         <mat-icon>file_download</mat-icon>
         Exportar
@@ -46,14 +46,57 @@
     </div>
   </div>
 
+  <div class="advanced-filters-panel" *ngIf="mostrarFiltros">
+    <div class="filters-grid">
+      
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="filter-field">
+        <mat-label>Rango de Fechas</mat-label>
+        <mat-date-range-input [rangePicker]="picker">
+          <input matStartDate placeholder="Inicio" [(ngModel)]="filtroFechaInicio" (dateChange)="filtrar()">
+          <input matEndDate placeholder="Fin" [(ngModel)]="filtroFechaFin" (dateChange)="filtrar()">
+        </mat-date-range-input>
+        <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+        <mat-date-range-picker #picker></mat-date-range-picker>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="filter-field">
+        <mat-label>Proveedor</mat-label>
+        <mat-select [(ngModel)]="filtroProveedor" (selectionChange)="filtrar()">
+          <mat-option value="TODOS">Todos</mat-option>
+          <mat-option *ngFor="let prov of proveedoresUnicos" [value]="prov">{{ prov }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="filter-field">
+        <mat-label>Tipo Comprobante</mat-label>
+        <mat-select [(ngModel)]="filtroTipo" (selectionChange)="filtrar()">
+          <mat-option value="TODOS">Todos</mat-option>
+          <mat-option *ngFor="let tipo of tiposComprobante" [value]="tipo">{{ formatearTipo(tipo) }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+    </div>
+
+    <div class="filters-actions">
+      <button mat-button color="warn" class="btn-reset" (click)="limpiarFiltros()">
+        <mat-icon>restart_alt</mat-icon> Limpiar Filtros
+      </button>
+    </div>
+  </div>
+
   <div class="main-card">
-    <div class="table-responsive">
+    
+    <div *ngIf="cargando" class="state-container">
+        <p>Cargando compras...</p>
+    </div>
+
+    <div class="table-responsive" *ngIf="!cargando">
       <table mat-table [dataSource]="comprasFiltradas">
 
         <ng-container matColumnDef="fecha">
-          <th mat-header-cell *matHeaderCellDef>FECHA EMISIÓN</th>
+          <th mat-header-cell *matHeaderCellDef>FECHA</th>
           <td mat-cell *matCellDef="let compra">
-            <span class="sku-badge">{{ compra.fecEmision | date:'dd/MM/yyyy' }}</span>
+            <span class="date-text">{{ compra.fechaEmision | date:'dd/MM/yyyy' }}</span>
           </td>
         </ng-container>
 
@@ -65,7 +108,7 @@
                 <mat-icon>description</mat-icon>
               </div>
               <div class="product-info">
-                <span class="name">{{ compra.tipoComprobante }}</span>
+                <span class="name">{{ formatearTipo(compra.tipoComprobante) }}</span>
                 <span class="desc">{{ compra.serie }}-{{ compra.numero }}</span>
               </div>
             </div>
@@ -77,25 +120,25 @@
           <td mat-cell *matCellDef="let compra">
             <div class="product-info">
                 <span class="name">{{ compra.nombreProveedor }}</span>
-                <span class="desc">RUC: {{ compra.rucProveedor }}</span>
+                <span class="desc sku-badge">RUC: {{ compra.rucProveedor }}</span>
             </div>
           </td>
         </ng-container>
 
         <ng-container matColumnDef="moneda">
-          <th mat-header-cell *matHeaderCellDef>MONEDA</th>
-          <td mat-cell *matCellDef="let compra">
+          <th mat-header-cell *matHeaderCellDef class="text-center">MONEDA</th>
+          <td mat-cell *matCellDef="let compra" class="text-center">
             <div class="stock-badge stock-normal">
               {{ compra.moneda }}
             </div>
           </td>
         </ng-container>
 
-     <ng-container matColumnDef="total">
-          <th mat-header-cell *matHeaderCellDef> TOTAL </th>
-          <td mat-cell *matCellDef="let compra">
+        <ng-container matColumnDef="total">
+          <th mat-header-cell *matHeaderCellDef class="text-right"> TOTAL </th>
+          <td mat-cell *matCellDef="let compra" class="text-right">
             <div class="price-cell">
-              <span class="currency">{{ compra.moneda === 'Soles' ? 'S/' : '$' }}</span>
+              <span class="currency">{{ compra.moneda === 'PEN' ? 'S/' : '$' }}</span>
               <span class="amount">{{ compra.total | number:'1.2-2' }}</span>
             </div>
           </td>
@@ -106,12 +149,10 @@
           <td mat-cell *matCellDef="let compra">
             <div class="action-buttons">
               <button mat-icon-button class="btn-view-blue" (click)="verDetalle(compra.id)" matTooltip="Ver detalle">
-                <mat-icon>chevron_right</mat-icon>
+                <mat-icon>visibility</mat-icon>
               </button>
-              <button mat-icon-button class="btn-edit-green" matTooltip="Editar">
-                <mat-icon>edit</mat-icon>
-              </button>
-              <button mat-icon-button color="warn" class="delete-btn" matTooltip="Eliminar">
+
+              <button mat-icon-button class="delete-btn" (click)="eliminarCompra(compra.id)" matTooltip="Anular">
                 <mat-icon>delete_outline</mat-icon>
               </button>
             </div>
@@ -123,9 +164,10 @@
       </table>
     </div>
 
-    <div *ngIf="comprasFiltradas.length === 0" class="state-container">
+    <div *ngIf="!cargando && comprasFiltradas.length === 0" class="state-container">
       <mat-icon class="empty-icon">receipt_long</mat-icon>
-      <p>No se encontraron registros de compras</p>
+      <p>No se encontraron registros de compras con ese criterio.</p>
+      <button mat-button color="primary" (click)="limpiarFiltros()">Limpiar filtros</button>
     </div>
   </div>
 </div>

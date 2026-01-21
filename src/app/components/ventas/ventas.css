@@ -195,11 +195,6 @@
 /* ========== COLUMNA DERECHA: RESUMEN Y PAGOS ========== */
 .resumen-section { position: sticky; top: 24px; border-top: 4px solid var(--primary); }
 
-.pago-mixto-container {
-  background: #f8fafc; border: 1px solid var(--border); padding: 16px;
-  border-radius: 8px; margin-bottom: 16px;
-}
-
 .divider { height: 1px; background: var(--border); margin: 20px 0; }
 
 .resumen-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px; color: var(--text-sub); }
@@ -216,7 +211,7 @@
 .btn-borrador { border: 1px solid var(--border); }
 
 
-/* ========== ✅ ESTILOS NUEVOS PARA CRÉDITO ========== */
+/* ========== ESTILOS NUEVOS PARA CRÉDITO ========== */
 
 .section-label-small {
   display: block; font-size: 12px; font-weight: 700; color: #475569;
@@ -289,4 +284,156 @@
   .producto-venta-details { grid-template-columns: 1fr 1fr; gap: 12px; }
   .subtotal-display { grid-column: 1 / -1; text-align: left; display: flex; justify-content: space-between; }
   .credito-grid { grid-template-columns: 1fr; } /* Inputs apilados en móvil */
+}
+
+/* =========================================
+   LISTA DE PAGOS (Estilo Tarjeta)
+   ========================================= */
+
+.pagos-container {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px; /* Más redondeado */
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+/* Formulario de agregar pago (alineación) */
+.add-pago-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.pago-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Contenedor de la lista */
+.lista-pagos {
+  display: flex;
+  flex-direction: column;
+  gap: 10px; /* Espacio entre tarjetas */
+  margin-top: 16px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+/* TARJETA DE PAGO INDIVIDUAL */
+.pago-item {
+  display: flex;
+  justify-content: space-between; /* Texto izquierda, Botón derecha */
+  align-items: center;            /* Centrado vertical */
+  
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-left: 5px solid var(--primary); /* Borde de color a la izquierda */
+  border-radius: 8px;
+  
+  padding: 10px 14px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.03); /* Sombra suave */
+  transition: all 0.2s ease;
+  animation: slideIn 0.2s ease-out;
+}
+
+.pago-item:hover {
+  transform: translateY(-2px); /* Efecto de elevación al pasar el mouse */
+  box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Texto dentro de la tarjeta */
+.pago-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.metodo-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+
+.pago-monto {
+  font-size: 16px;
+  font-weight: 800;
+  color: #1e293b;
+}
+
+/* Botón de Eliminar (Estilizado) */
+.btn-remove-pago {
+  height: 36px !important;
+  width: 36px !important;
+  min-width: 36px !important; /* Forzar tamaño cuadrado */
+  
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  background-color: #fee2e2; /* Fondo rojo suave */
+  color: #ef4444 !important; /* Icono rojo */
+  border-radius: 50%; /* Círculo perfecto */
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-remove-pago:hover {
+  background-color: #fecaca;
+}
+
+.btn-remove-pago mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
+}
+
+/* Total acumulado */
+.pago-total-acumulado {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 2px dashed #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  color: #475569;
+}
+
+.pago-total-acumulado strong {
+  color: var(--primary);
+  font-size: 18px;
+}
+
+/* --- MENSAJES DE ESTADO (Falta / Cubierto) --- */
+.status-pago {
+  margin-top: 16px;
+  padding: 10px;
+  border-radius: 6px;
+  font-weight: 600;
+  text-align: center;
+  font-size: 13px;
+}
+
+.status-pago.incompleto {
+  background-color: #fff7ed;
+  color: #c2410c;
+  border: 1px solid #ffedd5;
+}
+
+.status-pago.completo {
+  background-color: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
 }

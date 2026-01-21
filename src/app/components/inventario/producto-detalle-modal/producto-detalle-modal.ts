@@ -1,10 +1,11 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatTooltipModule } from '@angular/material/tooltip'; // Opcional para el tooltip del botón refresh
 
 import { Producto } from '../../../models/producto';
 import { ProductoAlmacen } from '../../../models/producto-almacen';
@@ -22,7 +23,8 @@ import { ConfirmDialogComponent } from '../confirm-dialog';
     MatButtonModule,
     MatIconModule,
     MatTabsModule,
-    MatChipsModule
+    MatChipsModule,
+    MatTooltipModule
   ],
   templateUrl: './producto-detalle-modal.html',
   styleUrls: ['./producto-detalle-modal.css']
@@ -30,22 +32,37 @@ import { ConfirmDialogComponent } from '../confirm-dialog';
 export class ProductoDetalleModalComponent implements OnInit {
   producto: Producto;
   productosAlmacen: ProductoAlmacen[] = [];
-  valorTotal: number = 0;
+  
+  // VARIABLES PARA VALORIZACIÓN
+  valorInventarioCosto: number = 0; 
+  valorInventarioVenta: number = 0; 
+  
   mostrarStockBajo: boolean = false;
-  selectedTab: number = 0;
   cargandoAlmacenes: boolean = false;
+  cargandoGeneral: boolean = false; // Nuevo indicador global
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: { productoId: number },
     private dialogRef: MatDialogRef<ProductoDetalleModalComponent>,
     private productoService: ProductoService,
     private productoAlmacenService: ProductoAlmacenService,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private cdr: ChangeDetectorRef // ✅ INYECTADO
   ) {
     this.producto = {} as Producto;
   }
 
   ngOnInit(): void {
+    this.refrescarDatos();
+  }
+
+  // ✅ Nueva función unificada para cargar todo
+  refrescarDatos(): void {
+    this.cargandoGeneral = true;
+    this.cdr.detectChanges(); // Avisar que empezamos a cargar
+
+    // Usamos Promesas o forkJoin si quisiéramos esperar a ambos, 
+    // pero llamarlos en paralelo también funciona bien.
     this.cargarProducto();
     this.cargarDistribucionAlmacenes();
   }
@@ -54,12 +71,15 @@ export class ProductoDetalleModalComponent implements OnInit {
     this.productoService.obtenerProducto(this.data.productoId).subscribe({
       next: (producto) => {
         this.producto = producto;
-        this.calcularValorTotal();
+        this.calcularValores(); 
         this.verificarStockBajo();
+        this.cargandoGeneral = false;
+        this.cdr.detectChanges(); // ✅ Forzar actualización
       },
       error: (error) => {
         console.error('Error al cargar producto:', error);
         alert('Error al cargar el producto');
+        this.cargandoGeneral = false;
         this.dialogRef.close();
       }
     });
@@ -71,24 +91,30 @@ export class ProductoDetalleModalComponent implements OnInit {
       next: (data) => {
         this.productosAlmacen = data;
         this.cargandoAlmacenes = false;
+        this.cdr.detectChanges(); // ✅ Forzar actualización
       },
       error: (error) => {
         console.error('Error al cargar distribución:', error);
         this.productosAlmacen = [];
         this.cargandoAlmacenes = false;
+        this.cdr.detectChanges();
       }
     });
   }
 
-  calcularValorTotal(): void {
-    if (this.producto.precioVenta && this.producto.stockActual) {
-      this.valorTotal = this.producto.precioVenta * this.producto.stockActual;
-    }
+  calcularValores(): void {
+    const stock = this.producto.stockActual || 0;
+    this.valorInventarioCosto = stock * (this.producto.costoTotal || 0);
+    this.valorInventarioVenta = stock * (this.producto.precioVenta || 0);
   }
 
   calcularMargen(): string {
-    if (!this.producto.precioVenta || !this.producto.costoTotal) return '0%';
-    const margen = ((this.producto.precioVenta - this.producto.costoTotal) / this.producto.precioVenta) * 100;
+    const venta = this.producto.precioVenta || 0;
+    const costo = this.producto.costoTotal || 0;
+    
+    if (venta === 0 || costo === 0) return '0%';
+    
+    const margen = ((venta - costo) / venta) * 100;
     return `${margen.toFixed(1)}%`;
   }
 
@@ -98,34 +124,35 @@ export class ProductoDetalleModalComponent implements OnInit {
   }
 
   formatearPrecio(precio: number | undefined): string {
-    if (!precio) return `${this.getSimboloMoneda()} 0.00`;
+    if (precio === undefined || precio === null) return `${this.getSimboloMoneda()} 0.00`;
     return `${this.getSimboloMoneda()} ${precio.toFixed(2)}`;
   }
 
   verificarStockBajo(): void {
-    this.mostrarStockBajo = this.producto.stockActual < this.producto.stockMinimo;
+    this.mostrarStockBajo = (this.producto.stockActual || 0) < (this.producto.stockMinimo || 0);
   }
 
   editarProducto(): void {
-    // Cerramos el modal actual
+    // Cerramos este modal, pero retornamos una acción especial si quieres reabrirlo luego
+    // O simplemente abrimos el de edición encima (sin cerrar este)
+    // En tu código original cerrabas este:
     this.dialogRef.close(); 
     
-    // Abrimos el modal de edición
     const dialogRef = this.dialog.open(ProductoModalComponent, {
       width: '1000px',
       maxWidth: '95vw',
       disableClose: false,
       data: { producto: this.producto, modo: 'editar' }
     });
-
+    
+    // Si quisieras que al guardar se reabra el detalle actualizado:
+    /*
     dialogRef.afterClosed().subscribe(result => {
-      // Si se editó, retornamos el resultado al componente padre
-      if (result) {
-        // Podrías reabrir este modal con los datos nuevos si quisieras,
-        // pero lo estándar es volver a la lista.
-        // this.dialogRef.close({ accion: 'editado', producto: result }); <-- Esto ya no aplica pq cerramos antes
-      }
+       if(result) { 
+          // Reabrir detalle...
+       }
     });
+    */
   }
 
   eliminarProducto(): void {

@@ -13,16 +13,13 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatDialog } from '@angular/material/dialog';
+import { MatTabsModule } from '@angular/material/tabs'; // ✅ NUEVO
+import { MatProgressBarModule } from '@angular/material/progress-bar'; // ✅ NUEVO
 import { Router } from '@angular/router';
 
-// Servicios
 import { VentaService } from '../../../services/venta-service';
 import { NotaCreditoService } from '../../../services/nota-credito-service';
-
-// Modelos y Enums
-import { Venta, EstadoVenta, TipoPago } from '../../../models/venta';
-
-// Componentes Modales
+import { Venta, EstadoVenta } from '../../../models/venta';
 import { VentaDetalleComponent } from '../venta-detalle/venta-detalle'; 
 import { NotaCreditoModalComponent } from '../nota-credito-modal/nota-credito-modal'; 
 import { AmortizarModalComponent } from '../amortizar-modal/amortizar-modal'; 
@@ -31,28 +28,24 @@ import { AmortizarModalComponent } from '../amortizar-modal/amortizar-modal';
     selector: 'app-ventas-lista',
     standalone: true,
     imports: [
-        CommonModule,
-        FormsModule,
-        MatTableModule,
-        MatButtonModule,
-        MatIconModule,
-        MatInputModule,
-        MatFormFieldModule,
-        MatSelectModule,
-        MatChipsModule,
-        MatTooltipModule,
-        MatProgressSpinnerModule,
-        MatSnackBarModule,
-        MatMenuModule
+        CommonModule, FormsModule, MatTableModule, MatButtonModule, MatIconModule,
+        MatInputModule, MatFormFieldModule, MatSelectModule, MatChipsModule,
+        MatTooltipModule, MatProgressSpinnerModule, MatSnackBarModule, MatMenuModule,
+        MatTabsModule, MatProgressBarModule // ✅ Módulos agregados
     ],
     templateUrl: './ventas-lista.html',
     styleUrls: ['./ventas-lista.css']
 })
 export class VentasListaComponent implements OnInit {
     
-    // Datos de la tabla
+    // === TAB 1: HISTORIAL (TU CÓDIGO ORIGINAL) ===
     ventas: Venta[] = [];
     ventasFiltradas = new MatTableDataSource<Venta>([]);
+    
+    // === TAB 2: CUENTAS POR COBRAR (NUEVO) ===
+    deudasFiltradas = new MatTableDataSource<Venta>([]);
+    totalPorCobrar: number = 0;
+    clientesDeudores: number = 0;
     
     // Filtros
     terminoBusqueda: string = '';
@@ -62,20 +55,14 @@ export class VentasListaComponent implements OnInit {
     isLoading: boolean = false;
     errorMessage: string = '';
 
-    // ⭐ VARIABLES FINANCIERAS
-    totalVentas: number = 0;        // Suma de ventas completadas + pagos parciales
-    totalNotasCredito: number = 0;  // Suma de devoluciones
-    ingresoNetoReal: number = 0;    // El resultado final
+    // Variables Financieras
+    totalVentas: number = 0;      
+    totalNotasCredito: number = 0; 
+    ingresoNetoReal: number = 0;    
 
-    displayedColumns: string[] = [
-        'codigo',
-        'fechaVenta',
-        'cliente',
-        'metodoPago',
-        'total',
-        'estado',
-        'acciones'
-    ];
+    // Columnas
+    displayedColumns: string[] = ['codigo', 'fechaVenta', 'cliente', 'metodoPago', 'total', 'estado', 'acciones'];
+    displayedColumnsDeudas: string[] = ['cliente', 'codigo', 'fechaVenta', 'total', 'abonado', 'saldo', 'acciones']; // ✅ Nueva columna
 
     estadosVenta = [
         { value: 'TODAS', label: 'Todas' },
@@ -108,8 +95,11 @@ export class VentasListaComponent implements OnInit {
         this.ventaService.listarTodas().subscribe({
             next: (data) => {
                 this.ventas = data;
-                this.aplicarFiltros();
+                
+                this.aplicarFiltros();     // Actualiza Tab 1
+                this.actualizarDeudas();   // ✅ Actualiza Tab 2 (Lógica corregida)
                 this.calcularFinanzas(); 
+                
                 this.isLoading = false;
                 this.cdr.detectChanges();
             },
@@ -121,6 +111,22 @@ export class VentasListaComponent implements OnInit {
                 this.cdr.detectChanges();
             }
         });
+    }
+
+    // ✅ LÓGICA CORREGIDA PARA DETECTAR DEUDAS
+    actualizarDeudas(): void {
+        // Filtramos cualquier venta que esté PENDIENTE y tenga saldo > 0.1 (evitar errores de redondeo)
+        // No importa si dice 'EFECTIVO' o 'CREDITO', si debe saldo, es deuda.
+        const deudas = this.ventas.filter(v => 
+            v.estado === EstadoVenta.PENDIENTE && (v.saldoPendiente || 0) > 0.1
+        );
+        
+        this.deudasFiltradas.data = deudas;
+
+        // Calcular Totales de Deuda
+        this.totalPorCobrar = deudas.reduce((acc, v) => acc + (v.saldoPendiente || 0), 0);
+        const uniqueClients = new Set(deudas.map(v => v.nombreCliente));
+        this.clientesDeudores = uniqueClients.size;
     }
 
     irANotasCredito(): void {
@@ -137,18 +143,14 @@ export class VentasListaComponent implements OnInit {
         });
     }
     
-
     calcularFinanzas(): void {
-        // 1. Sumamos las ventas COMPLETADAS al 100%
         let sumaCompletadas = this.ventas
             .filter(v => v.estado === EstadoVenta.COMPLETADA)
             .reduce((sum, v) => sum + v.total, 0);
 
-        // 2. Sumamos los PAGOS PARCIALES de las ventas PENDIENTES
         let sumaParciales = this.ventas
             .filter(v => v.estado === EstadoVenta.PENDIENTE)
             .reduce((sum, v) => {
-                // Si es crédito, sumamos la inicial + historial de pagos
                 const inicial = v.montoInicial || 0;
                 const abonos = v.pagos ? v.pagos.reduce((acc, p) => acc + p.monto, 0) : 0;
                 return sum + inicial + abonos;
@@ -158,7 +160,7 @@ export class VentasListaComponent implements OnInit {
         this.ingresoNetoReal = this.totalVentas - this.totalNotasCredito;
     }
 
-    // ========== LÓGICA DE TABLA Y FILTROS ==========
+    // ========== FILTROS (MANTENIDO) ==========
 
     aplicarFiltros(): void {
         let filtradas = [...this.ventas];
@@ -169,10 +171,15 @@ export class VentasListaComponent implements OnInit {
 
         if (this.terminoBusqueda.trim()) {
             const termino = this.terminoBusqueda.toLowerCase();
+            
+            // Filtro para Tabla Principal
             filtradas = filtradas.filter(v =>
                 v.codigo.toLowerCase().includes(termino) ||
                 (v.nombreCliente && v.nombreCliente.toLowerCase().includes(termino))
             );
+
+            // Filtro para Tabla Deudas (También permitimos buscar ahí)
+            this.deudasFiltradas.filter = termino;
         }
 
         this.ventasFiltradas.data = filtradas;
@@ -182,7 +189,7 @@ export class VentasListaComponent implements OnInit {
     buscarVentas(): void { this.aplicarFiltros(); }
     limpiarBusqueda(): void { this.terminoBusqueda = ''; this.aplicarFiltros(); }
     
-    // ========== ACCIONES DE VENTA ==========
+    // ========== ACCIONES (TODAS TUS FUNCIONES ORIGINALES) ==========
 
     nuevaVenta(): void { this.router.navigate(['/ventas']); }
 
@@ -207,21 +214,20 @@ export class VentasListaComponent implements OnInit {
         }
     }
 
-    // ✅ REGISTRAR PAGO DE CUOTA (AMORTIZAR) CON MODAL
+    // ✅ ESTA FUNCIÓN SE USA EN AMBAS PESTAÑAS
     amortizarDeuda(venta: Venta): void {
         const dialogRef = this.dialog.open(AmortizarModalComponent, {
-            width: '500px', // Ancho del modal
+            width: '500px', 
             data: { venta: venta }
         });
 
         dialogRef.afterClosed().subscribe(result => {
             if (result) {
-                // result tiene { monto, metodo, cuentaId }
                 this.ventaService.registrarPago(venta.id, result.monto, result.metodo, result.cuentaId)
                     .subscribe({
                         next: () => {
                             this.mostrarMensaje('✅ Pago registrado exitosamente', 'success');
-                            this.cargarVentas(); // Recargar la tabla para ver cambios de estado
+                            this.cargarVentas(); // Recarga todo para actualizar tablas
                         },
                         error: () => this.mostrarMensaje('Error al registrar pago', 'error')
                     });
@@ -253,8 +259,6 @@ export class VentasListaComponent implements OnInit {
         }
     }
 
-    // ========== MODALES ==========
-
     verDetalle(venta: Venta): void {
         this.dialog.open(VentaDetalleComponent, {
             width: '800px',
@@ -278,7 +282,15 @@ export class VentasListaComponent implements OnInit {
         });
     }
 
-    // ========== UTILIDADES DE FORMATO ==========
+    // ========== UTILIDADES ==========
+
+    // ✅ Nuevo helper para la barra de progreso de deuda
+    getPorcentajePagado(venta: Venta): number {
+        if (!venta.total || venta.total === 0) return 0;
+        const saldo = venta.saldoPendiente || 0;
+        const pagado = venta.total - saldo;
+        return (pagado / venta.total) * 100;
+    }
 
     getEstadoClass(estado: string): string {
         switch (estado) {

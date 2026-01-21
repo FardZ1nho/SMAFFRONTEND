@@ -1,6 +1,6 @@
 import { Component, OnInit, Inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -9,29 +9,21 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
+// ✅ IMPORTS NECESARIOS PARA RXJS (Solución a errores de lógica reactiva)
+import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { of } from 'rxjs';
+
 import { ProductoService } from '../../../services/producto-service';
 import { CategoriaService } from '../../../services/categoria-service';
-import { AlmacenService } from '../../../services/almacen-service';
-import { ProductoAlmacenService } from '../../../services/producto-almacen-service';
 import { ProductoRequest } from '../../../models/producto';
 import { Categoria } from '../../../models/categoria';
-import { Almacen } from '../../../models/almacen';
-
-interface StockPorAlmacen {
-  almacenId: number;
-  almacenNombre: string;
-  almacenCodigo: string;
-  stock: number;
-  ubicacionFisica?: string;
-  stockMinimo?: number;
-}
 
 @Component({
   selector: 'app-producto-modal',
   standalone: true,
   imports: [
     CommonModule, ReactiveFormsModule, MatDialogModule, MatFormFieldModule,
-    FormsModule, MatInputModule, MatSelectModule, MatButtonModule,
+    MatInputModule, MatSelectModule, MatButtonModule,
     MatIconModule, MatProgressSpinnerModule
   ],
   templateUrl: './producto-modal.html',
@@ -40,19 +32,19 @@ interface StockPorAlmacen {
 export class ProductoModalComponent implements OnInit {
   productoForm!: FormGroup;
   categorias: Categoria[] = [];
-  almacenes: Almacen[] = [];
-  stockPorAlmacenes: StockPorAlmacen[] = [];
   
   isLoading = false;
   isSaving = false;
   esEdicion = false;
   productoId: number | null = null;
   
-  imagenPreview: string | null = null;
-  almacenSeleccionado: number | null = null;
-  stockAAgregar: number = 0;
-  ubicacionFisicaAAgregar: string = '';
-  
+  // Variable para controlar la vista (PRODUCTO por defecto)
+  tipoSeleccionado: 'PRODUCTO' | 'SERVICIO' = 'PRODUCTO';
+
+  // ✅ VARIABLES PARA DUPLICADOS
+  coincidencias: any[] = [];
+  buscandoCoincidencias = false;
+
   monedas = [
     { codigo: 'USD', nombre: 'Dólar ($)', simbolo: '$' },
     { codigo: 'PEN', nombre: 'Sol (S/)', simbolo: 'S/' },
@@ -65,51 +57,105 @@ export class ProductoModalComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) public data: any,
     private productoService: ProductoService,
     private categoriaService: CategoriaService,
-    private almacenService: AlmacenService,
-    private productoAlmacenService: ProductoAlmacenService,
     private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit(): void {
-    // 1. Inicializar formulario vacío
+    // 1. Inicializar el formulario base
     this.inicializarFormulario();
 
-    // 2. Determinar modo SÍNCRONAMENTE para evitar NG0100
+    // 2. Cargar Categorías
+    this.categoriaService.listarCategoriasActivas().subscribe({
+      next: (data) => {
+        this.categorias = data;
+        this.cdr.detectChanges();
+      },
+      error: (err) => console.error('Error cargando categorías', err)
+    });
+
+    // 3. Verificar si es Edición
     if (this.data && (this.data.modo === 'editar' || this.data.producto)) {
       this.esEdicion = true;
       this.productoId = this.data.producto?.id;
-      console.log('✏️ Modo Edición detectado. ID:', this.productoId);
-      
-      // 3. Cargar datos del producto INMEDIATAMENTE
       if (this.data.producto) {
         this.cargarDatosProducto(this.data.producto);
       }
     }
 
-    // 4. Cargar catálogos y stock (Asíncrono)
-    this.cargarDatosAsincronos();
+    // ✅ 4. ACTIVAR DETECCIÓN DE DUPLICADOS
+    this.detectarDuplicados();
   }
 
   inicializarFormulario(): void {
     this.productoForm = this.fb.group({
+      tipo: ['PRODUCTO'], 
       nombre: ['', [Validators.required, Validators.minLength(3)]],
       codigo: [''],
       idCategoria: [null, Validators.required],
       descripcion: [''],
       stockMinimo: [5, [Validators.required, Validators.min(0)]],
+      
+      // Precios
       moneda: ['USD', Validators.required],
-      precioChina: [null, [Validators.min(0)]],
-      costoTotal: [null, [Validators.min(0)]],
-      precioVenta: [null, [Validators.min(0)]],
+      precioChina: [null],
+      costoTotal: [null],
+      precioVenta: [null, [Validators.required, Validators.min(0)]],
       unidadMedida: ['unidad']
     });
   }
 
+  // ✅ FUNCIÓN DE BÚSQUEDA REACTIVA
+  detectarDuplicados(): void {
+    const nombreControl = this.productoForm.get('nombre');
+    
+    if(!nombreControl) return;
+
+    nombreControl.valueChanges.pipe(
+      debounceTime(400), 
+      distinctUntilChanged(), 
+      switchMap(nombre => {
+        if (!nombre || nombre.length < 3) {
+          return of([]); 
+        }
+        this.buscandoCoincidencias = true;
+        // Ahora sí existe el método en el servicio
+        return this.productoService.buscarProductosPorNombre(nombre);
+      })
+    ).subscribe({
+      next: (resultados) => {
+        // ✅ SOLUCIÓN AL ERROR TS7006: Tipar explícitamente 'p' como 'any'
+        if (this.esEdicion && this.productoId) {
+          this.coincidencias = resultados.filter((p: any) => p.id !== this.productoId);
+        } else {
+          this.coincidencias = resultados;
+        }
+        this.buscandoCoincidencias = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.buscandoCoincidencias = false;
+        this.coincidencias = [];
+      }
+    });
+  }
+
+  usarCoincidencia(prod: any): void {
+    if(confirm(`¿Ya existe "${prod.nombre}". ¿Deseas editar este registro en su lugar?`)) {
+      this.esEdicion = true;
+      this.productoId = prod.id;
+      this.cargarDatosProducto(prod);
+      this.coincidencias = []; 
+    }
+  }
+
   cargarDatosProducto(producto: any): void {
-    // Mapeo seguro de la categoría
+    const tipo = producto.tipo || 'PRODUCTO';
+    this.tipoSeleccionado = tipo;
+
     const categoriaId = producto.categoria?.id || producto.idCategoria;
 
     this.productoForm.patchValue({
+      tipo: tipo,
       nombre: producto.nombre,
       codigo: producto.codigo,
       idCategoria: categoriaId,
@@ -121,91 +167,48 @@ export class ProductoModalComponent implements OnInit {
       precioVenta: producto.precioVenta,
       unidadMedida: producto.unidadMedida || 'unidad'
     });
-  }
-
-  cargarDatosAsincronos(): void {
-    // No bloqueamos con isLoading = true globalmente para evitar parpadeos
-    // o bloqueos si solo fallan los catálogos.
     
-    // Cargar Categorías
-    this.categoriaService.listarCategoriasActivas().subscribe({
-      next: (data) => {
-        this.categorias = data;
-        // Si ya tenemos un valor en el form, verificar que exista en la lista (opcional)
-        this.cdr.detectChanges();
-      },
-      error: (err) => console.error('Error categorías', err)
-    });
-
-    // Cargar Almacenes
-    this.almacenService.listarAlmacenesActivos().subscribe({
-      next: (data) => {
-        this.almacenes = data;
-        this.cdr.detectChanges();
-      },
-      error: (err) => console.error('Error almacenes', err)
-    });
-
-    // Si es edición, cargar stock
-    if (this.esEdicion && this.productoId) {
-      this.productoAlmacenService.listarUbicacionesPorProducto(this.productoId).subscribe({
-        next: (ubicaciones) => {
-          this.stockPorAlmacenes = ubicaciones.map(u => ({
-            almacenId: u.almacenId,
-            almacenNombre: u.almacenNombre,
-            almacenCodigo: u.almacenCodigo,
-            stock: u.stock,
-            ubicacionFisica: u.ubicacionFisica,
-            stockMinimo: u.stockMinimo
-          }));
-          this.cdr.detectChanges();
-        },
-        error: (err) => console.error('Error stock', err)
-      });
-    }
+    this.cambiarTipo(tipo, false); 
   }
 
-  // --- MÉTODOS DE STOCK Y GUARDADO (Mismos que antes) ---
-  
-  agregarStockAlmacen(): void {
-    if (!this.almacenSeleccionado) {
-      alert('Selecciona un almacén'); return;
-    }
-    if (this.stockAAgregar < 0) {
-      alert('Stock inválido'); return;
-    }
+  cambiarTipo(tipo: 'PRODUCTO' | 'SERVICIO', actualizarValores: boolean = true) {
+    this.tipoSeleccionado = tipo;
+    this.productoForm.patchValue({ tipo: tipo });
 
-    const indice = this.stockPorAlmacenes.findIndex(s => s.almacenId === this.almacenSeleccionado);
-    const info = this.almacenes.find(a => a.id === this.almacenSeleccionado);
+    if (tipo === 'SERVICIO') {
+      // === MODO SERVICIO ===
+      const catServicio = this.categorias.find(c => 
+          c.nombre.toUpperCase().includes('SERVIC')
+      );
+      
+      const idCategoriaDefault = catServicio ? catServicio.id : (this.categorias[0]?.id || null);
 
-    if (!info) return;
-
-    if (indice >= 0) {
-      if (confirm('El almacén ya existe. ¿Actualizar cantidad?')) {
-        this.stockPorAlmacenes[indice].stock = this.stockAAgregar;
-        if (this.ubicacionFisicaAAgregar) this.stockPorAlmacenes[indice].ubicacionFisica = this.ubicacionFisicaAAgregar;
+      if (actualizarValores) {
+        this.productoForm.patchValue({
+          stockMinimo: 0,
+          precioChina: 0,
+          costoTotal: 0,
+          idCategoria: idCategoriaDefault, 
+          unidadMedida: 'Global', 
+          codigo: '' 
+        });
       }
+      
+      this.productoForm.get('stockMinimo')?.clearValidators();
+      this.productoForm.get('stockMinimo')?.updateValueAndValidity();
+
     } else {
-      this.stockPorAlmacenes.push({
-        almacenId: info.id!,
-        almacenNombre: info.nombre,
-        almacenCodigo: info.codigo,
-        stock: this.stockAAgregar,
-        ubicacionFisica: this.ubicacionFisicaAAgregar
-      });
+      // === MODO PRODUCTO ===
+      this.productoForm.get('stockMinimo')?.setValidators([Validators.required, Validators.min(0)]);
+      this.productoForm.get('stockMinimo')?.updateValueAndValidity();
+      
+      if (actualizarValores) {
+         this.productoForm.patchValue({
+             unidadMedida: 'Unidad',
+             idCategoria: null 
+         });
+      }
     }
-    
-    this.almacenSeleccionado = null;
-    this.stockAAgregar = 0;
-    this.ubicacionFisicaAAgregar = '';
-  }
-
-  eliminarStockAlmacen(i: number) {
-    this.stockPorAlmacenes.splice(i, 1);
-  }
-
-  get stockTotal() {
-    return this.stockPorAlmacenes.reduce((acc, curr) => acc + curr.stock, 0);
   }
 
   guardarProducto(): void {
@@ -214,19 +217,14 @@ export class ProductoModalComponent implements OnInit {
       return;
     }
 
-    // Validación de stock: En creación es obligatorio, en edición opcional (si no se toca)
-    if (!this.esEdicion && this.stockPorAlmacenes.length === 0) {
-      alert('Asigna al menos un almacén');
-      return;
-    }
-
     this.isSaving = true;
     const val = this.productoForm.value;
     
     const request: ProductoRequest = {
+      tipo: this.tipoSeleccionado, 
       nombre: val.nombre,
       codigo: val.codigo,
-      idCategoria: val.idCategoria,
+      idCategoria: val.idCategoria, 
       descripcion: val.descripcion,
       stockMinimo: val.stockMinimo,
       moneda: val.moneda,
@@ -236,63 +234,28 @@ export class ProductoModalComponent implements OnInit {
       unidadMedida: val.unidadMedida
     };
 
-    if (this.esEdicion && this.productoId) {
-      // ACTUALIZAR
-      this.productoService.actualizarProducto(this.productoId, request).subscribe({
-        next: () => this.procesarStocks(this.productoId!),
-        error: (e) => {
-          this.isSaving = false;
-          alert('Error al actualizar: ' + (e.error?.message || e.message));
-        }
-      });
-    } else {
-      // CREAR
-      this.productoService.crearProducto(request).subscribe({
-        next: (p) => this.procesarStocks(p.id),
-        error: (e) => {
-          this.isSaving = false;
-          alert('Error al crear: ' + (e.error?.message || e.message));
-        }
-      });
-    }
+    const operacion = (this.esEdicion && this.productoId)
+      ? this.productoService.actualizarProducto(this.productoId, request)
+      : this.productoService.crearProducto(request);
+
+    operacion.subscribe({
+      next: () => this.finalizarGuardado(this.esEdicion ? 'Actualizado correctamente' : 'Registrado correctamente'),
+      error: (e) => this.manejarError(e)
+    });
   }
 
-  procesarStocks(idProd: number) {
-    if (this.stockPorAlmacenes.length === 0) {
-      this.isSaving = false;
-      this.dialogRef.close(true);
-      return;
-    }
+  finalizarGuardado(mensaje: string) {
+    this.isSaving = false;
+    this.dialogRef.close(true);
+  }
 
-    const promesas = this.stockPorAlmacenes.map(s => 
-      this.productoAlmacenService.asignarProductoAAlmacen({
-        productoId: idProd,
-        almacenId: s.almacenId,
-        stock: s.stock,
-        ubicacionFisica: s.ubicacionFisica,
-        stockMinimo: s.stockMinimo || 0,
-        activo: true
-      }).toPromise()
-    );
-
-    Promise.all(promesas)
-      .then(() => {
-        this.isSaving = false;
-        this.dialogRef.close(true);
-        alert(this.esEdicion ? 'Producto actualizado' : 'Producto creado');
-      })
-      .catch(() => {
-        this.isSaving = false;
-        this.dialogRef.close(true);
-        alert('Producto guardado pero hubo error en stocks');
-      });
+  manejarError(e: any) {
+    this.isSaving = false;
+    console.error(e);
+    alert('Error: ' + (e.error?.message || 'Error desconocido'));
   }
 
   cancelar() { this.dialogRef.close(); }
 
-  // Getters
   get nombre() { return this.productoForm.get('nombre'); }
-  get idCategoria() { return this.productoForm.get('idCategoria'); }
-  get stockMinimo() { return this.productoForm.get('stockMinimo'); }
-  get moneda() { return this.productoForm.get('moneda'); }
 }

@@ -284,6 +284,67 @@ textarea.form-control-smaf { height: auto; padding: 12px; font-family: inherit; 
 .search-results li:hover {
   background-color: #f0f9ff; /* Efecto visual al pasar el mouse */
 }
+
+/* Copia todo lo anterior que tenías y agrega esto nuevo: */
+
+/* SELECTOR DE TIPO */
+.tipo-selector-row {
+  display: flex; gap: 16px; margin-bottom: 20px;
+}
+
+.tipo-card {
+  flex: 1; padding: 16px; border-radius: 10px; border: 1px solid #e2e8f0;
+  background: white; color: #64748b; font-weight: 600; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: all 0.2s;
+}
+
+.tipo-card:hover { border-color: #cbd5e1; background: #f8fafc; }
+
+.tipo-card.active {
+  border-color: #2563eb; background: #eff6ff; color: #2563eb;
+  box-shadow: 0 4px 6px rgba(37, 99, 235, 0.1);
+}
+
+.text-danger { color: #dc2626; }
+.bg-disabled { background-color: #f1f5f9; color: #64748b; }
+
+.impuesto-row {
+  background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px dashed #cbd5e1;
+}
+
+.total-row-final td {
+  background-color: #eff6ff; border-top: 2px solid #bfdbfe; padding: 16px;
+}
+
+.label-total-lg { font-weight: 800; font-size: 15px; color: #1e3a8a; }
+.amount-total-lg { font-weight: 800; font-size: 20px; color: #2563eb; }
+.amount-sub { font-weight: 600; color: #475569; }
+
+
+/* Estilo para inputs con símbolo de moneda */
+.input-group-sm {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.currency-symbol {
+  position: absolute;
+  left: 8px;
+  font-size: 11px;
+  color: #64748b;
+  pointer-events: none; /* Click traspasa al input */
+  z-index: 10;
+}
+
+.currency-input {
+  padding-left: 24px !important; /* Espacio para el 'S/' */
+  text-align: right; /* Números alineados a la derecha */
+}
+
+.text-end { text-align: right; }
+.pe-3 { padding-right: 1rem; }
 /* ================= RESPONSIVE ================= */
 @media (max-width: 900px) { .four-cols, .custom-grid-2 { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 600px) {

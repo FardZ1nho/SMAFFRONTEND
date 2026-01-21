@@ -5,59 +5,55 @@
 export interface Venta {
   id: number;
   codigo: string;
-  fechaVenta: Date;
+  fechaVenta: string; // String por LocalDateTime
   clienteId?: number;
   nombreCliente?: string;
   tipoCliente: TipoCliente;
 
   // Tipo de Pago (Contado vs Crédito)
   tipoPago: TipoPago; 
-
-  metodoPago: MetodoPago;
-
-  // ✅ NUEVO: Información de la Cuenta Bancaria (Para Venta Inicial/Total)
-  cuentaBancariaId?: number;
-  nombreCuentaBancaria?: string; // Ej: "Yape Patrick"
-
-  // PAGO MIXTO
-  pagoEfectivo?: number;
-  pagoTransferencia?: number;
+  
+  // Estado de la venta
+  estado: EstadoVenta;
 
   // CAMPOS DE CRÉDITO
-  montoInicial?: number;
+  montoInicial?: number; // Se calcula sumando los pagos iniciales
   numeroCuotas?: number;
   montoCuota?: number;     
   saldoPendiente?: number; 
 
-  // HISTORIAL DE PAGOS (Amortizaciones)
+  // ✅ HISTORIAL DE PAGOS REALIZADOS
   pagos?: Pago[]; 
 
-  // Moneda, Documento y Cambio
+  // Moneda y Totales de la Venta
   moneda: string;           
+  tipoCambio: number;       
+  
   tipoDocumento: string;    
   numeroDocumento?: string; 
-  tipoCambio: number;       
   
   subtotal: number;
   igv: number;
   total: number;
   notas?: string;
-  estado: EstadoVenta;
+
   detalles: DetalleVenta[];
-  fechaCreacion: Date;
-  fechaActualizacion?: Date;
+  fechaCreacion: string;
+  fechaActualizacion?: string;
 }
 
-// ✅ INTERFAZ PARA EL HISTORIAL DE PAGOS (Cuotas)
+// ✅ INTERFAZ DE RESPUESTA DE PAGO (Lo que viene del backend)
 export interface Pago {
   id: number;
   monto: number;
+  moneda: string; // 'PEN' | 'USD'
   fechaPago: string;
   metodoPago: MetodoPago;
+  referencia?: string; // Nro Operación
   
-  // ✅ Dónde entró este pago específico
+  // Datos de la cuenta destino (si aplica)
   cuentaDestinoId?: number; 
-  nombreCuenta?: string;    
+  nombreCuentaDestino?: string;    
 }
 
 export interface DetalleVenta {
@@ -81,30 +77,34 @@ export interface VentaRequest {
   nombreCliente?: string;
   tipoCliente: TipoCliente;
   
-  // Obligatorio enviar si es Contado o Crédito
+  // Define si hay deuda o no
   tipoPago: TipoPago;
 
-  metodoPago: MetodoPago;
-
-  // ✅ NUEVO: Seleccionar Cuenta al crear la venta (Si es Yape/Plin/Etc)
-  cuentaBancariaId?: number; 
-
-  // PAGO MIXTO
-  pagoEfectivo?: number;
-  pagoTransferencia?: number;
+  // ✅ NUEVO: LISTA DE PAGOS DINÁMICA
+  // Reemplaza a pagoEfectivo, pagoTransferencia, metodoPago suelto, etc.
+  pagos: PagoRequest[];
 
   // CAMPOS PARA SOLICITAR CRÉDITO
-  montoInicial?: number;
+  // (El montoInicial se deduce de la suma de 'pagos')
   numeroCuotas?: number;
 
   // Moneda y Documento
   moneda: string;           
+  tipoCambio: number;       
   tipoDocumento: string;    
   numeroDocumento?: string; 
-  tipoCambio: number;       
   
   notas?: string;
   detalles: DetalleVentaRequest[];
+}
+
+// ✅ NUEVO: ESTRUCTURA PARA REGISTRAR UN PAGO INDIVIDUAL
+export interface PagoRequest {
+  metodoPago: MetodoPago;
+  monto: number;
+  moneda: string; // La moneda en la que paga el cliente (puede ser distinta a la venta)
+  cuentaBancariaId?: number; // Opcional (Solo para Yape/Plin/Transferencia)
+  referencia?: string; // Opcional (Nro operación)
 }
 
 export interface DetalleVentaRequest {
@@ -135,7 +135,8 @@ export enum MetodoPago {
   TRANSFERENCIA = 'TRANSFERENCIA',
   YAPE = 'YAPE',
   PLIN = 'PLIN',
-  MIXTO = 'MIXTO'
+  // MIXTO ya no es necesario como método único, pero no estorba si lo dejas.
+  // Ahora "Mixto" es simplemente enviar varios objetos en el array 'pagos'.
 }
 
 export enum EstadoVenta {

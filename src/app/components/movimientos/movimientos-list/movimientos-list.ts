@@ -1,6 +1,4 @@
-// src/app/components/movimientos/movimientos-list/movimientos-list.component.ts
-
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core'; // Import ChangeDetectorRef
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -32,12 +30,10 @@ export class MovimientosListComponent implements OnInit {
 
   constructor(
     private movimientoService: MovimientoService,
-    private cdr: ChangeDetectorRef // Inject ChangeDetectorRef
+    private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit(): void {
-    // Remove setTimeout if possible, or keep it short. 
-    // Direct call is usually fine unless there are specific rendering conflicts.
     this.cargarMovimientos(); 
   }
 
@@ -50,27 +46,25 @@ export class MovimientosListComponent implements OnInit {
     this.movimientoService.listarTodos().subscribe({
       next: (data) => {
         console.log('✅ Movimientos recibidos:', data);
+        // Opcional: Si quieres que la tabla NUNCA muestre entradas/salidas aunque vengan del backend:
+        // this.movimientos = data.filter(m => m.tipoMovimiento !== TipoMovimiento.ENTRADA && m.tipoMovimiento !== TipoMovimiento.SALIDA);
         this.movimientos = data || [];
         
-        // Ensure filters are applied immediately
         this.aplicarFiltros();
         this.actualizarEstadisticas();
         
         this.cargando = false;
-        
-        // Force view update to ensure loading spinner disappears and data shows
         this.cdr.detectChanges(); 
       },
       error: (err) => {
         console.error('❌ Error:', err);
-        // ... error handling ...
         this.error = `Error al cargar movimientos: ${err.message}`;
         
         this.cargando = false;
         this.movimientos = [];
         this.movimientosFiltrados = [];
         this.actualizarEstadisticas();
-        this.cdr.detectChanges(); // Force view update on error too
+        this.cdr.detectChanges();
       }
     });
   }
@@ -95,8 +89,6 @@ export class MovimientosListComponent implements OnInit {
     }
 
     this.movimientosFiltrados = resultado;
-    // No need for cdr.detectChanges() here usually as this is triggered by user events
-    // but safe to add if UI lags
   }
 
   onFiltroTextoChange(texto: string): void {
@@ -110,9 +102,7 @@ export class MovimientosListComponent implements OnInit {
   }
 
   obtenerIconoTipo(tipo: TipoMovimiento): string {
-    const iconos: Record<string, string> = { // Typed for safety
-      'ENTRADA': '📥',
-      'SALIDA': '📤',
+    const iconos: Record<string, string> = {
       'TRASLADO': '🔄',
       'AJUSTE': '⚙️'
     };
@@ -120,9 +110,7 @@ export class MovimientosListComponent implements OnInit {
   }
 
   obtenerClaseTipo(tipo: TipoMovimiento): string {
-    const clases: Record<string, string> = { // Typed for safety
-      'ENTRADA': 'tipo-entrada',
-      'SALIDA': 'tipo-salida',
+    const clases: Record<string, string> = {
       'TRASLADO': 'tipo-traslado',
       'AJUSTE': 'tipo-ajuste'
     };
@@ -131,19 +119,17 @@ export class MovimientosListComponent implements OnInit {
 
   // Estadísticas
   private _totalMovimientos: number = 0;
-  private _totalEntradas: number = 0;
-  private _totalSalidas: number = 0;
   private _totalTraslados: number = 0;
+  private _totalAjustes: number = 0;
 
   get totalMovimientos(): number { return this._totalMovimientos; }
-  get totalEntradas(): number { return this._totalEntradas; }
-  get totalSalidas(): number { return this._totalSalidas; }
   get totalTraslados(): number { return this._totalTraslados; }
+  get totalAjustes(): number { return this._totalAjustes; }
 
   private actualizarEstadisticas(): void {
+    // Calculamos totales basados en la data cargada (o filtrada si prefieres)
     this._totalMovimientos = this.movimientos.length;
-    this._totalEntradas = this.movimientos.filter(m => m.tipoMovimiento === TipoMovimiento.ENTRADA).length;
-    this._totalSalidas = this.movimientos.filter(m => m.tipoMovimiento === TipoMovimiento.SALIDA).length;
     this._totalTraslados = this.movimientos.filter(m => m.tipoMovimiento === TipoMovimiento.TRASLADO).length;
+    this._totalAjustes = this.movimientos.filter(m => m.tipoMovimiento === TipoMovimiento.AJUSTE).length;
   }
 }

@@ -10,192 +10,183 @@
   padding: 24px;
   background-color: var(--bg-body);
   min-height: 100vh;
+  font-family: 'Inter', sans-serif;
 }
 
-/* HEADER */
+/* =========================
+   HEADER & TITLES
+   ========================= */
 .page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 32px;
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 32px; padding: 0 4px;
 }
 
-.header-content {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
+.header-content { display: flex; align-items: center; gap: 16px; }
 
 .icon-box {
-  background: white;
-  color: var(--primary);
-  padding: 12px;
-  border-radius: 12px;
-  display: flex;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  background: white; color: var(--primary); padding: 12px;
+  border-radius: 12px; display: flex; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
-.page-header h1 {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--text-main);
-  margin: 0;
-}
-
-.subtitle {
-  color: var(--text-sub);
-  font-size: 14px;
-  margin: 0;
-}
+.page-header h1 { font-size: 24px; font-weight: 700; color: var(--text-main); margin: 0; }
+.subtitle { color: var(--text-sub); font-size: 14px; margin: 0; }
 
 .btn-nuevo {
-  background-color: var(--primary) !important;
-  color: white !important;
-  border-radius: 10px !important;
-  font-weight: 600 !important;
-  padding: 0 20px !important;
-  height: 44px;
+  background-color: var(--primary) !important; color: white !important;
+  border-radius: 10px !important; font-weight: 600 !important;
+  padding: 0 20px !important; height: 44px;
 }
 
-/* TOOLBAR */
+/* =========================
+   TOOLBAR
+   ========================= */
 .toolbar {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 24px;
-  align-items: flex-end;
+  display: flex; gap: 16px; margin-bottom: 24px; align-items: flex-end; padding: 0 4px;
 }
 
 .search-container {
-  flex: 1;
-  max-width: 500px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  flex: 1; max-width: 500px; display: flex; flex-direction: column; gap: 8px;
 }
 
 .search-label {
-  font-size: 13px;
-  font-weight: 700;
-  color: #475569;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  text-transform: uppercase;
+  font-size: 13px; font-weight: 700; color: #475569;
+  display: flex; align-items: center; gap: 6px; text-transform: uppercase;
 }
+
+.input-wrapper { position: relative; display: flex; align-items: center; width: 100%; }
 
 .filter-input {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1.5px solid var(--border-color);
-  border-radius: 8px;
-  font-size: 14px;
-  background-color: white;
-  transition: all 0.2s;
-  height: 44px;
-  box-sizing: border-box;
+  width: 100%; padding: 10px 12px; padding-right: 36px;
+  border: 1.5px solid var(--border-color); border-radius: 8px;
+  font-size: 14px; background-color: white; transition: all 0.2s;
+  height: 44px; box-sizing: border-box;
 }
-
-.filter-input:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-}
-
-.input-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
+.filter-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
 
 .btn-clear {
-  position: absolute;
-  right: 8px;
-  background: none; border: none; cursor: pointer; color: #94a3b8;
+  position: absolute; right: 8px; background: none; border: none; cursor: pointer;
+  color: #94a3b8; display: flex; align-items: center; justify-content: center;
 }
+
+.actions { display: flex; gap: 12px; }
 
 .btn-tool {
-  height: 44px !important;
-  border-radius: 8px !important;
+  height: 44px !important; border-radius: 8px !important;
   border: 1.5px solid var(--border-color) !important;
-  background: white !important;
-  color: var(--text-main) !important;
+  background: white !important; color: var(--text-main) !important;
 }
 
-/* TABLE STYLES */
+/* Estilo activo cuando los filtros están abiertos */
+.active-filter-btn {
+  background-color: #eff6ff !important;
+  color: var(--primary) !important;
+  border-color: var(--primary) !important;
+}
+.active-filter-btn mat-icon { color: var(--primary) !important; }
+
+/* =========================
+   ✅ PANEL FILTROS AVANZADOS
+   ========================= */
+.advanced-filters-panel {
+  background: white; border: 1px solid var(--border-color);
+  border-radius: 12px; padding: 20px; margin-bottom: 24px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.filters-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px; align-items: center;
+}
+
+/* Material Field Overrides para que sean compactos */
+.filter-field { width: 100%; }
+::ng-deep .filter-field .mat-mdc-text-field-wrapper {
+  background-color: #fff !important;
+  border: 1px solid var(--border-color); border-radius: 8px !important;
+  padding: 0 12px !important; height: 44px;
+}
+::ng-deep .filter-field .mat-mdc-form-field-flex { height: 44px; align-items: center; }
+::ng-deep .filter-field .mat-mdc-form-field-infix { padding: 8px 0 !important; min-height: unset !important; }
+::ng-deep .filter-field .mdc-line-ripple { display: none !important; }
+
+.filters-actions {
+  display: flex; justify-content: flex-end; margin-top: 16px;
+  padding-top: 16px; border-top: 1px solid #f1f5f9;
+}
+
+/* =========================
+   TABLE STYLES
+   ========================= */
 .main-card {
-  background: white;
-  border-radius: 16px;
-  border: 1px solid var(--border-color);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  overflow: hidden;
+  background: white; border-radius: 16px; border: 1px solid var(--border-color);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); overflow: hidden;
 }
 
+.table-responsive { width: 100%; overflow-x: auto; }
+
+table { width: 100%; table-layout: fixed; border-collapse: collapse; }
+
+/* Headers & Cells */
 th.mat-header-cell {
-  background: #f1f5f9;
-  color: var(--text-sub);
-  font-weight: 700;
-  font-size: 11px;
-  text-transform: uppercase;
-  padding: 16px !important;
+  background: #f1f5f9; color: var(--text-sub); font-weight: 700;
+  font-size: 11px; text-transform: uppercase; padding: 16px !important;
+  border-bottom: 1px solid var(--border-color); white-space: nowrap;
 }
 
 td.mat-cell {
-  padding: 16px !important;
-  border-bottom: 1px solid var(--border-color);
+  padding: 12px 16px !important; border-bottom: 1px solid var(--border-color);
+  font-size: 13px; vertical-align: middle;
 }
 
 .row-hover:hover { background-color: #f8fafc; }
 
-/* BADGES & INFO */
+/* Column Widths */
+.mat-column-fecha { width: 120px; }
+.mat-column-comprobante { width: 25%; }
+.mat-column-proveedor { width: 25%; }
+.mat-column-moneda { width: 80px; text-align: center; }
+.mat-column-total { width: 160px; text-align: right; padding-right: 24px !important; }
+th.mat-column-total { text-align: right !important; padding-right: 24px !important; }
+.mat-column-acciones { width: 120px; text-align: center; }
+th.mat-column-acciones { text-align: center !important; }
+
+/* Components */
 .sku-badge {
-  font-family: monospace;
-  background: #f1f5f9;
-  color: #475569;
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-weight: 700;
+  font-family: monospace; background: #f1f5f9; color: #475569;
+  padding: 2px 6px; border-radius: 4px; font-weight: 600; font-size: 11px;
 }
-
-.product-cell { display: flex; align-items: center; gap: 12px; }
-
-.product-avatar {
-  width: 40px; height: 40px;
-  background: #f1f5f9;
-  border-radius: 8px;
-  display: flex; align-items: center; justify-content: center;
-  color: var(--text-sub);
-}
-
-.product-info .name { font-weight: 600; color: var(--text-main); display: block; }
-.product-info .desc { font-size: 12px; color: var(--text-sub); }
+.date-text { font-weight: 600; color: var(--text-main); }
 
 .stock-badge {
-  display: inline-flex;
-  padding: 4px 12px;
-  border-radius: 12px;
-  font-weight: 700;
+  display: inline-flex; padding: 4px 10px; border-radius: 12px;
+  font-weight: 700; font-size: 11px;
 }
 .stock-normal { background: #eff6ff; color: #1e40af; }
 
-.price-cell {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-weight: 600;
-  color: #1e293b;
+.product-cell { display: flex; align-items: center; gap: 12px; }
+.product-avatar {
+  width: 36px; height: 36px; min-width: 36px; background: #f1f5f9;
+  border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--text-sub);
 }
+.product-info { display: flex; flex-direction: column; }
+.product-info .name { font-weight: 600; color: var(--text-main); line-height: 1.4; text-transform: capitalize; }
+.product-info .desc { font-size: 11px; color: var(--text-sub); }
 
-.price-cell .currency { color: #64748b; margin-right: 2px; font-size: 12px; }
-.price-cell .amount { color: var(--primary); }
+.price-cell { display: flex; justify-content: flex-end; align-items: center; font-weight: 600; color: #1e293b; }
+.price-cell .currency { color: #64748b; margin-right: 4px; font-size: 11px; }
+.price-cell .amount { color: var(--primary); font-size: 14px; }
 
 .action-buttons { display: flex; gap: 4px; justify-content: center; }
-.btn-view-blue { color: #2563eb !important; }
-.btn-edit-green { color: #059669 !important; }
-.delete-btn { color: #dc2626 !important; }
+.btn-view-blue { color: #2563eb !important; width: 32px !important; height: 32px !important; line-height: 32px !important; }
+.btn-edit-green { color: #059669 !important; width: 32px !important; height: 32px !important; line-height: 32px !important; }
+.delete-btn { color: #dc2626 !important; width: 32px !important; height: 32px !important; line-height: 32px !important; }
 
-.state-container {
-  padding: 80px 24px;
-  text-align: center;
-  color: var(--text-sub);
-}
+/* Empty State */
+.state-container { padding: 80px 24px; text-align: center; color: var(--text-sub); display: flex; flex-direction: column; align-items: center; }
 .empty-icon { font-size: 48px; width: 48px; height: 48px; opacity: 0.3; margin-bottom: 16px; }

@@ -2,12 +2,12 @@
    VARS & GENERAL
    =================================== */
 :host {
-  --primary-soft: #eff6ff;
-  --primary-color: #2563eb;
-  --text-dark: #1e293b;
-  --text-gray: #64748b;
-  --border-radius-lg: 20px;
-  --border-radius-md: 12px;
+  --primary: #2563eb;
+  --primary-light: #eff6ff;
+  --text-main: #1e293b;
+  --text-light: #64748b;
+  --bg-input: #f8fafc;
+  --border-radius: 12px;
 }
 
 .modal-container {
@@ -25,56 +25,59 @@
 .modal-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   padding: 24px 32px;
   background: #fff;
-  z-index: 10;
+  border-bottom: 1px solid #f1f5f9; 
 }
 
 .title-group h2 {
   margin: 0;
   font-size: 24px;
   font-weight: 700;
-  color: var(--text-dark);
+  color: var(--text-main);
   letter-spacing: -0.5px;
 }
 
 .subtitle {
   margin: 4px 0 0 0;
-  font-size: 13px;
-  color: var(--text-gray);
+  font-size: 14px;
+  color: var(--text-light);
 }
 
 .btn-close {
   background: #f1f5f9;
-  color: var(--text-gray);
+  color: var(--text-light);
   border-radius: 50%;
   transition: all 0.2s;
 }
 .btn-close:hover {
-  background: #e2e8f0;
+  background: #fee2e2;
   color: #ef4444;
 }
 
 /* ===================================
-   CONTENT & SCROLL
+   CONTENT
    =================================== */
 .modal-content {
   flex: 1;
   overflow-y: auto;
-  padding: 10px 32px 30px 32px;
+  padding: 24px 32px 32px 32px; 
 }
-/* Scrollbar bonita */
+
 .modal-content::-webkit-scrollbar { width: 6px; }
 .modal-content::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
 
-/* ===================================
-   FORMULARIO
-   =================================== */
 .producto-form {
   display: flex;
   flex-direction: column;
-  gap: 25px;
+  gap: 20px;
+}
+
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .form-row {
@@ -86,13 +89,63 @@
 .full-width { flex: 1; width: 100%; }
 .half-width { flex: 1; min-width: 200px; }
 .third-width { flex: 1; min-width: 140px; }
-.categoria-field { flex: 2; min-width: 250px; }
 
 /* ===================================
-   DIVISORES DE SECCIÓN
+   SELECTOR DE TIPO
+   =================================== */
+.type-selector-container {
+  display: flex;
+  gap: 16px;
+  background: #f8fafc;
+  padding: 6px;
+  border-radius: 16px;
+  margin-bottom: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.type-option {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  color: #64748b;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  border: 1px solid transparent; 
+}
+
+.type-option mat-icon { margin: 0; font-size: 20px; width: 20px; height: 20px; }
+
+.type-option:not(.active):hover {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.type-option.active {
+  background: var(--primary);
+  color: white;
+  box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3);
+}
+
+.check-mark {
+  position: absolute;
+  right: 12px;
+  display: flex; align-items: center;
+}
+.check-mark mat-icon { font-size: 16px; width: 16px; height: 16px; font-weight: bold; }
+
+
+/* ===================================
+   DIVISORES
    =================================== */
 .section-divider {
-  margin: 30px 0 15px 0;
+  margin: 24px 0 12px 0;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -102,102 +155,20 @@
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  background: var(--primary-soft);
-  color: var(--primary-color);
+  background: var(--primary-light);
+  color: var(--primary);
   display: flex;
   align-items: center;
   justify-content: center;
 }
+
 .section-divider h3 {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
-  color: var(--text-dark);
+  color: var(--text-main);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-}
-
-/* ===================================
-   GESTIÓN DE STOCK (TARJETA GRIS)
-   =================================== */
-.almacen-asignacion-card {
-  background: #f8fafc; /* Fondo gris suave */
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  padding: 24px;
-}
-
-/* Grid para organizar los inputs (2 columnas) */
-.stock-grid {
-  display: grid;
-  grid-template-columns: 2fr 1fr; /* Columna 1 ancha, Columna 2 estrecha */
-  gap: 16px;
-  margin-bottom: 16px;
-}
-
-/* Botón Agregar Stock */
-.btn-add-stock {
-  width: 100%;
-  height: 50px; /* Misma altura visual que los inputs */
-  border-radius: 12px;
-  font-weight: 600;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);
-  margin-top: 4px; /* Ajuste para alinear con inputs */
-}
-
-/* --- Lista de Almacenes --- */
-.almacenes-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 20px;
-  border-top: 1px solid #e2e8f0;
-  padding-top: 20px;
-}
-
-.almacen-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  background: white;
-  border-radius: 12px;
-  border: 1px solid #f1f5f9;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-}
-
-.almacen-info {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.stock-badge {
-  background: #dcfce7;
-  color: #166534;
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-/* Resumen Total */
-.stock-total-resumen {
-  margin-top: 15px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 20px;
-  background: linear-gradient(90deg, #1e293b 0%, #334155 100%);
-  border-radius: 12px;
-  color: white;
-  font-size: 14px;
-  box-shadow: 0 4px 12px rgba(30, 41, 59, 0.2);
 }
 
 /* ===================================
@@ -207,86 +178,137 @@
   display: flex;
   justify-content: flex-end;
   gap: 16px;
-  padding: 20px 32px;
+  padding: 24px 32px;
   background: #fff;
   border-top: 1px solid #f1f5f9;
 }
 
 .btn-cancel {
   border: 1px solid #e2e8f0 !important;
-  border-radius: 30px !important;
-  color: var(--text-gray) !important;
+  color: var(--text-light) !important;
+  border-radius: 10px !important;
+  font-weight: 500 !important;
 }
 
 .btn-save {
-  border-radius: 30px !important;
-  padding: 0 30px !important;
-  font-weight: 600;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+  border-radius: 10px !important;
+  padding: 0 28px !important;
+  font-weight: 600 !important;
+  box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.4);
+}
+
+.spinner-white ::ng-deep circle { stroke: white !important; }
+
+/* ===================================
+   HELPERS VISUALES
+   =================================== */
+.text-gray { color: #94a3b8; }
+.prefix-symbol { margin-right: 6px; color: #64748b; font-weight: 500; }
+.price-input { font-weight: 700; color: #059669; }
+
+.animate-fade-in { animation: fadeIn 0.3s ease-out; }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* ===================================
-   OVERRIDES DE MATERIAL (CORREGIDO Y VISIBLE)
+   OVERRIDES MATERIAL
    =================================== */
-
-/* 1. Fondo blanco y bordes redondos para el input */
 ::ng-deep .mat-mdc-text-field-wrapper {
-  background-color: #ffffff !important;
+  background-color: #fff !important;
   border-radius: 12px !important;
 }
 
-/* 2. Estilizar el Borde Original (No ocultarlo) */
-/* Parte Izquierda del borde */
-::ng-deep .mdc-notched-outline__leading {
-  border-top-left-radius: 12px !important;
-  border-bottom-left-radius: 12px !important;
-  border-color: #e2e8f0 !important; /* Gris suave */
-  border-width: 1px !important;
-}
-/* Parte Derecha del borde */
-::ng-deep .mdc-notched-outline__trailing {
-  border-top-right-radius: 12px !important;
-  border-bottom-right-radius: 12px !important;
-  border-color: #e2e8f0 !important;
-  border-width: 1px !important;
-}
-/* Parte Central (donde va el texto) */
+::ng-deep .mdc-notched-outline__leading,
+::ng-deep .mdc-notched-outline__trailing,
 ::ng-deep .mdc-notched-outline__notch {
-  border-color: #e2e8f0 !important;
+  border-color: #cbd5e1 !important;
   border-width: 1px !important;
-  border-left: none !important; /* Sin líneas verticales internas */
-  border-right: none !important;
 }
 
-/* 3. Color del Título (Label) */
-::ng-deep .mdc-floating-label {
-  color: #64748b !important; /* Gris legible */
-  font-weight: 500;
-}
-/* Cuando está enfocado (Azul) */
-::ng-deep .mat-mdc-form-field.mat-focused .mdc-floating-label {
-  color: #3b82f6 !important;
-}
 ::ng-deep .mat-mdc-form-field.mat-focused .mdc-notched-outline__leading,
-::ng-deep .mat-mdc-form-field.mat-focused .mdc-notched-outline__notch,
-::ng-deep .mat-mdc-form-field.mat-focused .mdc-notched-outline__trailing {
-  border-color: #3b82f6 !important; /* Borde azul al escribir */
+::ng-deep .mat-mdc-form-field.mat-focused .mdc-notched-outline__trailing,
+::ng-deep .mat-mdc-form-field.mat-focused .mdc-notched-outline__notch {
+  border-color: var(--primary) !important;
   border-width: 2px !important;
 }
 
-/* 4. Quitar fondo gris al hacer hover */
-::ng-deep .mat-mdc-form-field:hover .mat-mdc-text-field-wrapper {
-  background-color: #f8fafc !important; /* Gris muy sutil al pasar mouse */
-}
-
-/* 5. Ajustar altura para que se vea elegante */
 ::ng-deep .mat-mdc-form-field-infix {
   padding-top: 14px !important;
   padding-bottom: 14px !important;
   min-height: 52px !important;
 }
 
-/* 6. CORRECCIÓN: Asegurar que el input de texto sea visible */
-::ng-deep .mat-mdc-input-element {
-  color: #1e293b !important; /* Texto oscuro */
+/* ===================================
+   ✅ ALERTA DE DUPLICADOS (NUEVO)
+   =================================== */
+.duplicados-alert {
+  background-color: #fffbeb; /* Amarillo muy suave */
+  border: 1px solid #fcd34d;
+  border-radius: 12px;
+  margin-top: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.alert-header {
+  background-color: #fef3c7; /* Amarillo header */
+  color: #b45309;
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.alert-header mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.duplicados-list {
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.duplicado-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  border-bottom: 1px solid #fef3c7;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.duplicado-item:last-child { border-bottom: none; }
+
+.duplicado-item:hover {
+  background-color: #fff7ed; /* Hover naranja suave */
+}
+
+.dup-name {
+  font-size: 13px;
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.dup-code {
+  font-size: 11px;
+  color: #b45309;
+  background: #fef3c7;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-weight: 700;
 }

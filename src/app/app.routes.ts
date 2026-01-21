@@ -12,6 +12,7 @@ import { NotasCreditoListaComponent } from './components/ventas/notas-credito-li
 import { ProveedorComponent } from './components/proveedor/proveedor';
 import { CompraDetalleComponent } from './components/compras/compra-detalle/compra-detalle';
 import { CuentasListaComponent } from './components/configuracion/cuentas-lista/cuentas-lista';
+import { ImportacionesListComponent } from './components/importaciones/importaciones-list/importaciones-list';
 
 export const routes: Routes = [
   {
@@ -63,6 +64,12 @@ export const routes: Routes = [
     ]
   },
   { path: 'configuracion/cuentas', component: CuentasListaComponent },
+
+  { 
+        path: 'importaciones', 
+        component: ImportacionesListComponent,
+        title: 'Gestión de Importaciones' 
+    },
 
   // En tus rutas:
   {

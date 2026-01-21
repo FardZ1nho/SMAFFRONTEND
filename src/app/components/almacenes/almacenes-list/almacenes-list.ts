@@ -1,14 +1,17 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog'; // ✅ Importado
+
 import { AlmacenService } from '../../../services/almacen-service'; 
 import { Almacen } from '../../../models/almacen';
 import { AlmacenModalComponent } from '../almacen-modal/almacen-modal';
-import { FormsModule } from '@angular/forms';
+import { AlmacenDetalleModalComponent } from '../almacen-detalle-modal/almacen-detalle-modal'; // ✅ Importado
 
 @Component({
   selector: 'app-almacenes-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, AlmacenModalComponent],
+  imports: [CommonModule, FormsModule, AlmacenModalComponent, MatDialogModule],
   templateUrl: './almacenes-list.html',
   styleUrls: ['./almacenes-list.css']
 })
@@ -16,7 +19,7 @@ export class AlmacenesListComponent implements OnInit {
 
   almacenes: Almacen[] = [];
   almacenesFiltrados: Almacen[] = [];
-  cargando: boolean = true; // ✅ Vuelve a true para que muestre el loader desde el inicio
+  cargando: boolean = true;
   error: string = '';
   
   mostrarModal: boolean = false;
@@ -28,7 +31,8 @@ export class AlmacenesListComponent implements OnInit {
 
   constructor(
     private almacenService: AlmacenService,
-    private cdr: ChangeDetectorRef // ✅ Agregado para forzar detección de cambios
+    private cdr: ChangeDetectorRef,
+    private dialog: MatDialog // ✅ Inyectado
   ) { }
 
   ngOnInit(): void {
@@ -44,13 +48,13 @@ export class AlmacenesListComponent implements OnInit {
         this.almacenes = data;
         this.aplicarFiltros();
         this.cargando = false;
-        this.cdr.detectChanges(); // ✅ Forzar detección de cambios
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Error al cargar almacenes:', err);
         this.error = 'Error al cargar los almacenes';
         this.cargando = false;
-        this.cdr.detectChanges(); // ✅ Forzar detección de cambios
+        this.cdr.detectChanges();
       }
     });
   }
@@ -86,6 +90,18 @@ export class AlmacenesListComponent implements OnInit {
     this.aplicarFiltros();
   }
 
+  // ✅ NUEVA FUNCIÓN: Abrir Inventario
+ verInventario(almacen: Almacen): void {
+    this.dialog.open(AlmacenDetalleModalComponent, {
+      width: '1100px', // 👈 AUMENTADO (Antes 800px)
+      maxWidth: '95vw',
+      height: '85vh', // Altura fija para que se vea imponente
+      data: { almacen: almacen },
+      autoFocus: false,
+      panelClass: 'modal-soft-ui' // Opcional si tienes estilos globales
+    });
+  }
+
   abrirModalCrear(): void {
     this.almacenSeleccionado = null;
     this.modoEdicion = false;
@@ -118,7 +134,7 @@ export class AlmacenesListComponent implements OnInit {
         next: () => {
           almacen.activo = nuevoEstado;
           this.aplicarFiltros();
-          this.cdr.detectChanges(); // ✅ Forzar detección de cambios
+          this.cdr.detectChanges();
         },
         error: (err) => {
           console.error('Error al cambiar estado:', err);
@@ -142,15 +158,7 @@ export class AlmacenesListComponent implements OnInit {
     }
   }
 
-  get totalAlmacenes(): number {
-    return this.almacenes.length;
-  }
-
-  get almacenesActivos(): number {
-    return this.almacenes.filter(a => a.activo).length;
-  }
-
-  get almacenesInactivos(): number {
-    return this.almacenes.filter(a => !a.activo).length;
-  }
+  get totalAlmacenes(): number { return this.almacenes.length; }
+  get almacenesActivos(): number { return this.almacenes.filter(a => a.activo).length; }
+  get almacenesInactivos(): number { return this.almacenes.filter(a => !a.activo).length; }
 }

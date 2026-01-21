@@ -15,7 +15,6 @@
 
           <div class="col-cliente">
             <h3 class="section-title">Información del Cliente</h3>
-
             <div class="cliente-search-container">
               <mat-form-field appearance="outline" class="full-width no-bottom-space">
                 <mat-label>Buscar Cliente *</mat-label>
@@ -58,14 +57,11 @@
           <div class="col-config">
             <h3 class="section-title">Datos de Emisión</h3>
             <div class="config-grid-rows">
-
               <div class="config-row">
                 <mat-form-field appearance="outline" class="field-comprobante">
                   <mat-label>Comprobante</mat-label>
                   <mat-select [(ngModel)]="tipoDocumento">
-                    <mat-option *ngFor="let doc of tiposDocumento" [value]="doc.value">
-                      {{ doc.label }}
-                    </mat-option>
+                    <mat-option *ngFor="let doc of tiposDocumento" [value]="doc.value">{{ doc.label }}</mat-option>
                   </mat-select>
                 </mat-form-field>
 
@@ -78,20 +74,18 @@
 
               <div class="config-row">
                 <mat-form-field appearance="outline" class="field-moneda">
-                  <mat-label>Moneda</mat-label>
+                  <mat-label>Moneda Venta</mat-label>
                   <mat-select [(ngModel)]="moneda" (selectionChange)="cambiarMoneda($event.value)">
-                    <mat-option value="PEN">Soles</mat-option>
-                    <mat-option value="USD">Dólares</mat-option>
+                    <mat-option value="PEN">Soles (S/)</mat-option>
+                    <mat-option value="USD">Dólares ($)</mat-option>
                   </mat-select>
                 </mat-form-field>
 
                 <mat-form-field appearance="outline" class="field-cambio">
                   <mat-label>T. Cambio</mat-label>
-                  <input matInput type="number" [(ngModel)]="tipoCambio" (input)="onTipoCambioChange()" step="0.01"
-                    (focus)="$any($event.target).select()">
+                  <input matInput type="number" [(ngModel)]="tipoCambio" (input)="onTipoCambioChange()" step="0.01">
                 </mat-form-field>
               </div>
-
             </div>
           </div>
 
@@ -122,21 +116,18 @@
 
       <div class="card productos-venta-section">
         <h3>Detalle de Venta</h3>
-
         <div class="productos-venta-container" *ngIf="productosEnVenta.length > 0">
           <div class="producto-venta-item" *ngFor="let item of productosEnVenta; let i = index">
-
+            
             <div class="producto-venta-header">
               <div class="producto-venta-info">
-                <div class="producto-icon">
-                  <mat-icon>inventory_2</mat-icon>
-                </div>
+                <div class="producto-icon"><mat-icon>inventory_2</mat-icon></div>
                 <div>
                   <div class="producto-venta-nombre">{{ item.producto.nombre }}</div>
                   <div class="producto-venta-codigo">{{ item.producto?.codigo || '---' }}</div>
                 </div>
               </div>
-              <button mat-icon-button color="warn" (click)="eliminarProducto(i)" matTooltip="Quitar producto">
+              <button mat-icon-button color="warn" (click)="eliminarProducto(i)">
                 <mat-icon>delete</mat-icon>
               </button>
             </div>
@@ -144,20 +135,17 @@
             <div class="producto-venta-details">
               <mat-form-field appearance="outline" class="grid-input">
                 <mat-label>Cant.</mat-label>
-                <input matInput type="number" [(ngModel)]="item.cantidad" (ngModelChange)="onCantidadChange(item)"
-                  min="1" (focus)="$any($event.target).select()">
+                <input matInput type="number" [(ngModel)]="item.cantidad" (ngModelChange)="onCantidadChange(item)" min="1">
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="grid-input">
                 <mat-label>Precio Unit.</mat-label>
-                <input matInput type="number" [(ngModel)]="item.precioUnitario" (ngModelChange)="onPrecioChange(item)"
-                  step="0.01" (focus)="$any($event.target).select()">
+                <input matInput type="number" [(ngModel)]="item.precioUnitario" (ngModelChange)="onPrecioChange(item)" step="0.01">
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="grid-input">
                 <mat-label>Desc. %</mat-label>
-                <input matInput type="number" [(ngModel)]="item.descuento" (ngModelChange)="onDescuentoChange(item)"
-                  min="0" max="100" (focus)="$any($event.target).select()">
+                <input matInput type="number" [(ngModel)]="item.descuento" (ngModelChange)="onDescuentoChange(item)" min="0" max="100">
               </mat-form-field>
 
               <div class="subtotal-display">
@@ -183,7 +171,7 @@
         <h3>Resumen y Pago</h3>
 
         <div class="modalidad-selector mb-3">
-          <label class="section-label-small">Modalidad de Pago</label>
+          <label class="section-label-small">Modalidad de Venta</label>
           <div class="toggle-container">
             <button class="toggle-btn" [class.active]="tipoPago === eTipoPago.CONTADO"
               (click)="tipoPago = eTipoPago.CONTADO; onTipoPagoChange()">
@@ -196,91 +184,114 @@
           </div>
         </div>
 
-        <div *ngIf="tipoPago === eTipoPago.CREDITO" class="credito-panel animate-fade-in">
-          <div class="credito-grid">
-            <mat-form-field appearance="outline" class="dense-input bg-white">
-              <mat-label>Inicial</mat-label>
-              <span matPrefix>{{ moneda === 'PEN' ? 'S/' : '$' }}&nbsp;</span>
-              <input matInput type="number" [(ngModel)]="montoInicial" (input)="calcularCredito()"
-                (focus)="$any($event.target).select()">
+        <div class="pagos-container">
+          <label class="section-label-small">Registrar Pagos</label>
+          
+          <div class="add-pago-form">
+            <div class="pago-row">
+              <mat-form-field appearance="outline" class="dense-input" style="flex: 1;">
+                <mat-label>Método</mat-label>
+                <mat-select [(ngModel)]="pagoActual.metodoPago">
+                  <mat-option *ngFor="let m of metodosPagoDisponibles" [value]="m.value">{{ m.label }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="dense-input" style="width: 80px;">
+                <mat-label>Moneda</mat-label>
+                <mat-select [(ngModel)]="pagoActual.moneda">
+                  <mat-option value="PEN">PEN</mat-option>
+                  <mat-option value="USD">USD</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+
+            <mat-form-field appearance="outline" class="dense-input full-width" *ngIf="esPagoDigital(pagoActual.metodoPago)">
+              <mat-label>Cuenta Destino</mat-label>
+              <mat-select [(ngModel)]="pagoActual.cuentaBancariaId">
+                <mat-option *ngFor="let c of cuentas" [value]="c.id">
+                  {{ c.banco }} - {{ c.nombre }} ({{ c.moneda }})
+                </mat-option>
+              </mat-select>
             </mat-form-field>
 
-            <mat-form-field appearance="outline" class="dense-input bg-white">
-              <mat-label>N° Cuotas</mat-label>
-              <input matInput type="number" [(ngModel)]="numeroCuotas" (input)="calcularCredito()" min="1" step="1"
-                (focus)="$any($event.target).select()">
-              <span matSuffix style="font-size: 12px; margin-left: 4px;">meses</span>
-            </mat-form-field>
+            <div class="pago-row">
+              <mat-form-field appearance="outline" class="dense-input" style="flex: 1;">
+                <mat-label>Monto</mat-label>
+                <input matInput type="number" [(ngModel)]="pagoActual.monto" min="0">
+              </mat-form-field>
+              
+              <button mat-mini-fab color="primary" (click)="agregarPagoALista()" [disabled]="pagoActual.monto <= 0">
+                <mat-icon>add</mat-icon>
+              </button>
+            </div>
           </div>
+
+          <div class="lista-pagos" *ngIf="listaPagos.length > 0">
+            <div class="pago-item" *ngFor="let pago of listaPagos; let i = index">
+              <div class="pago-info">
+                <span class="metodo-badge">{{ pago.metodoPago }}</span>
+                <span class="pago-monto">
+                  {{ pago.moneda === 'PEN' ? 'S/' : '$' }} {{ pago.monto | number:'1.2-2' }}
+                </span>
+              </div>
+              <button mat-icon-button color="warn" class="btn-tiny" (click)="eliminarPagoDeLista(i)">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+          </div>
+          
+          <div class="pago-total-acumulado" *ngIf="listaPagos.length > 0">
+            <span>Total Pagado:</span>
+            <strong>{{ moneda === 'PEN' ? 'S/' : '$' }} {{ totalPagadoAcumulado | number:'1.2-2' }}</strong>
+          </div>
+        </div>
+
+        <div *ngIf="tipoPago === eTipoPago.CREDITO" class="credito-panel animate-fade-in">
+          <div class="credito-header">Plan de Financiamiento</div>
+          
+          <mat-form-field appearance="outline" class="dense-input bg-white full-width">
+            <mat-label>N° Cuotas</mat-label>
+            <input matInput type="number" [(ngModel)]="numeroCuotas" (input)="calcularCredito()" min="1">
+          </mat-form-field>
 
           <div class="plan-pagos-info">
             <div class="info-row">
-              <span>Saldo a financiar:</span>
-              <strong>{{ moneda === 'PEN' ? 'S/' : '$' }} {{ saldoPendiente.toFixed(2) }}</strong>
+              <span>Saldo Pendiente:</span>
+              <strong>{{ moneda === 'PEN' ? 'S/' : '$' }} {{ saldoPendiente | number:'1.2-2' }}</strong>
             </div>
             <div class="info-row highlight">
-              <span>Cuota mensual:</span>
-              <strong>{{ moneda === 'PEN' ? 'S/' : '$' }} {{ montoCuota.toFixed(2) }}</strong>
+              <span>Cuota Aprox:</span>
+              <strong>{{ moneda === 'PEN' ? 'S/' : '$' }} {{ montoCuota | number:'1.2-2' }}</strong>
             </div>
           </div>
         </div>
 
-        <div class="divider"></div>
-
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>{{ tipoPago === eTipoPago.CREDITO ? 'Método para la Inicial' : 'Método de Pago' }}</mat-label>
-          <mat-select [(ngModel)]="metodoPago">
-            <mat-option *ngFor="let m of metodosPago" [value]="m.value">
-              {{ m.label }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="full-width animate-fade-in" *ngIf="esPagoDigital()">
-          <mat-label>Seleccionar Cuenta Destino</mat-label>
-          <mat-icon matPrefix>account_balance_wallet</mat-icon>
-          <mat-select [(ngModel)]="cuentaSeleccionadaId">
-            <mat-option *ngFor="let c of cuentas" [value]="c.id">
-              {{ c.banco }} - {{ c.nombre }} ({{ c.moneda }})
-            </mat-option>
-          </mat-select>
-          <mat-error *ngIf="!cuentaSeleccionadaId">Requerido para este método</mat-error>
-        </mat-form-field>
-
-        <div *ngIf="esPagoMixto()" class="pago-mixto-container">
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Monto Transferencia</mat-label>
-            <input matInput type="number" [(ngModel)]="pagoTransferencia" (input)="validarMontoMixto('T')"
-              (focus)="$any($event.target).select()">
-            <span matSuffix>{{ moneda === 'PEN' ? 'S/' : '$' }}</span>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Monto Efectivo</mat-label>
-            <input matInput type="number" [(ngModel)]="pagoEfectivo" (input)="validarMontoMixto('E')"
-              (focus)="$any($event.target).select()">
-            <span matSuffix>{{ moneda === 'PEN' ? 'S/' : '$' }}</span>
-          </mat-form-field>
-        </div>
-
-        <mat-form-field appearance="outline" class="full-width">
+        <mat-form-field appearance="outline" class="full-width mt-3">
           <mat-label>Notas (Opcional)</mat-label>
-          <textarea matInput [(ngModel)]="notas" rows="3"></textarea>
+          <textarea matInput [(ngModel)]="notas" rows="2"></textarea>
         </mat-form-field>
 
         <div class="divider"></div>
 
         <div class="resumen-row">
           <span>Subtotal:</span>
-          <strong>{{ moneda === 'PEN' ? 'S/' : '$' }} {{ subtotal.toFixed(2) }}</strong>
+          <strong>{{ moneda === 'PEN' ? 'S/' : '$' }} {{ subtotal | number:'1.2-2' }}</strong>
         </div>
         <div class="resumen-row">
           <span>IGV (18%):</span>
-          <strong>{{ moneda === 'PEN' ? 'S/' : '$' }} {{ igv.toFixed(2) }}</strong>
+          <strong>{{ moneda === 'PEN' ? 'S/' : '$' }} {{ igv | number:'1.2-2' }}</strong>
         </div>
         <div class="resumen-row total">
-          <span>Total:</span>
-          <strong>{{ moneda === 'PEN' ? 'S/' : '$' }} {{ total.toFixed(2) }}</strong>
+          <span>Total a Pagar:</span>
+          <strong>{{ moneda === 'PEN' ? 'S/' : '$' }} {{ total | number:'1.2-2' }}</strong>
+        </div>
+
+        <div class="status-pago" [class.incompleto]="tipoPago === 'CONTADO' && totalPagadoAcumulado < (total - 0.10)"
+                                 [class.completo]="totalPagadoAcumulado >= (total - 0.10)">
+          <span *ngIf="totalPagadoAcumulado >= (total - 0.10)">✅ Cubierto</span>
+          <span *ngIf="totalPagadoAcumulado < (total - 0.10)">
+            ⚠️ Faltan {{ moneda === 'PEN' ? 'S/' : '$' }} {{ (total - totalPagadoAcumulado) | number:'1.2-2' }}
+          </span>
         </div>
 
         <div class="action-buttons">

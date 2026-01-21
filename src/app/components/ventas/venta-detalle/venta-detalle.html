@@ -19,6 +19,7 @@
         <p><strong>Fecha:</strong> {{ formatearFecha(venta.fechaVenta) }}</p>
         <p><strong>Comprobante:</strong> {{ venta.tipoDocumento }}</p>
         <p><strong>N° Documento:</strong> {{ venta.numeroDocumento || '---' }}</p>
+        <p><strong>Tipo Venta:</strong> <span class="badge-tipo">{{ venta.tipoPago }}</span></p>
       </div>
 
       <div class="info-card">
@@ -28,13 +29,25 @@
       </div>
 
       <div class="info-card">
-        <h3><mat-icon>payments</mat-icon> Pago</h3>
-        <p><strong>Método:</strong> {{ venta.metodoPago }}</p>
-        <p><strong>Moneda:</strong> {{ venta.moneda }} (TC: {{ venta.tipoCambio }})</p>
+        <h3><mat-icon>payments</mat-icon> Historial de Pagos</h3>
         
-        <div *ngIf="venta.metodoPago === 'MIXTO'" class="pago-mixto-info">
-          <small>Efectivo: {{ venta.moneda === 'USD' ? '$' : 'S/' }} {{ venta.pagoEfectivo | number:'1.2-2' }}</small>
-          <small>Transferencia: {{ venta.moneda === 'USD' ? '$' : 'S/' }} {{ venta.pagoTransferencia | number:'1.2-2' }}</small>
+        <div class="pagos-list-readonly">
+          <div *ngFor="let pago of venta.pagos" class="pago-row-item">
+            <div class="pago-meta">
+              <span class="pago-method">{{ pago.metodoPago }}</span>
+              <span *ngIf="pago.nombreCuentaDestino" class="pago-cuenta">
+                ({{ pago.nombreCuentaDestino }})
+              </span>
+            </div>
+            <span class="pago-amount">
+              {{ pago.moneda === 'PEN' ? 'S/' : '$' }} {{ pago.monto | number:'1.2-2' }}
+            </span>
+          </div>
+        </div>
+
+        <div *ngIf="venta.saldoPendiente && venta.saldoPendiente > 0" class="saldo-alert">
+          <span>Por Cobrar:</span>
+          <strong>{{ venta.moneda === 'PEN' ? 'S/' : '$' }} {{ venta.saldoPendiente | number:'1.2-2' }}</strong>
         </div>
       </div>
 
@@ -91,5 +104,6 @@
 
   <mat-dialog-actions align="end">
     <button mat-stroked-button (click)="cerrar()">Cerrar</button>
-    <button mat-flat-button color="primary" (click)="cerrar()">Imprimir</button> </mat-dialog-actions>
+    <button mat-flat-button color="primary" (click)="cerrar()">Imprimir</button>
+  </mat-dialog-actions>
 </div>

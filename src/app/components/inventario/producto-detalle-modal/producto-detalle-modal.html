@@ -118,13 +118,28 @@
                 <mat-icon>inventory</mat-icon>
                 <h3>Stock e Inventario</h3>
               </div>
+              
               <div class="kpi-row">
                 <div class="kpi-item">
-                  <span class="kpi-label">STOCK ACTUAL</span>
+                  <span class="kpi-label">STOCK FÍSICO</span>
                   <span class="kpi-value primary">{{ producto.stockActual || 0 }}</span>
                   <span class="kpi-unit">unidades</span>
                 </div>
+                
                 <div class="kpi-divider"></div>
+
+                <div class="kpi-item">
+                  <span class="kpi-label">POR LLEGAR </span>
+                  <span class="kpi-value" 
+                        [class.transit-active]="(producto.stockPorLlegar || 0) > 0" 
+                        [class.transit-empty]="!producto.stockPorLlegar">
+                    {{ producto.stockPorLlegar || 0 }}
+                  </span>
+                  <span class="kpi-unit">en tránsito</span>
+                </div>
+
+                <div class="kpi-divider"></div>
+
                 <div class="kpi-item">
                   <span class="kpi-label">MÍNIMO</span>
                   <span class="kpi-value secondary">{{ producto.stockMinimo || 0 }}</span>

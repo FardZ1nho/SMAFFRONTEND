@@ -2,22 +2,27 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DashboardService } from '../../services/dashboard-service'; 
 import { DashboardResponseDTO, MetricaCard } from '../../models/dashboard';
-import { GraficoVentasSemanaComponent } from '../grafico-ventas-semana/grafico-ventas-semana';  // ✅ AGREGAR
-import { ProductosMasVendidosComponent } from '../productos-mas-vendidos/productos-mas-vendidos'; // ✅ AGREGAR
+import { GraficoVentasSemanaComponent } from '../grafico-ventas-semana/grafico-ventas-semana';
+import { ProductosMasVendidosComponent } from '../productos-mas-vendidos/productos-mas-vendidos';
+import { MetodosPagoWidgetComponent } from '../dashboard/metodos-pago-widget/metodos-pago-widget';
+// ✅ 1. IMPORTAR EL WIDGET DE LLEGADAS
+import { LlegadasWidgetComponent } from '../llegadas-widget/llegadas-widget'; 
 
 @Component({
   selector: 'app-inicio',
   standalone: true,
   imports: [
     CommonModule,
-    GraficoVentasSemanaComponent ,// ✅ AGREGAR
-    ProductosMasVendidosComponent
+    GraficoVentasSemanaComponent,
+    ProductosMasVendidosComponent,
+    MetodosPagoWidgetComponent,
+    LlegadasWidgetComponent // ✅ 2. AGREGAR AL ARRAY DE IMPORTS
   ],
   templateUrl: './inicio.html',
   styleUrls: ['./inicio.css']
 })
 export class InicioComponent implements OnInit {
-
+  
   metricas: DashboardResponseDTO | null = null;
   metricasCards: MetricaCard[] = [];
   cargando: boolean = true;
@@ -33,24 +38,16 @@ export class InicioComponent implements OnInit {
   }
 
   cargarMetricas(): void {
-    console.log('🔄 Iniciando carga de métricas...');
-    this.cargando = true;
-    this.error = '';
-    
     this.dashboardService.obtenerMetricas().subscribe({
       next: (data) => {
-        console.log('✅ Métricas recibidas:', data);
         this.metricas = data;
         this.generarMetricasCards();
-        console.log('✅ Cards generadas:', this.metricasCards);
-        
         this.cargando = false;
         this.cdr.detectChanges();
-        console.log('Estado final - cargando:', this.cargando);
       },
       error: (err) => {
-        console.error('❌ Error al cargar métricas:', err);
-        this.error = 'Error al cargar las métricas del dashboard';
+        console.error(err);
+        this.error = 'Error al cargar métricas';
         this.cargando = false;
         this.cdr.detectChanges();
       }
@@ -58,56 +55,49 @@ export class InicioComponent implements OnInit {
   }
 
   generarMetricasCards(): void {
-    if (!this.metricas) return;
-
-    this.metricasCards = [
-      {
-        titulo: 'Ventas del Mes',
-        valor: this.formatearMoneda(this.metricas.ventasMes),
-        porcentaje: this.metricas.porcentajeCambioVentasMes,
-        icono: '💰',
-        colorIcono: '#f59e0b',
-        colorFondo: '#fef3c7'
-      },
-      {
-        titulo: 'Productos en Stock',
-        valor: this.metricas.productosStock.toString(),
-        porcentaje: this.metricas.porcentajeCambioProductos,
-        icono: '📦',
-        colorIcono: '#8b5cf6',
-        colorFondo: '#ede9fe'
-      },
-      {
-        titulo: 'Clientes Activos',
-        valor: this.metricas.clientesActivos.toString(),
-        porcentaje: this.metricas.porcentajeCambioClientes,
-        icono: '👥',
-        colorIcono: '#6366f1',
-        colorFondo: '#e0e7ff'
-      },
-      {
-        titulo: 'Ventas Hoy',
-        valor: this.formatearMoneda(this.metricas.ventasHoy),
-        porcentaje: this.metricas.porcentajeCambioVentasHoy,
-        icono: '🛒',
-        colorIcono: '#10b981',
-        colorFondo: '#d1fae5'
-      }
-    ];
+     if (!this.metricas) return;
+     
+     // Mapeo de datos a tarjetas
+     this.metricasCards = [
+       {
+         titulo: 'Ventas Hoy',
+         valor: this.formatearMoneda(this.metricas.ventasHoy),
+         porcentaje: this.metricas.porcentajeCambioVentasHoy,
+         icono: 'trending_up',
+         colorIcono: '#10b981', // Verde
+         colorFondo: '#d1fae5'
+       },
+       {
+         titulo: 'Ventas Mes',
+         valor: this.formatearMoneda(this.metricas.ventasMes),
+         porcentaje: this.metricas.porcentajeCambioVentasMes,
+         icono: 'calendar_today',
+         colorIcono: '#3b82f6', // Azul
+         colorFondo: '#dbeafe'
+       },
+       {
+         titulo: 'Clientes Activos',
+         valor: this.metricas.clientesActivos,
+         porcentaje: this.metricas.porcentajeCambioClientes,
+         icono: 'users',
+         colorIcono: '#f59e0b', // Naranja
+         colorFondo: '#fef3c7'
+       },
+       {
+         titulo: 'Productos Stock',
+         valor: this.metricas.productosStock,
+         porcentaje: this.metricas.porcentajeCambioProductos,
+         icono: 'package',
+         colorIcono: '#6366f1', // Indigo
+         colorFondo: '#e0e7ff'
+       }
+     ];
   }
 
   formatearMoneda(valor: number): string {
     return `S/ ${valor.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   }
 
- obtenerClasePorcentaje(porcentaje: number): string {
-  return porcentaje >= 0 ? 'positivo' : 'negativo';
-}
-  obtenerIconoPorcentaje(porcentaje: number): string {
-    return porcentaje >= 0 ? '↑' : '↓';
-  }
-
-  formatearPorcentaje(porcentaje: number): string {
-    return `${Math.abs(porcentaje).toFixed(1)}%`;
-  }
+  obtenerClasePorcentaje(porcentaje: number): string { return porcentaje >= 0 ? 'positivo' : 'negativo'; }
+  formatearPorcentaje(porcentaje: number): string { return `${Math.abs(porcentaje).toFixed(1)}%`; }
 }

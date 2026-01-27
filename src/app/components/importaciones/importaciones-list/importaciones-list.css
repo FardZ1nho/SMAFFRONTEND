@@ -1,152 +1,223 @@
+/* ===================================
+   VARS & THEME (Copiado de Inventario)
+   =================================== */
 :host {
-  --primary: #4f46e5;
+  --primary: #2563eb;       /* Azul Inventario */
+  --primary-dark: #1d4ed8;
   --bg-body: #f8fafc;
-  --text-main: #1e293b;
+  --text-main: #0f172a;     /* Texto oscuro Inventario */
   --text-sub: #64748b;
-  --border: #e2e8f0;
+  --border-color: #e2e8f0;
+  --hover-row: #f8fafc;
+  --danger: #ef4444;
+  --success: #059669;
 }
 
 .page-container {
-  padding: 24px;
+  padding: 32px; /* Igual que inventario */
   background-color: var(--bg-body);
   min-height: 100vh;
   box-sizing: border-box;
-  font-family: 'Inter', 'Roboto', sans-serif;
+  font-family: 'Inter', sans-serif;
 }
 
-/* --- HEADER --- */
-.page-header {
-  display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;
-}
-.header-content { display: flex; gap: 16px; align-items: center; }
-.icon-box {
-  width: 48px; height: 48px; background: white; border-radius: 12px;
-  display: flex; align-items: center; justify-content: center;
-  color: var(--primary); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-}
-h1 { font-size: 24px; font-weight: 700; color: var(--text-main); margin: 0; }
-.subtitle { font-size: 14px; color: var(--text-sub); margin: 4px 0 0 0; }
+/* ===================================
+   HEADER & TOOLBAR (Estilo Inventario)
+   =================================== */
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+.header-content { display: flex; gap: 12px; align-items: center; }
 
-.btn-secondary { color: var(--primary); border: 1px solid var(--border); background: white; }
+/* Icono más limpio sin caja blanca de fondo, estilo inventario */
+.icon-box { display: none; } 
+.header-icon-large { font-size: 28px; width: 28px; height: 28px; color: var(--primary); }
 
-/* --- CARDS & TOOLBAR --- */
-.card {
-  background: white; border-radius: 16px; border: 1px solid var(--border);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.02); overflow: hidden;
+h1 { font-size: 22px; font-weight: 700; color: var(--text-main); margin: 0; letter-spacing: -0.5px; }
+.subtitle { color: var(--text-sub); font-size: 13px; margin: 0; font-weight: 400; }
+
+.btn-secondary {
+  background-color: var(--primary) !important; color: white !important;
+  border: none !important;
+  border-radius: 8px !important; font-weight: 500 !important;
+  font-size: 14px !important; padding: 0 20px !important; height: 40px !important;
+  transition: background-color 0.2s ease;
+  display: flex; align-items: center; gap: 8px;
+}
+.btn-secondary:hover { background-color: var(--primary-dark) !important; }
+.btn-secondary mat-icon { margin: 0; }
+
+/* FILTERS BAR SIMPLIFICADA */
+.filters-bar { display: flex; gap: 12px; margin-bottom: 20px; align-items: center; justify-content: space-between; padding: 0; background: transparent; border: none; box-shadow: none; }
+.card { border: none; box-shadow: none; border-radius: 0; } /* Reset de la card vieja */
+
+.search-wrapper { 
+  position: relative; display: flex; align-items: center; flex: 1; max-width: 400px; 
+  background: white; border-radius: 8px; padding: 0;
+}
+.search-wrapper mat-icon { 
+  position: absolute; left: 10px; color: #94a3b8; font-size: 20px; width: 20px; height: 20px; pointer-events: none; margin: 0; 
+}
+.search-wrapper input { 
+  width: 100%; height: 40px; padding: 0 12px 0 38px;
+  border: 1px solid var(--border-color); border-radius: 8px;
+  font-size: 13px; background-color: white; color: var(--text-main);
+  transition: border-color 0.2s; outline: none;
+}
+.search-wrapper input:focus { border-color: var(--primary); }
+.btn-clear { position: absolute; right: 8px; }
+
+.btn-tool {
+  height: 40px !important; border-radius: 8px !important;
+  border: 1px solid var(--border-color) !important;
+  background: white !important; color: var(--text-main) !important;
+  font-size: 13px !important; font-weight: 500 !important;
+  padding: 0 16px !important; display: flex !important; align-items: center !important; gap: 8px;
 }
 
-.filters-bar {
-  padding: 16px 24px; display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 24px; gap: 16px;
+/* ===================================
+   TABLAS (Estilo Inventario Replicado)
+   =================================== */
+/* La tarjeta que contiene la tabla */
+.table-card {
+  background: white; border-radius: 12px; border: 1px solid var(--border-color);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05); overflow: hidden; margin-top: 0;
 }
 
-.search-wrapper {
-  display: flex; align-items: center; background: #f1f5f9;
-  padding: 8px 16px; border-radius: 8px; flex: 1; max-width: 500px;
-}
-.search-wrapper mat-icon { color: var(--text-sub); margin-right: 8px; }
-.search-wrapper input {
-  border: none; background: transparent; outline: none; width: 100%;
-  font-size: 14px; color: var(--text-main);
-}
-.btn-clear { background: none; border: none; cursor: pointer; color: #94a3b8; display: flex; }
-
-.btn-tool { border: 1px solid var(--border) !important; color: var(--text-main) !important; font-weight: 500 !important; }
-.active-filter { background-color: #eef2ff !important; color: var(--primary) !important; border-color: var(--primary) !important; }
-
-/* --- FILTROS AVANZADOS --- */
-.advanced-filters { padding: 24px; margin-bottom: 24px; animation: slideDown 0.3s ease-out; }
-@keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-
-.filters-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px; }
-.filter-item { display: flex; flex-direction: column; gap: 8px; }
-.filter-item label { font-size: 12px; font-weight: 700; color: var(--text-sub); text-transform: uppercase; }
-.filter-item select {
-  padding: 10px; border-radius: 8px; border: 1px solid var(--border);
-  background: white; color: var(--text-main); font-size: 14px; outline: none;
-}
-::ng-deep .dense-datepicker .mat-mdc-text-field-wrapper {
-  background-color: white !important; border: 1px solid var(--border); border-radius: 8px !important; padding: 0 12px !important; height: 42px;
-}
-::ng-deep .dense-datepicker .mat-mdc-form-field-flex { height: 42px; align-items: center; }
-::ng-deep .dense-datepicker .mat-mdc-form-field-infix { padding: 8px 0 !important; min-height: unset !important; }
-::ng-deep .dense-datepicker .mdc-line-ripple { display: none !important; }
-.filters-footer { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; }
-
-/* --- TABLA (CORRECCIÓN DE ALINEACIÓN) --- */
 .table-responsive { width: 100%; overflow-x: auto; }
 
-.soft-table {
-  width: 100%; border-collapse: separate; border-spacing: 0;
-  table-layout: fixed; /* Mantiene el ancho fijo */
+.soft-table { 
+  width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; 
 }
 
-.soft-table th {
-  padding: 16px 24px; font-size: 11px; font-weight: 700;
-  color: var(--text-sub); text-transform: uppercase; background: #f8fafc;
-  border-bottom: 1px solid var(--border); white-space: nowrap;
+/* HEADER TABLE - IDENTICO A INVENTARIO */
+.soft-table th { 
+  background: #f8fafc; color: #475569; font-weight: 600; font-size: 11px;
+  text-transform: uppercase; letter-spacing: 0.5px;
+  padding: 0 24px; height: 48px; border-bottom: 1px solid var(--border-color);
   text-align: left; /* Default */
+  white-space: nowrap;
 }
 
-.soft-table td {
-  padding: 16px 24px; border-bottom: 1px solid var(--border);
-  vertical-align: middle; overflow: hidden; text-overflow: ellipsis;
-  font-size: 13px; color: var(--text-main);
+/* ROWS - IDENTICO A INVENTARIO */
+.master-row td { 
+  padding: 0 24px; height: 60px; border-bottom: 1px solid #f1f5f9;
+  color: var(--text-main); font-size: 13px;
+  vertical-align: middle;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.master-row { cursor: pointer; transition: background-color 0.2s; }
+.master-row:hover { background-color: #f8fafc; }
+.master-row.expanded-row { background-color: #f8fafc; } 
+
+/* UTILS DE ALINEACION (CRITICO) */
+.text-right { text-align: right !important; }
+.text-center { text-align: center !important; }
+.text-left { text-align: left !important; }
+
+/* ANCHOS DE COLUMNA */
+.col-expander { width: 40px; padding-left: 12px !important; padding-right: 0 !important; }
+.col-id       { width: 200px; } 
+.col-estado   { width: 130px; }
+.col-proveedor{ width: auto; }
+.col-eta      { width: 120px; }
+.col-items    { width: 80px; }
+.col-money    { width: 140px; }
+
+/* COMPONENTES DE CELDA */
+.folder-cell { display: flex; align-items: center; gap: 10px; }
+.folder-icon { color: #f59e0b; font-size: 20px; width: 20px; height: 20px; }
+.folder-name { font-weight: 600; color: var(--text-main); font-family: 'Consolas', monospace; font-size: 13px; }
+
+/* STATUS BADGES - Estilo "Pill" de Inventario */
+.status-badge { 
+  display: inline-flex; padding: 2px 10px; border-radius: 12px;
+  font-weight: 600; font-size: 11px; justify-content: center; width: auto; min-width: 80px;
+}
+.badge-ordenado { background: #f1f5f9; color: #64748b; }
+.badge-transito { background: #ffedd5; color: #f97316; }
+.badge-aduanas  { background: #f3e8ff; color: #7e22ce; }
+.badge-nacionalizado { background: #dcfce7; color: #16a34a; }
+.badge-almacen  { background: #dbeafe; color: #2563eb; }
+
+/* Dinero estilo Inventario */
+.col-money { font-family: 'Inter', sans-serif; font-weight: 500; color: var(--text-main); }
+.total-highlight { color: var(--success); font-weight: 700; }
+.currency { color: #94a3b8; font-size: 11px; margin-right: 2px; font-weight: 400; }
+.badge-count { background: #f1f5f9; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; color: #475569; border: 1px solid #e2e8f0; }
+
+/* ===================================
+   TABLA INTERNA (DETALLE)
+   =================================== */
+/* Contenedor del detalle: Fondo igual al row expandido para continuidad */
+.detail-row td { padding: 0 !important; border-bottom: none !important; background: #f8fafc; }
+
+.detail-container { 
+  padding: 0 24px 24px 64px; /* Sangría visual para jerarquía */
+  border-bottom: 1px solid var(--border-color); 
 }
 
-.soft-table tr:hover { background-color: #f8fafc; }
-
-/* === ANCHOS Y ALINEACIÓN DE COLUMNAS === */
-.col-estado      { width: 140px; }
-.col-logistica   { width: 130px; }
-.col-proveedor   { width: 22%; }
-.col-seguimiento { width: 18%; }
-
-/* Alineación Derecha para montos */
-.col-money { 
-  width: 12%; 
-  text-align: right !important; /* Forza alineación en Header y Body */
+/* La tabla interna en sí: Fondo blanco y bordes como Inventario */
+.inner-table { 
+  width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed;
+  background: white; border-radius: 8px; border: 1px solid var(--border-color);
+  overflow: hidden;
 }
 
-/* Alineación Centro para acciones */
-.col-actions { 
-  width: 80px; 
-  text-align: center !important; 
+/* Headers internos: Mismo estilo que los externos pero un poco más bajos */
+.inner-table th { 
+  background: white; /* Header blanco para diferenciar */
+  color: #94a3b8; font-weight: 700; font-size: 10px;
+  text-transform: uppercase; padding: 0 16px; height: 40px;
+  border-bottom: 1px solid var(--border-color);
+  text-align: inherit; /* Hereda las clases .text-right del HTML */
 }
 
-/* --- ESTILOS DE CONTENIDO --- */
-.status-badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; margin-bottom: 4px; }
-.badge-ordenado { background-color: #e2e8f0; color: #475569; }
-.badge-transito { background-color: #fff7ed; color: #c2410c; border: 1px solid #ffedd5; }
-.badge-aduanas { background-color: #f3e8ff; color: #7e22ce; border: 1px solid #e9d5ff; }
-.badge-nacionalizado { background-color: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
-.date-info { font-size: 11px; color: var(--text-sub); }
+/* Celdas internas */
+.inner-table td { 
+  padding: 0 16px; height: 50px; /* Un poco más compactas */
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 12px; color: var(--text-main);
+  vertical-align: middle;
+  text-align: inherit;
+}
+.inner-table tr:last-child td { border-bottom: none; }
 
-.logistics-cell { display: flex; gap: 10px; align-items: center; }
-.transport-icon { color: var(--primary); font-size: 20px; width: 20px; height: 20px; }
-.logistics-info { display: flex; flex-direction: column; }
-.origin { font-weight: 600; font-size: 13px; }
-.incoterm { font-size: 10px; background: #eef2ff; color: var(--primary); padding: 1px 6px; border-radius: 4px; margin-top: 2px; display: inline-block; width: fit-content; }
+/* COMPONENTES INTERNOS */
+.type-tag { font-family: monospace; font-weight: 700; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; color: #475569; font-size: 11px; }
+.cell-primary { font-weight: 600; color: var(--text-main); font-size: 12px; }
+.cell-secondary { font-size: 11px; color: #94a3b8; }
 
-.cell-primary { font-weight: 600; margin-bottom: 2px; }
-.cell-secondary { font-size: 11px; color: var(--text-sub); display: flex; align-items: center; gap: 4px; }
-.tiny-icon { font-size: 14px; width: 14px; height: 14px; }
+.dua-tag { color: var(--success); background: #dcfce7; padding: 2px 6px; border-radius: 4px; font-weight: 600; display: inline-block; font-size: 10px; }
+.track-tag { color: var(--primary); background: #dbeafe; padding: 2px 6px; border-radius: 4px; font-weight: 600; display: inline-block; font-size: 10px; }
 
-.highlight-dua { color: #059669; font-weight: 600; background: #ecfdf5; padding: 4px 8px; border-radius: 6px; display: inline-block; border: 1px solid #a7f3d0; margin-bottom: 4px; font-size: 11px; }
-.label { font-weight: 600; color: var(--text-sub); font-size: 11px; margin-right: 4px; }
-.tracking-info { font-size: 12px; }
-.placeholder-text { font-size: 11px; color: #cbd5e1; font-style: italic; }
+.logistics-mini { display: flex; align-items: center; justify-content: center; gap: 6px; }
+.tiny-icon { font-size: 16px; width: 16px; height: 16px; color: #94a3b8; }
 
-.amount-primary { font-weight: 600; color: var(--text-main); }
-.amount-secondary { font-size: 12px; color: #64748b; }
-.amount-total { font-weight: 700; color: var(--primary); font-size: 14px; }
+.btn-mini-edit { 
+  color: #94a3b8; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; 
+  border-radius: 4px; transition: all 0.2s;
+}
+.btn-mini-edit:hover { background: #f1f5f9; color: var(--primary); }
 
-.btn-edit { color: var(--primary); background: #eef2ff; }
-.btn-edit:hover { background: #e0e7ff; }
+/* Anchos internos */
+.i-col-tipo   { width: 70px; }
+.i-col-doc    { width: auto; }
+.i-col-track  { width: 140px; }
+.i-col-log    { width: 100px; }
+.i-col-money  { width: 110px; }
+.i-col-action { width: 60px; }
 
-.loading-overlay, .empty-state { text-align: center; padding: 40px; color: var(--text-sub); font-style: italic; }
-.empty-state mat-icon { font-size: 48px; width: 48px; height: 48px; opacity: 0.3; margin-bottom: 10px; display: block; margin: 0 auto 10px auto; }
+/* LOADING & EMPTY */
+.loading-overlay, .empty-state { text-align: center; padding: 60px; color: var(--text-sub); }
+.animate-fade-in { animation: fadeIn 0.4s ease-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-.animate-fade-in { animation: fadeIn 0.4s ease-out forwards; opacity: 0; }
-.delay-1 { animation-delay: 0.1s; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+/* Chevron animation */
+.chevron-icon { color: #cbd5e1; transition: transform 0.2s; }
+.chevron-icon.rotated { transform: rotate(180deg); color: var(--primary); }
+
+/* Filtros Avanzados (Reutilizando estilo Inventario) */
+.advanced-filters { 
+  background: white; border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; margin-bottom: 20px; 
+}
+.filters-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
+.filters-footer { margin-top: 16px; padding-top: 16px; border-top: 1px solid #f1f5f9; display: flex; justify-content: flex-end; }

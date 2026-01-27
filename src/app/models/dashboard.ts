@@ -1,5 +1,3 @@
-// src/app/models/dashboard.model.ts
-
 export interface DashboardResponseDTO {
   // Métricas principales
   ventasMes: number;
@@ -29,14 +27,11 @@ export interface MetricaCard {
   colorFondo: string;
 }
 
-// ✅ AGREGAR esta interfaz
-export interface VentasSemanaDTO {
-  fecha: string;
-  diaSemana: string;
-  totalVentas: number;
-  cantidadVentas: number; // Se mantiene como number en TypeScript
+export interface GraficoVentasDTO {
+  label: string;    // Ej: "Lunes", "24/01", "Enero"
+  total: number;
+  cantidad: number;
 }
-
 
 export interface ProductoVendidoDTO {
   id: number;
@@ -44,4 +39,20 @@ export interface ProductoVendidoDTO {
   codigo: string;
   cantidadVendida: number;
   totalVentas: number;
+}
+
+export interface ReporteMetodoPagoDTO {
+  metodo: string;
+  total: number;
+  cantidad: number;
+}
+
+// ✅ NUEVO: Interfaz para el Widget de Alertas (Próximas Llegadas)
+export interface DashboardAlerta {
+  idImportacion: number;
+  codigoImportacion: string; // Ej: "IMP-2026-01"
+  proveedor: string;
+  fechaEta: string;          // Fecha en formato string (ISO)
+  diasRestantes: number;     // Días que faltan (o atraso si es negativo)
+  estado: string;            // TRANSITO / ADUANAS
 }

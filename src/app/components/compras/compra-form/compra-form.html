@@ -20,30 +20,32 @@
   </div>
 
   <div class="card mb-4">
-    <h3>
-      <mat-icon style="vertical-align: middle; margin-right: 8px;">receipt_long</mat-icon>
-      Datos del Comprobante
-    </h3>
-
+    <h3><mat-icon style="vertical-align: middle; margin-right: 8px;">receipt_long</mat-icon> Datos del Comprobante</h3>
     <div class="config-grid-rows">
+      
       <div class="config-row four-cols">
         <div class="grid-input">
           <label class="section-title">Tipo Comprobante</label>
-          <select class="form-control-smaf full-width" [(ngModel)]="compra.tipoComprobante">
+          <select class="form-control-smaf full-width" [(ngModel)]="compra.tipoComprobante" (change)="onTipoComprobanteChange()">
             <option *ngFor="let c of listaComprobantes" [value]="c.valor">{{ c.texto }}</option>
           </select>
+        </div>
+
+        <div class="grid-input" *ngIf="compra.tipoComprobante === 'FACTURA_COMERCIAL'">
+          <label class="section-title" style="color: #2563eb;">ID Importación</label>
+          <input type="text" class="form-control-smaf full-width" 
+                 [(ngModel)]="compra.codImportacion" 
+                 placeholder="Ej. IMP-2026-001">
         </div>
 
         <div class="grid-input">
           <label class="section-title">Serie <span class="text-danger">*</span></label>
           <input type="text" class="form-control-smaf full-width" [(ngModel)]="compra.serie" placeholder="F001">
         </div>
-
         <div class="grid-input">
           <label class="section-title">Número <span class="text-danger">*</span></label>
           <input type="text" class="form-control-smaf full-width" [(ngModel)]="compra.numero" placeholder="000001">
         </div>
-
         <div class="grid-input">
           <label class="section-title">Fecha Emisión</label>
           <input type="date" class="form-control-smaf full-width" [(ngModel)]="compra.fechaEmision">
@@ -63,15 +65,13 @@
             <option *ngFor="let p of proveedores" [value]="p.id">{{p.nombre}}</option>
           </select>
         </div>
-
         <div class="grid-input">
           <label class="section-title">Moneda</label>
-          <select class="form-control-smaf full-width" [(ngModel)]="compra.moneda">
+          <select class="form-control-smaf full-width" [(ngModel)]="compra.moneda" (change)="onMonedaChange()">
             <option value="PEN">Soles (S/)</option>
             <option value="USD">Dólares ($)</option>
           </select>
         </div>
-
         <div class="grid-input">
           <label class="section-title">T. Cambio</label>
           <input type="number" class="form-control-smaf full-width" [(ngModel)]="compra.tipoCambio">
@@ -79,25 +79,18 @@
       </div>
 
       <div class="config-row four-cols impuesto-row">
-        
         <div class="grid-input" *ngIf="compra.tipoCompra === 'BIEN'">
           <label class="section-title">Percepción</label>
-          <input type="number" class="form-control-smaf full-width" [(ngModel)]="compra.percepcion"
-            (change)="recalcularTotales()" placeholder="0.00">
+          <input type="number" class="form-control-smaf full-width" [(ngModel)]="compra.percepcion" (change)="recalcularTotales()" placeholder="0.00">
         </div>
-
         <div class="grid-input" *ngIf="compra.tipoCompra === 'SERVICIO'">
           <label class="section-title">% Detracción</label>
-          <input type="number" class="form-control-smaf full-width" [(ngModel)]="compra.detraccionPorcentaje"
-            (change)="recalcularTotales()" placeholder="Ej. 10">
+          <input type="number" class="form-control-smaf full-width" [(ngModel)]="compra.detraccionPorcentaje" (change)="recalcularTotales()" placeholder="Ej. 10">
         </div>
-
         <div class="grid-input" *ngIf="compra.tipoCompra === 'SERVICIO'">
           <label class="section-title">Monto Detracción</label>
-          <input type="number" class="form-control-smaf full-width bg-disabled"
-            [value]="compra.detraccionMonto | number:'1.2-2'" readonly>
+          <input type="number" class="form-control-smaf full-width bg-disabled" [value]="compra.detraccionMonto | number:'1.2-2'" readonly>
         </div>
-
         <div class="grid-input">
           <label class="section-title">Retención</label>
           <input type="number" class="form-control-smaf full-width" [(ngModel)]="compra.retencion" placeholder="0.00">
@@ -111,12 +104,9 @@
     </div>
   </div>
 
-  <div class="card">
+  <div class="card mb-4">
     <div class="section-header-with-action">
-      <h3>
-        <mat-icon style="vertical-align: middle; margin-right: 8px;">shopping_cart</mat-icon>
-        Detalle de Items
-      </h3>
+      <h3><mat-icon style="vertical-align: middle; margin-right: 8px;">shopping_cart</mat-icon> Detalle de Items</h3>
       <button class="btn-tiny-action" (click)="nuevoProducto()">
         <mat-icon>add_circle</mat-icon> Nuevo Item
       </button>
@@ -127,7 +117,6 @@
         <mat-icon class="search-icon">search</mat-icon>
         <input type="text" class="search-input-lg" placeholder="Buscar item para agregar..."
           [(ngModel)]="busquedaProducto" (ngModelChange)="buscarProducto()">
-
         <ul class="search-results shadow-sm" *ngIf="productosFiltrados.length > 0">
           <li *ngFor="let p of productosFiltrados" (click)="agregarProducto(p)">
             <div class="result-name">{{p.nombre}}</div>
@@ -143,14 +132,11 @@
           <tr>
             <th class="ps-4">Descripción</th>
             <th width="80">Cant.</th>
-            
             <th width="130" title="Valor de Venta (Sin IGV)">Precio Compra<br><small>(Base)</small></th>
             <th width="130" title="Precio de Venta (Con IGV)">Costo Unit.<br><small>(Inc. IGV)</small></th>
-
             <th width="180" *ngIf="compra.tipoCompra === 'BIEN'">Almacén</th>
-
             <th width="120">Subtotal</th>
-            <th width="50" class="text-center"></th>
+            <th width="50"></th>
           </tr>
         </thead>
         <tbody>
@@ -159,50 +145,36 @@
               <div class="fw-bold text-main">{{item.nombre}}</div>
               <small class="text-sub">{{item.codigo}}</small>
             </td>
-
             <td>
-              <input type="number" class="form-control-smaf sm-input" [(ngModel)]="item.cantidad"
-                (change)="recalcularTotales()" min="1">
+              <input type="number" class="form-control-smaf sm-input" [(ngModel)]="item.cantidad" (change)="recalcularTotales()" min="1">
             </td>
-
             <td>
               <div class="input-group-sm">
                 <span class="currency-symbol">{{ getSimboloMoneda() }}</span>
                 <input type="number" class="form-control-smaf sm-input currency-input" 
-                       [(ngModel)]="item.precioUnitario"
-                       (ngModelChange)="actualizarPrecios(item, 'BASE')"
-                       placeholder="0.00">
+                       [(ngModel)]="item.precioUnitario" (ngModelChange)="actualizarPrecios(item, 'BASE')" placeholder="0.00">
               </div>
             </td>
-
             <td>
               <div class="input-group-sm">
                 <span class="currency-symbol">{{ getSimboloMoneda() }}</span>
                 <input type="number" class="form-control-smaf sm-input currency-input fw-bold" 
-                       [(ngModel)]="item.costoConIgv"
-                       (ngModelChange)="actualizarPrecios(item, 'TOTAL')"
-                       placeholder="0.00">
+                       [(ngModel)]="item.costoConIgv" (ngModelChange)="actualizarPrecios(item, 'TOTAL')" placeholder="0.00">
               </div>
             </td>
-
             <td *ngIf="compra.tipoCompra === 'BIEN'">
               <select class="form-control-smaf sm-input" [(ngModel)]="item.almacenId">
                 <option *ngFor="let a of almacenes" [value]="a.id">{{a.nombre}}</option>
               </select>
             </td>
-
             <td class="fw-bold text-main text-end pe-3">
               {{ (item.cantidad * item.precioUnitario) | number:'1.2-2' }}
             </td>
-
             <td class="text-center">
-              <button class="btn-icon btn-delete" (click)="eliminarItem(i)">
-                <mat-icon>delete</mat-icon>
-              </button>
+              <button class="btn-icon btn-delete" (click)="eliminarItem(i)"><mat-icon>delete</mat-icon></button>
             </td>
           </tr>
         </tbody>
-
         <tfoot *ngIf="itemsAgregados.length > 0">
           <tr>
             <td [attr.colspan]="compra.tipoCompra === 'BIEN' ? 5 : 4" class="text-end label-total">SUBTOTAL:</td>
@@ -214,28 +186,103 @@
             <td class="amount-sub">{{ compra.igv | number:'1.2-2' }}</td>
             <td></td>
           </tr>
-
           <tr *ngIf="(compra.percepcion || 0) > 0">
             <td [attr.colspan]="compra.tipoCompra === 'BIEN' ? 5 : 4" class="text-end label-total">PERCEPCIÓN:</td>
             <td class="amount-sub">{{ compra.percepcion | number:'1.2-2' }}</td>
             <td></td>
           </tr>
-
           <tr class="total-row-final">
             <td [attr.colspan]="compra.tipoCompra === 'BIEN' ? 5 : 4" class="text-end label-total-lg">TOTAL A PAGAR:</td>
-            <td class="amount-total-lg">{{ compra.total | number:'1.2-2' }}</td>
+            <td class="amount-total-lg">{{ getSimboloMoneda() }} {{ compra.total | number:'1.2-2' }}</td>
             <td></td>
           </tr>
         </tfoot>
       </table>
     </div>
-
-    <div class="form-actions mt-4">
-      <button class="btn-borrador" (click)="cancelar()">Cancelar</button>
-      <button class="btn-completar" (click)="guardarCompra()">
-        <mat-icon>save</mat-icon> Guardar Compra
-      </button>
-    </div>
-
   </div>
+
+  <div class="card mb-4" *ngIf="itemsAgregados.length > 0">
+    <h3><mat-icon style="vertical-align: middle; margin-right: 8px;">payments</mat-icon> Información de Pago</h3>
+    
+    <div class="payment-layout">
+      <div class="payment-selector">
+        <div class="pago-option" 
+             [class.selected]="tipoPago === eTipoPago.CONTADO" 
+             (click)="cambiarTipoPago(eTipoPago.CONTADO)">
+          <div class="radio-circle"></div>
+          <div>
+            <div class="opt-title">CONTADO</div>
+            <small>Pago total inmediato</small>
+          </div>
+        </div>
+        <div class="pago-option" 
+             [class.selected]="tipoPago === eTipoPago.CREDITO" 
+             (click)="cambiarTipoPago(eTipoPago.CREDITO)">
+          <div class="radio-circle"></div>
+          <div>
+            <div class="opt-title">CRÉDITO</div>
+            <small>Generar deuda pendiente</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="payment-details">
+        <div class="config-grid-rows">
+          <div class="config-row custom-grid-2">
+            
+            <div class="grid-input">
+              <label class="section-title">Método de Pago</label>
+              <select class="form-control-smaf full-width" [(ngModel)]="pagoActual.metodoPago">
+                <option *ngFor="let m of metodosPago" [value]="m.valor">{{ m.texto }}</option>
+              </select>
+            </div>
+
+            <div class="grid-input">
+              <label class="section-title">
+                {{ tipoPago === eTipoPago.CONTADO ? 'Monto Total' : 'Pago Inicial (Adelanto)' }}
+              </label>
+              <div class="input-group-sm">
+                <span class="currency-symbol">{{ getSimboloMoneda() }}</span>
+                <input type="number" class="form-control-smaf full-width currency-input fw-bold" 
+                       [(ngModel)]="pagoActual.monto" 
+                       [readonly]="tipoPago === eTipoPago.CONTADO">
+              </div>
+            </div>
+
+            <div class="grid-input" *ngIf="tipoPago === eTipoPago.CREDITO">
+              <label class="section-title text-danger">Saldo Pendiente</label>
+              <div class="saldo-display">
+                {{ getSimboloMoneda() }} {{ getSaldoPendiente() | number:'1.2-2' }}
+              </div>
+            </div>
+          </div>
+
+          <div class="config-row custom-grid-2" *ngIf="esPagoBancarizado()">
+            <div class="grid-input">
+              <label class="section-title">Cuenta Origen (Salida de Dinero)</label>
+              <select class="form-control-smaf full-width" [(ngModel)]="pagoActual.cuentaOrigenId">
+                <option [ngValue]="undefined">-- Seleccione Cuenta --</option>
+                <option *ngFor="let c of cuentasBancarias" [value]="c.id">
+                  {{c.banco}} - {{c.moneda}} - {{c.numero}} ({{c.nombre}})
+                </option>
+              </select>
+            </div>
+            <div class="grid-input">
+              <label class="section-title">Nro. Operación / Ref.</label>
+              <input type="text" class="form-control-smaf full-width" [(ngModel)]="pagoActual.referencia" placeholder="Ej. 123456">
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-actions mt-4">
+    <button class="btn-borrador" (click)="cancelar()">Cancelar</button>
+    <button class="btn-completar" (click)="guardarCompra()">
+      <mat-icon>save</mat-icon> Guardar Compra
+    </button>
+  </div>
+
 </div>

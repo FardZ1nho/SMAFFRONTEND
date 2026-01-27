@@ -1,0 +1,37 @@
+/* Contenedor del formulario */
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px; /* Espacio vertical entre filas */
+  padding-top: 8px;
+  min-width: 100%;
+}
+
+/* Campos que deben ocupar todo el ancho */
+.full-width {
+  width: 100%;
+}
+
+/* Fila para poner dos campos lado a lado (Prioridad y Fecha) */
+.two-col-row {
+  display: flex;
+  gap: 16px; /* Espacio entre los dos campos */
+  width: 100%;
+}
+
+/* Asegura que los campos dentro de la fila ocupen el 50% cada uno */
+.two-col-row mat-form-field {
+  flex: 1;
+}
+
+/* Hacer el área de descripción más alta */
+textarea {
+  min-height: 80px;
+  resize: vertical; /* Permite al usuario estirarlo si quiere */
+}
+
+/* Ajuste para el footer de botones */
+mat-dialog-actions {
+  padding-bottom: 0;
+  margin-bottom: 0;
+}

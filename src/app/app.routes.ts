@@ -86,6 +86,16 @@ export const routes: Routes = [
     component: VentasListaComponent,
     canActivate: [seguridadGuard]
   },
+
+  {
+    path: 'caja-chica',
+    loadComponent: () => import('./components/caja-chica/caja-chica').then(m => m.CajaChicaComponent),
+    canActivate: [seguridadGuard]
+  },
+
+  // ✅ MODIFICA LA SECCIÓN DE INVENTARIO ASÍ:
+  { path: 'inventario/productos', component: InventarioComponent },
+  { path: 'inventario/servicios', component: InventarioComponent },
   {
     path: 'clientes',
     loadComponent: () => import('./components/cliente/cliente').then(m => m.ClientesComponent),

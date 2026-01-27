@@ -1,0 +1,62 @@
+<div class="panel-container">
+  
+  <div class="panel-header">
+    <h3>Tareas {{ isAdmin ? '(Admin)' : '' }}</h3>
+    
+    <button *ngIf="isAdmin" mat-mini-fab color="primary" class="btn-add" (click)="abrirNuevaTarea()" title="Asignar Nueva Tarea">
+      <mat-icon>add</mat-icon>
+    </button>
+  </div>
+
+  <mat-tab-group animationDuration="0ms" class="custom-tabs">
+    
+    <mat-tab label="Pendientes">
+      <div class="task-list">
+        <div class="empty-state" *ngIf="tareasPendientes.length === 0 && !isLoading">
+          <mat-icon>task_alt</mat-icon>
+          <p>¡Todo al día! No hay tareas pendientes.</p>
+        </div>
+
+        <div class="task-card" *ngFor="let t of tareasPendientes">
+          <div class="task-row">
+            <mat-checkbox [checked]="false" (change)="toggleCompletar(t, $event.checked)" color="primary"></mat-checkbox>
+            
+            <div class="task-content">
+              <span class="task-title" [class.vencida]="t.vencida">{{ t.titulo }}</span>
+              <span class="task-desc" *ngIf="t.descripcion">{{ t.descripcion }}</span>
+              
+              <div class="task-meta">
+                <span class="badge-prio" [style.background-color]="getPrioridadColor(t.prioridad)">
+                  {{ t.prioridad }}
+                </span>
+                <span class="date" [class.text-danger]="t.vencida">
+                  <mat-icon class="tiny-icon">event</mat-icon> {{ t.fechaLimite | date:'dd/MM HH:mm' }}
+                </span>
+                <span class="assignee" *ngIf="isAdmin">
+                  <mat-icon class="tiny-icon">person</mat-icon> {{ t.usernameAsignado }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+
+    <mat-tab label="Historial">
+      <div class="task-list">
+        <div class="task-card completed" *ngFor="let t of tareasCompletadas">
+          <div class="task-row">
+            <mat-icon class="done-icon">check_circle</mat-icon>
+            <div class="task-content">
+              <span class="task-title line-through">{{ t.titulo }}</span>
+              <div class="task-meta">
+                <span class="date">Asignado a: {{ t.usernameAsignado }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+
+  </mat-tab-group>
+</div>

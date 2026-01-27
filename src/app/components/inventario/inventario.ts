@@ -1,6 +1,11 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, OnDestroy } from '@angular/core'; // ✅ Agregado OnDestroy
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router, NavigationEnd, Event } from '@angular/router'; // ✅ Importar NavigationEnd y Event
+import { filter } from 'rxjs/operators'; // ✅ Importar filter
+import { Subscription } from 'rxjs'; // ✅ Importar Subscription
+
+// ... (MANTÉN TUS IMPORTS DE MATERIAL Y MODELOS IGUAL QUE ANTES) ...
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -34,47 +39,84 @@ import { StockModalComponent } from './stock-modal/stock-modal';
   templateUrl: './inventario.html',
   styleUrl: './inventario.css'
 })
-export class InventarioComponent implements OnInit {
+export class InventarioComponent implements OnInit, OnDestroy {
+  
+  vistaActual: 'PRODUCTO' | 'SERVICIO' = 'PRODUCTO';
+  routerSubscription: Subscription | undefined; // ✅ Para evitar fugas de memoria
+
   productos: Producto[] = [];
   productosFiltrados = new MatTableDataSource<Producto>([]);
   terminoBusqueda: string = '';
   isLoading: boolean = false;
-  errorMessage: string = '';
   
-  // VARIABLES PARA FILTROS
+  // Filtros
   mostrarFiltros: boolean = false;
   categoriasDisponibles: string[] = [];
-  
-  // Estado de los filtros
   filtroCategoria: string = 'TODAS';
-  filtroTipo: string = 'TODOS';
   filtroEstadoStock: string = 'TODOS';
   filtroPrecioMin: number | null = null;
   filtroPrecioMax: number | null = null;
   
-  displayedColumns: string[] = ['codigo', 'nombre', 'categoria', 'stock', 'precio', 'acciones'];
+  displayedColumns: string[] = [];
 
   constructor(
     private productoService: ProductoService,
     private cdr: ChangeDetectorRef,
     private dialog: MatDialog,
-    private snackBar: MatSnackBar
-  ) { }
-
-  ngOnInit(): void {
-    this.cargarProductos();
+    private snackBar: MatSnackBar,
+    private router: Router
+  ) { 
+    // Configuración inicial
+    this.configurarVista();
   }
 
-  cargarProductos(): void {
+  ngOnInit(): void {
+    this.cargarDatos();
+
+    // ✅ DETECCIÓN DINÁMICA DE CAMBIO DE RUTA
+    // Esto hace que si pasas de "Productos" a "Servicios", la tabla se recargue
+    this.routerSubscription = this.router.events.pipe(
+      filter((event: Event): event is NavigationEnd => event instanceof NavigationEnd)
+    ).subscribe(() => {
+      this.configurarVista();
+      this.cargarDatos();
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.routerSubscription) {
+      this.routerSubscription.unsubscribe();
+    }
+  }
+
+  // ✅ LÓGICA EXTRAÍDA PARA REUTILIZARSE
+  configurarVista(): void {
+    if (this.router.url.includes('servicios')) {
+      this.vistaActual = 'SERVICIO';
+      this.displayedColumns = ['codigo', 'nombre', 'categoria', 'precio', 'acciones'];
+    } else {
+      this.vistaActual = 'PRODUCTO';
+      this.displayedColumns = ['codigo', 'nombre', 'categoria', 'stock', 'precio', 'acciones'];
+    }
+    // Reiniciar filtros al cambiar de vista para evitar confusiones
+    this.filtroCategoria = 'TODAS';
+    this.filtroEstadoStock = 'TODOS';
+    this.terminoBusqueda = '';
+  }
+
+  cargarDatos(): void {
     this.isLoading = true;
     this.productoService.listarProductosActivos().subscribe({
       next: (data) => {
-        this.productos = data;
+        // Filtrado estricto
+        this.productos = data.filter(p => {
+          const tipoItem = p.tipo || 'PRODUCTO';
+          return tipoItem === this.vistaActual;
+        });
         
-        // ✅ CORRECCIÓN 1: Filtrado estricto para categorías (evita error TS2322)
-        const categoriasUnicas = data
+        const categoriasUnicas = this.productos
             .map(p => p.nombreCategoria)
-            .filter((c): c is string => !!c); // "Type Guard" que elimina undefined
+            .filter((c): c is string => !!c);
             
         this.categoriasDisponibles = [...new Set(categoriasUnicas)];
         
@@ -89,10 +131,11 @@ export class InventarioComponent implements OnInit {
     });
   }
 
+  // ... (EL RESTO DE TUS MÉTODOS SIGUEN IGUAL: aplicarFiltros, abrirModal, etc.) ...
+  
   aplicarFiltros(): void {
     let resultado = this.productos;
 
-    // 1. Filtro de Texto
     if (this.terminoBusqueda.trim()) {
       const termino = this.terminoBusqueda.toLowerCase();
       resultado = resultado.filter(p => 
@@ -101,23 +144,14 @@ export class InventarioComponent implements OnInit {
       );
     }
 
-    // 2. Filtro por Categoría
     if (this.filtroCategoria !== 'TODAS') {
       resultado = resultado.filter(p => p.nombreCategoria === this.filtroCategoria);
     }
 
-    // 3. Filtro por Tipo
-    if (this.filtroTipo !== 'TODOS') {
-      resultado = resultado.filter(p => (p.tipo || 'PRODUCTO') === this.filtroTipo);
-    }
-
-    // 4. Filtro por Estado de Stock
-    if (this.filtroEstadoStock !== 'TODOS') {
+    if (this.vistaActual === 'PRODUCTO' && this.filtroEstadoStock !== 'TODOS') {
       resultado = resultado.filter(p => {
-        if (p.tipo === 'SERVICIO') return false; 
-        
-        const stock = p.stockActual || 0; // Protección contra undefined
-        const min = p.stockMinimo || 0;   // Protección contra undefined
+        const stock = p.stockActual || 0;
+        const min = p.stockMinimo || 0;
         
         switch (this.filtroEstadoStock) {
           case 'AGOTADO': return stock <= 0;
@@ -129,8 +163,6 @@ export class InventarioComponent implements OnInit {
       });
     }
 
-    // 5. Filtro por Precio
-    // ✅ CORRECCIÓN 2: Protección con (p.precioVenta || 0) para evitar error TS18048
     if (this.filtroPrecioMin !== null) {
       resultado = resultado.filter(p => (p.precioVenta || 0) >= (this.filtroPrecioMin as number));
     }
@@ -141,9 +173,7 @@ export class InventarioComponent implements OnInit {
     this.productosFiltrados.data = resultado;
   }
 
-  toggleFiltros(): void {
-    this.mostrarFiltros = !this.mostrarFiltros;
-  }
+  toggleFiltros(): void { this.mostrarFiltros = !this.mostrarFiltros; }
 
   limpiarBusqueda(): void {
     this.terminoBusqueda = '';
@@ -152,7 +182,6 @@ export class InventarioComponent implements OnInit {
 
   resetearFiltros(): void {
     this.filtroCategoria = 'TODAS';
-    this.filtroTipo = 'TODOS';
     this.filtroEstadoStock = 'TODOS';
     this.filtroPrecioMin = null;
     this.filtroPrecioMax = null;
@@ -160,27 +189,27 @@ export class InventarioComponent implements OnInit {
     this.aplicarFiltros();
   }
 
-  abrirModalNuevoProducto(): void {
+  abrirModalNuevo(): void {
     const dialogRef = this.dialog.open(ProductoModalComponent, {
       width: '1000px', maxWidth: '95vw', disableClose: false, panelClass: 'producto-modal',
-      data: { modo: 'crear' }
+      data: { modo: 'crear', tipoFijo: this.vistaActual } 
     });
-    dialogRef.afterClosed().subscribe(result => { if (result) this.cargarProductos(); });
+    dialogRef.afterClosed().subscribe(result => { if (result) this.cargarDatos(); });
   }
 
   abrirModalStock(producto: Producto): void {
     const dialogRef = this.dialog.open(StockModalComponent, {
       width: '450px', disableClose: false, data: { producto: producto }
     });
-    dialogRef.afterClosed().subscribe(result => { if (result) this.cargarProductos(); });
+    dialogRef.afterClosed().subscribe(result => { if (result) this.cargarDatos(); });
   }
 
   editarProducto(producto: Producto): void {
     const dialogRef = this.dialog.open(ProductoModalComponent, {
       width: '1000px', maxWidth: '95vw', disableClose: false, panelClass: 'producto-modal',
-      data: { producto: producto, modo: 'editar' }
+      data: { producto: producto, modo: 'editar', tipoFijo: this.vistaActual }
     });
-    dialogRef.afterClosed().subscribe(result => { if (result) this.cargarProductos(); });
+    dialogRef.afterClosed().subscribe(result => { if (result) this.cargarDatos(); });
   }
 
   verDetalle(producto: Producto): void {
@@ -188,7 +217,7 @@ export class InventarioComponent implements OnInit {
       width: '1400px', maxWidth: '98vw', height: '85vh', panelClass: 'detalle-modal-panel',
       data: { productoId: producto.id }
     });
-    dialogRef.afterClosed().subscribe(result => { if (result) this.cargarProductos(); });
+    dialogRef.afterClosed().subscribe(result => { if (result) this.cargarDatos(); });
   }
 
   eliminarProducto(producto: Producto): void {
@@ -202,18 +231,16 @@ export class InventarioComponent implements OnInit {
   private ejecutarEliminacion(producto: Producto): void {
     this.productoService.eliminarProducto(producto.id).subscribe({
       next: () => {
-        this.mostrarMensaje('✅ Eliminado', 'success');
-        this.productos = this.productos.filter(p => p.id !== producto.id);
-        this.aplicarFiltros(); 
+        this.mostrarMensaje('✅ Eliminado correctamente', 'success');
+        this.cargarDatos();
       },
-      error: () => this.mostrarMensaje('❌ Error', 'error')
+      error: () => this.mostrarMensaje('❌ Error al eliminar', 'error')
     });
   }
 
   getStockClass(producto: Producto): string {
     const stock = producto.stockActual || 0;
     const min = producto.stockMinimo || 0;
-
     if (stock <= 0) return 'stock-agotado';
     if (stock < min) return 'stock-bajo';
     if (stock < min * 2) return 'stock-normal';
@@ -224,5 +251,5 @@ export class InventarioComponent implements OnInit {
     this.snackBar.open(mensaje, 'Cerrar', { duration: 3000, panelClass: tipo === 'success' ? 'snackbar-success' : 'snackbar-error', horizontalPosition: 'right', verticalPosition: 'top' });
   }
   
-  exportarDatos(): void { console.log('Exportar datos'); }
+  exportarDatos(): void { console.log(`Exportando ${this.vistaActual}...`); }
 }

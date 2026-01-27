@@ -42,11 +42,9 @@
 .btn-delete { background: #fee2e2 !important; color: #dc2626 !important; border-radius: 8px !important; }
 .close-btn { color: #94a3b8; position: absolute; top: 24px; right: 24px; }
 
-/* Refresh Button */
 .btn-refresh { color: #64748b; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
 .btn-refresh:hover { background: #f1f5f9; color: #3b82f6; }
 
-/* Animación Rotación */
 .spin { animation: rotation 1s infinite linear; }
 .spin-icon { animation: rotation 1s infinite linear; font-size: 16px; width: 16px; height: 16px; margin-right: 8px; vertical-align: middle; }
 
@@ -103,11 +101,17 @@
 
 /* KPIs */
 .kpi-row { display: flex; justify-content: space-between; text-align: center; margin-bottom: 20px; }
-.kpi-item { flex: 1; }
+.kpi-item { flex: 1; display: flex; flex-direction: column; align-items: center; } /* ✅ CENTRADO */
+
 .kpi-label { font-size: 11px; font-weight: 700; color: #64748b; display: block; margin-bottom: 4px; }
 .kpi-value { font-size: 28px; font-weight: 800; display: block; line-height: 1; }
+
 .kpi-value.primary { color: #3b82f6; }
 .kpi-value.secondary { color: #64748b; }
+/* ✅ COLORES TRÁNSITO */
+.transit-active { color: #3b82f6; }
+.transit-empty { color: #cbd5e1; }
+
 .kpi-unit { font-size: 11px; color: #94a3b8; }
 .kpi-divider { width: 1px; background: #e2e8f0; margin: 0 16px; }
 
@@ -128,7 +132,6 @@
 .big-row { font-size: 16px; margin-top: 4px; }
 .badge-margen { background: #dcfce7; color: #166534; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 700; }
 
-/* Empty States */
 .empty-tab, .empty-state-small { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #94a3b8; padding: 40px; text-align: center; }
 .empty-tab mat-icon { font-size: 48px; width: 48px; height: 48px; margin-bottom: 16px; opacity: 0.5; }
 

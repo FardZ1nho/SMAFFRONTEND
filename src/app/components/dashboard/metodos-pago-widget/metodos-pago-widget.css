@@ -1,0 +1,176 @@
+/* =========================================
+   1. CONTENEDOR PRINCIPAL (SOFT CARD)
+   ========================================= */
+:host {
+  display: block;
+  height: 100%;
+}
+
+.soft-card {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 24px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  
+  /* Sombra difusa y elegante (Neumorfismo sutil) */
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(241, 245, 249, 1);
+  overflow: hidden; /* ✅ CRÍTICO: Evita que el gráfico rompa el borde */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.soft-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+}
+
+/* =========================================
+   2. HEADER & FILTRO
+   ========================================= */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-shrink: 0; /* Evita que el header se aplaste */
+}
+
+.card-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1e293b;
+  letter-spacing: -0.3px;
+}
+
+/* Botón de Filtro (Estilo Pastilla) */
+.filter-btn {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  background-color: #f8fafc;
+  border-radius: 20px !important;
+  padding: 0 12px !important;
+  height: 28px !important;
+  line-height: 28px !important;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+}
+
+.filter-btn:hover {
+  background-color: #f1f5f9;
+  color: #334155;
+  border-color: #e2e8f0;
+}
+
+.filter-btn mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  margin-left: 4px;
+  vertical-align: text-bottom;
+  opacity: 0.7;
+}
+
+/* =========================================
+   3. CUERPO (LAYOUT VERTICAL)
+   ========================================= */
+.card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column; /* ✅ IMPORTANTE: Apila verticalmente */
+  min-height: 0; /* Permite el scroll interno */
+  position: relative;
+}
+
+.content-wrapper {
+  display: flex;
+  flex-direction: column; /* ✅ Elementos uno debajo del otro */
+  align-items: center;
+  gap: 16px;
+  height: 100%;
+}
+
+/* =========================================
+   4. GRÁFICO (DONUT)
+   ========================================= */
+.chart-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 220px; /* Altura reservada fija */
+  margin-top: -10px;
+}
+
+/* =========================================
+   5. LISTA DE DETALLES
+   ========================================= */
+.list-container {
+  width: 100%;
+  flex: 1; /* Toma el espacio restante */
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto; /* Scroll si hay muchos items */
+  padding-right: 4px;
+}
+
+/* Scrollbar Minimalista */
+.list-container::-webkit-scrollbar { width: 4px; }
+.list-container::-webkit-scrollbar-track { background: transparent; }
+.list-container::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+.list-container::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+
+/* Item */
+.list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background-color: #f8fafc; /* Fondo suave para separar */
+  border: 1px solid transparent;
+  transition: background-color 0.2s ease;
+}
+
+.list-item:hover {
+  border-color: #e2e8f0;
+  background-color: #f1f5f9;
+}
+
+.item-left { display: flex; align-items: center; gap: 10px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+.item-info { display: flex; flex-direction: column; }
+.method-name { font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 2px; }
+.tx-count { font-size: 11px; color: #94a3b8; font-weight: 500; }
+
+.item-right { text-align: right; }
+.amount { display: block; font-size: 13px; font-weight: 700; color: #1e293b; }
+.percentage { display: inline-block; font-size: 10px; font-weight: 600; color: #64748b; background-color: #f1f5f9; padding: 2px 6px; border-radius: 6px; margin-top: 3px; }
+
+/* =========================================
+   6. ESTADOS
+   ========================================= */
+.loading-state, .empty-state {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.9);
+  z-index: 10;
+  border-radius: 20px;
+}
+
+.spinner {
+  width: 30px; height: 30px;
+  border: 3px solid #f1f5f9; border-top: 3px solid #6366f1;
+  border-radius: 50%; animation: spin 0.8s linear infinite;
+}
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }

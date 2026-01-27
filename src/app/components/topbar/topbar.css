@@ -125,6 +125,59 @@
   letter-spacing: 0.5px;
 }
 
+.actions-section {
+  display: flex;
+  align-items: center;
+  gap: 16px; /* Espacio entre campana y usuario */
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #64748b;
+  padding: 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.icon-btn:hover {
+  background-color: #f1f5f9;
+  color: #2563eb;
+}
+
+.divider {
+  width: 1px;
+  height: 24px;
+  background-color: #e2e8f0;
+}
+/* src/styles.css */
+
+.notification-toast {
+  background-color: #1e293b !important; /* Fondo oscuro */
+  color: white !important;
+  border-radius: 8px !important;
+  font-family: 'Inter', sans-serif !important;
+}
+
+.notification-toast .mat-mdc-simple-snack-bar {
+  font-weight: 500;
+}
+
+.notification-toast .mat-mdc-snack-bar-action {
+  color: #60a5fa !important; /* Color del botón "Ver" */
+}
+/* IMPORTANTE: Estilo global para el menú de tareas (ancho fijo) */
+::ng-deep .task-menu-panel {
+  max-width: none !important; /* Quitar límite por defecto */
+  padding: 0 !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .user-label {

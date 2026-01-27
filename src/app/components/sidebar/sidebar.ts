@@ -11,16 +11,14 @@ import { RouterModule } from '@angular/router';
 })
 export class SidebarComponent implements OnInit {
   
-  // Recibimos el estado actual del padre
   @Input() isCollapsed = false;
-  
-  // Enviamos al padre la orden de cerrar la sidebar (para móvil)
   @Output() closeSidebar = new EventEmitter<void>();
-
-  // ✅ NUEVO: Enviamos al padre la orden de alternar (toggle) colapsado/expandido
   @Output() toggleCollapse = new EventEmitter<void>();
   
   logoPath = 'assets/logo-smaf.png';
+
+  // ✅ NUEVO: Variable para controlar el submenú de inventario
+  isInventarioOpen = false;
 
   constructor() { }
 
@@ -32,8 +30,19 @@ export class SidebarComponent implements OnInit {
     }
   }
 
-  // ✅ NUEVO: Función que se llama al dar clic en el botón de abajo
   toggleSidebarState(): void {
     this.toggleCollapse.emit();
+  }
+
+  // ✅ NUEVO: Lógica para abrir/cerrar inventario
+  toggleInventario(): void {
+    if (this.isCollapsed) {
+      // Si la barra está colapsada, la expandimos primero para ver el menú
+      this.toggleCollapse.emit();
+      this.isInventarioOpen = true;
+    } else {
+      // Si ya está expandida, solo alternamos el menú
+      this.isInventarioOpen = !this.isInventarioOpen;
+    }
   }
 }

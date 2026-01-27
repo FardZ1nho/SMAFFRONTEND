@@ -15,59 +15,82 @@
     <button (click)="cargarMetricas()" class="btn-retry">Reintentar</button>
   </div>
 
-  <div *ngIf="!cargando && !error" class="metricas-grid">
-    <div *ngFor="let metrica of metricasCards" class="metrica-card">
-      <div class="icono-container" [style.background-color]="metrica.colorFondo">
-        <span class="icono" [style.color]="metrica.colorIcono">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" *ngIf="metrica.titulo.toLowerCase().includes('venta') || metrica.titulo.toLowerCase().includes('ingreso')"></path>
-            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" *ngIf="metrica.titulo.toLowerCase().includes('cliente')"></path>
-            <circle cx="8.5" cy="7" r="4" *ngIf="metrica.titulo.toLowerCase().includes('cliente')"></circle>
-            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" *ngIf="!metrica.titulo.toLowerCase().includes('venta') && !metrica.titulo.toLowerCase().includes('cliente')"></polyline>
-          </svg>
+  <div *ngIf="!cargando && !error">
+    
+    <div class="metricas-grid">
+      <div *ngFor="let metrica of metricasCards" class="metrica-card">
+        <div class="icono-container" [style.background-color]="metrica.colorFondo">
+          <span class="icono" [style.color]="metrica.colorIcono">
+             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+               <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" *ngIf="metrica.titulo.toLowerCase().includes('venta')"></path>
+               <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" *ngIf="metrica.titulo.toLowerCase().includes('cliente')"></path>
+               <circle cx="8.5" cy="7" r="4" *ngIf="metrica.titulo.toLowerCase().includes('cliente')"></circle>
+               <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" *ngIf="metrica.titulo.toLowerCase().includes('stock')"></path>
+               <polyline points="3.27 6.96 12 12.01 20.73 6.96" *ngIf="metrica.titulo.toLowerCase().includes('stock')"></polyline>
+               <line x1="12" y1="22.08" x2="12" y2="12" *ngIf="metrica.titulo.toLowerCase().includes('stock')"></line>
+             </svg>
+          </span>
+        </div>
+
+        <div class="badge-porcentaje" [ngClass]="obtenerClasePorcentaje(metrica.porcentaje)">
+          <span class="icono-flecha">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"
+                 [style.transform]="metrica.porcentaje < 0 ? 'rotate(180deg)' : 'rotate(0deg)'">
+              <polyline points="18 15 12 9 6 15"></polyline>
+            </svg>
+          </span>
+          <span>{{ formatearPorcentaje(metrica.porcentaje) }}</span>
+        </div>
+
+        <div class="valor-container">
+          <h2 class="valor">{{ metrica.valor }}</h2>
+          <p class="titulo">{{ metrica.titulo }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="metricas" class="info-adicional">
+      <div class="info-card">
+        <span class="info-label">Productos con stock bajo:</span>
+        <span class="info-valor" [class.alerta]="(metricas?.productosStockBajo || 0) > 0">
+          {{ metricas?.productosStockBajo }}
         </span>
       </div>
-      <div class="badge-porcentaje" [ngClass]="obtenerClasePorcentaje(metrica.porcentaje)">
-        <span class="icono-flecha">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"
-               [style.transform]="metrica.porcentaje < 0 ? 'rotate(180deg)' : 'rotate(0deg)'">
-            <polyline points="18 15 12 9 6 15"></polyline>
-          </svg>
+      <div class="info-card">
+        <span class="info-label">Valor total inventario:</span>
+        <span class="info-valor">
+          {{ metricas?.valorInventario !== undefined ? formatearMoneda(metricas!.valorInventario) : 'S/ 0.00' }}
         </span>
-        <span>{{ formatearPorcentaje(metrica.porcentaje) }}</span>
       </div>
-      <div class="valor-container">
-        <h2 class="valor">{{ metrica.valor }}</h2>
-        <p class="titulo">{{ metrica.titulo }}</p>
+      <div class="info-card">
+        <span class="info-label">Total ventas mes:</span>
+        <span class="info-valor">{{ metricas?.cantidadVentasMes }} transacciones</span>
       </div>
     </div>
-  </div>
 
-  <div *ngIf="metricas && !cargando" class="info-adicional">
-    <div class="info-card">
-      <span class="info-label">Productos con stock bajo:</span>
-      <span class="info-valor" [class.alerta]="(metricas?.productosStockBajo || 0) > 0">
-        {{ metricas?.productosStockBajo }}
-      </span>
-    </div>
-    <div class="info-card">
-      <span class="info-label">Valor total inventario:</span>
-      <span class="info-valor">
-        {{ metricas?.valorInventario !== undefined ? formatearMoneda(metricas!.valorInventario) : 'S/ 0.00' }}
-      </span>
-    </div>
-    <div class="info-card">
-      <span class="info-label">Total ventas mes:</span>
-      <span class="info-valor">{{ metricas?.cantidadVentasMes }} transacciones</span>
-    </div>
-  </div>
+    <div class="dashboard-grid">
+      
+      <div class="grafico-section">
+        <app-grafico-ventas-semana></app-grafico-ventas-semana>
+      </div>
+      
+      <div class="side-section">
+        
+        <div class="widget-wrapper">
+          <app-metodos-pago-widget></app-metodos-pago-widget>
+        </div>
 
-  <div *ngIf="!cargando && !error" class="dashboard-grid">
-    <div class="grafico-section">
-      <app-grafico-ventas-semana></app-grafico-ventas-semana>
+        <div class="widget-wrapper">
+          <app-llegadas-widget></app-llegadas-widget>
+        </div>
+
+        <div class="widget-wrapper">
+          <app-productos-mas-vendidos></app-productos-mas-vendidos>
+        </div>
+
+      </div>
+
     </div>
-    <div class="productos-section">
-      <app-productos-mas-vendidos></app-productos-mas-vendidos>
-    </div>
-  </div>
+
+  </div> 
 </div>

@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 
-// Material Modules
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -18,6 +17,18 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { ImportacionEditarModalComponent } from '../importacion-editar-modal/importacion-editar-modal'; 
 import { ImportacionService } from '../../../services/importacion-service'; 
 import { ImportacionResponse, EstadoImportacion, TipoTransporte } from '../../../models/importacion';
+
+export interface ImportacionGroup {
+  id: string;
+  items: ImportacionResponse[];
+  totalFob: number;
+  totalCosto: number;
+  moneda: string; 
+  estadoGeneral: string; 
+  proveedores: string; 
+  fechaEta: Date | null;
+  expanded: boolean;
+}
 
 @Component({
   selector: 'app-importaciones-list',
@@ -34,21 +45,16 @@ import { ImportacionResponse, EstadoImportacion, TipoTransporte } from '../../..
 export class ImportacionesListComponent implements OnInit {
 
   importaciones: ImportacionResponse[] = [];
-  importacionesFiltradas: ImportacionResponse[] = [];
+  gruposFiltrados: ImportacionGroup[] = [];
   loading: boolean = true;
 
-  // --- CONTROL DE UI ---
   mostrarFiltros: boolean = false;
-
-  // --- VARIABLES DE FILTROS ---
   filtroTexto: string = '';
   filtroEstado: string = 'TODOS';
   filtroTransporte: string = 'TODOS';
-  
   filtroFechaInicio: Date | null = null;
   filtroFechaFin: Date | null = null;
 
-  // Enums para los selectores
   estados = Object.values(EstadoImportacion);
   transportes = Object.values(TipoTransporte);
 
@@ -79,82 +85,111 @@ export class ImportacionesListComponent implements OnInit {
     });
   }
 
-  // ✅ LÓGICA DE FILTRADO MAESTRA
   filtrar(): void {
     let lista = this.importaciones;
 
-    // 1. Búsqueda por Texto (Proveedor, Factura, Tracking, DUA)
     if (this.filtroTexto.trim()) {
       const texto = this.filtroTexto.toLowerCase();
       lista = lista.filter(imp => 
+        ((imp.compra as any).codImportacion && (imp.compra as any).codImportacion.toLowerCase().includes(texto)) ||
         (imp.compra.nombreProveedor && imp.compra.nombreProveedor.toLowerCase().includes(texto)) ||
         (imp.compra.numero && imp.compra.numero.toLowerCase().includes(texto)) ||
         (imp.trackingNumber && imp.trackingNumber.toLowerCase().includes(texto)) ||
-        (imp.numeroDua && imp.numeroDua.toLowerCase().includes(texto)) // 👈 Búsqueda por DUA agregada
+        (imp.numeroDua && imp.numeroDua.toLowerCase().includes(texto))
       );
     }
 
-    // 2. Filtro por Estado
     if (this.filtroEstado !== 'TODOS') {
       lista = lista.filter(imp => imp.estado === this.filtroEstado);
     }
 
-    // 3. Filtro por Tipo de Transporte
     if (this.filtroTransporte !== 'TODOS') {
       lista = lista.filter(imp => imp.tipoTransporte === this.filtroTransporte);
     }
 
-    // 4. Filtro por Fechas (Usamos Fecha Estimada de Llegada como referencia principal)
     if (this.filtroFechaInicio) {
-      lista = lista.filter(imp => imp.fechaEstimadaLlegada && new Date(imp.fechaEstimadaLlegada) >= this.filtroFechaInicio!);
+      lista = lista.filter(imp => {
+        if (!imp.fechaEstimadaLlegada) return false;
+        const fecha = new Date(imp.fechaEstimadaLlegada);
+        return fecha >= this.filtroFechaInicio!;
+      });
     }
     if (this.filtroFechaFin) {
       const finDia = new Date(this.filtroFechaFin);
       finDia.setHours(23, 59, 59);
-      lista = lista.filter(imp => imp.fechaEstimadaLlegada && new Date(imp.fechaEstimadaLlegada) <= finDia);
+      lista = lista.filter(imp => {
+        if (!imp.fechaEstimadaLlegada) return false;
+        const fecha = new Date(imp.fechaEstimadaLlegada);
+        return fecha <= finDia;
+      });
     }
 
-    this.importacionesFiltradas = lista;
+    this.gruposFiltrados = this.agruparImportaciones(lista);
   }
 
-  // --- CONTROLADORES UI ---
-  toggleFiltros(): void {
-    this.mostrarFiltros = !this.mostrarFiltros;
+  agruparImportaciones(lista: ImportacionResponse[]): ImportacionGroup[] {
+    const gruposMap = new Map<string, ImportacionGroup>();
+
+    lista.forEach(item => {
+      let codigo = (item.compra as any).codImportacion;
+      const key = (codigo && codigo.trim() !== '') ? codigo : 'SIN_AGRUPAR';
+
+      if (!gruposMap.has(key)) {
+        gruposMap.set(key, {
+          id: key,
+          items: [],
+          totalFob: 0,
+          totalCosto: 0,
+          moneda: item.compra.moneda,
+          estadoGeneral: item.estado,
+          proveedores: '',
+          fechaEta: item.fechaEstimadaLlegada ? new Date(item.fechaEstimadaLlegada) : null,
+          expanded: false
+        });
+      }
+
+      const grupo = gruposMap.get(key)!;
+      grupo.items.push(item);
+
+      grupo.totalFob += item.compra.total;
+      grupo.totalCosto += (item.compra.total + this.calcularCostosExtra(item));
+      
+      if (item.fechaEstimadaLlegada) {
+        const itemDate = new Date(item.fechaEstimadaLlegada);
+        if (!grupo.fechaEta || itemDate < grupo.fechaEta) {
+          grupo.fechaEta = itemDate;
+        }
+      }
+    });
+
+    return Array.from(gruposMap.values()).map(grupo => {
+      const uniqueProveedores = [...new Set(grupo.items.map(i => i.compra.nombreProveedor))];
+      grupo.proveedores = uniqueProveedores.join(', ');
+      return grupo;
+    });
   }
 
-  limpiarBusqueda(): void {
-    this.filtroTexto = '';
-    this.filtrar();
+  toggleFiltros(): void { this.mostrarFiltros = !this.mostrarFiltros; }
+  limpiarBusqueda(): void { this.filtroTexto = ''; this.filtrar(); }
+  limpiarFiltros(): void { 
+    this.filtroEstado = 'TODOS'; 
+    this.filtroTransporte = 'TODOS'; 
+    this.filtroFechaInicio = null; 
+    this.filtroFechaFin = null; 
+    this.filtroTexto = ''; 
+    this.filtrar(); 
   }
-
-  limpiarFiltros(): void {
-    this.filtroEstado = 'TODOS';
-    this.filtroTransporte = 'TODOS';
-    this.filtroFechaInicio = null;
-    this.filtroFechaFin = null;
-    this.filtroTexto = '';
-    this.filtrar();
-  }
+  toggleGroup(group: ImportacionGroup): void { group.expanded = !group.expanded; }
 
   editarImportacion(id: number): void {
     const importacion = this.importaciones.find(i => i.id === id);
     if (!importacion) return;
-
+    
     const dialogRef = this.dialog.open(ImportacionEditarModalComponent, {
-      width: '1200px',
-      maxWidth: '95vw',
-      data: importacion,
-      disableClose: true
+      width: '1200px', maxWidth: '95vw', data: importacion, disableClose: true
     });
-
-    dialogRef.afterClosed().subscribe(result => {
-      if (result === true) {
-        this.cargarDatos(); 
-      }
-    });
+    dialogRef.afterClosed().subscribe(result => { if (result === true) this.cargarDatos(); });
   }
-
-  // --- HELPERS VISUALES ---
 
   getClassEstado(estado: string): string {
     switch (estado) {
@@ -168,9 +203,7 @@ export class ImportacionesListComponent implements OnInit {
     }
   }
 
-  getLabelEstado(estado: string): string {
-    return estado.replace(/_/g, ' ');
-  }
+  getLabelEstado(estado: string): string { return estado ? estado.replace(/_/g, ' ') : 'ND'; }
 
   getIconoTransporte(tipo?: string): string {
     if (tipo === 'MARITIMO') return 'directions_boat';
@@ -183,7 +216,7 @@ export class ImportacionesListComponent implements OnInit {
     return (imp.costoFlete || 0) + 
            (imp.costoSeguro || 0) + 
            (imp.impuestosAduanas || 0) + 
-           (imp.gastosOperativos || 0) +
+           (imp.gastosOperativos || 0) + 
            (imp.costoTransporteLocal || 0);
   }
 }

@@ -1,0 +1,65 @@
+<div class="soft-card">
+  
+  <div class="card-header">
+    <div class="header-left">
+      <h3>Métodos de Pago</h3>
+    </div>
+
+    <button mat-button [matMenuTriggerFor]="menuFiltro" class="filter-btn">
+      {{ filtroActual }}
+      <mat-icon>expand_more</mat-icon>
+    </button>
+    
+    <mat-menu #menuFiltro="matMenu">
+      <button mat-menu-item (click)="cambiarFiltro('HOY')">Hoy</button>
+      <button mat-menu-item (click)="cambiarFiltro('SEMANA')">Esta Semana</button>
+      <button mat-menu-item (click)="cambiarFiltro('MES')">Este Mes</button>
+      <button mat-menu-item (click)="cambiarFiltro('ANIO')">Este Año</button>
+    </mat-menu>
+  </div>
+
+  <div class="card-body">
+    <div *ngIf="isLoading" class="loading-state">
+      <div class="spinner"></div>
+    </div>
+
+    <div *ngIf="!isLoading && reporteData.length > 0" class="content-wrapper">
+      
+      <div class="chart-container">
+        <apx-chart
+          [series]="chartOptions.series!"
+          [chart]="chartOptions.chart!"
+          [labels]="chartOptions.labels!"
+          [colors]="chartOptions.colors!"
+          [plotOptions]="chartOptions.plotOptions!"
+          [legend]="chartOptions.legend!"
+          [dataLabels]="chartOptions.dataLabels!"
+          [responsive]="chartOptions.responsive!"
+        ></apx-chart>
+      </div>
+
+      <div class="list-container">
+        <div class="list-item" *ngFor="let item of reporteData; let i = index">
+          <div class="item-left">
+            <span class="dot" [style.background-color]="getColor(i)"></span>
+            <div class="item-info">
+              <span class="method-name">{{ formatearNombre(item.metodo) }}</span>
+              <span class="tx-count">{{ item.cantidad }} ops</span>
+            </div>
+          </div>
+          <div class="item-right">
+            <span class="amount">S/ {{ item.total | number:'1.2-2' }}</span>
+            <span class="percentage">
+              {{ (item.total / totalVentasPeriodo) | percent:'1.0-0' }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div *ngIf="!isLoading && reporteData.length === 0" class="empty-state">
+      <p>No hay movimientos en este periodo.</p>
+    </div>
+  </div>
+</div>

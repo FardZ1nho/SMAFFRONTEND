@@ -1,0 +1,129 @@
+<div class="caja-container">
+  
+  <div class="page-header">
+    <div class="header-content">
+      <div class="icon-box">
+        <mat-icon>savings</mat-icon>
+      </div>
+      <div>
+        <h1>Caja Chica</h1>
+        <p class="subtitle">Movimientos y flujo de efectivo diario</p>
+      </div>
+    </div>
+    
+    <div class="date-filter">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="dense-datepicker">
+        <mat-label>Filtrar por día</mat-label>
+        <input matInput [matDatepicker]="picker" [(ngModel)]="filtroFecha" (dateChange)="aplicarFiltroFecha()" readonly>
+        <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+        <mat-datepicker #picker></mat-datepicker>
+      </mat-form-field>
+      
+      <button mat-icon-button *ngIf="filtroFecha" (click)="limpiarFiltro()" matTooltip="Ver todo el historial">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    
+    <div class="stat-card ingresos">
+      <div class="stat-icon">
+        <mat-icon>arrow_downward</mat-icon>
+      </div>
+      <div class="stat-data">
+        <span class="label">Ingresos Efectivo</span>
+        <span class="value">S/ {{ totalIngresosEfectivo | number:'1.2-2' }}</span>
+      </div>
+    </div>
+
+    <div class="stat-card egresos">
+      <div class="stat-icon">
+        <mat-icon>arrow_upward</mat-icon>
+      </div>
+      <div class="stat-data">
+        <span class="label">Salidas / Compras</span>
+        <span class="value">S/ {{ totalEgresosEfectivo | number:'1.2-2' }}</span>
+      </div>
+    </div>
+
+    <div class="stat-card saldo" [class.negativo]="saldoEnCaja < 0">
+      <div class="stat-icon">
+        <mat-icon>account_balance_wallet</mat-icon>
+      </div>
+      <div class="stat-data">
+        <span class="label">Saldo en Caja</span>
+        <span class="value">S/ {{ saldoEnCaja | number:'1.2-2' }}</span>
+        <span class="sub-label" *ngIf="saldoEnCaja >= 0">Disponible</span>
+        <span class="sub-label danger" *ngIf="saldoEnCaja < 0">Déficit</span>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="table-card">
+    
+    <div *ngIf="cargando" class="loading-state">
+      <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+      <p>Calculando flujo de caja...</p>
+    </div>
+
+    <div class="table-responsive" *ngIf="!cargando">
+      <table mat-table [dataSource]="dataSource">
+
+        <ng-container matColumnDef="fecha">
+          <th mat-header-cell *matHeaderCellDef> FECHA Y HORA </th>
+          <td mat-cell *matCellDef="let row">
+            <span class="date-text">{{ row.fecha | date:'dd/MM/yyyy HH:mm' }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="tipo">
+          <th mat-header-cell *matHeaderCellDef> TIPO </th>
+          <td mat-cell *matCellDef="let row">
+            <span class="type-badge" [class.ingreso]="row.tipo === 'INGRESO'" [class.egreso]="row.tipo === 'EGRESO'">
+              {{ row.tipo }}
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="descripcion">
+          <th mat-header-cell *matHeaderCellDef> CONCEPTO </th>
+          <td mat-cell *matCellDef="let row">
+            <div class="desc-cell">
+              <span class="main-desc">{{ row.descripcion }}</span>
+              <span class="sub-desc">Doc: {{ row.referencia }}</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="entidad">
+          <th mat-header-cell *matHeaderCellDef> RESPONSABLE / TERCERO </th>
+          <td mat-cell *matCellDef="let row">
+            <div class="entity-cell">
+              <mat-icon style="font-size: 16px; width: 16px; height: 16px; color: #94a3b8;">person</mat-icon>
+              {{ row.entidad }}
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="monto">
+          <th mat-header-cell *matHeaderCellDef class="text-right"> MONTO </th>
+          <td mat-cell *matCellDef="let row" class="text-right">
+            <span class="amount-text" [class.positive]="row.tipo === 'INGRESO'" [class.negative]="row.tipo === 'EGRESO'">
+              {{ row.tipo === 'INGRESO' ? '+' : '-' }} S/ {{ row.monto | number:'1.2-2' }}
+            </span>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="hover-row"></tr>
+      </table>
+
+      <div *ngIf="dataSource.data.length === 0 && !cargando" class="empty-state">
+        <mat-icon>inbox</mat-icon>
+        <p>No se encontraron movimientos en efectivo para este periodo.</p>
+      </div>
+    </div>
+  </div>
+</div>

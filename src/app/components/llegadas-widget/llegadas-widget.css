@@ -1,0 +1,99 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+.card-widget {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  padding: 24px;
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  min-height: 320px; /* Altura mínima para que se vea bien */
+}
+
+/* HEADER */
+.widget-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 20px;
+}
+.title-wrap { display: flex; align-items: center; gap: 12px; }
+.icon-box {
+  width: 40px; height: 40px; background: #e0e7ff; color: #4f46e5;
+  border-radius: 10px; display: flex; align-items: center; justify-content: center;
+}
+.widget-header h3 { margin: 0; font-size: 16px; font-weight: 700; color: #1e293b; }
+.mini-btn { color: #94a3b8; }
+.mini-btn:hover { color: #4f46e5; background: #eef2ff; }
+
+/* LISTA */
+.list-container {
+  display: flex; flex-direction: column; gap: 12px; overflow-y: auto; flex: 1;
+  padding-right: 4px; /* Espacio para scrollbar */
+}
+
+/* Scrollbar fina */
+.list-container::-webkit-scrollbar { width: 4px; }
+.list-container::-webkit-scrollbar-thumb { background-color: #e2e8f0; border-radius: 4px; }
+
+.arrival-item {
+  display: flex; align-items: center; gap: 16px;
+  padding: 12px; border-radius: 12px;
+  transition: all 0.2s ease;
+  cursor: pointer; border: 1px solid transparent;
+  background-color: #fff;
+}
+.arrival-item:hover {
+  background-color: #f8fafc; border-color: #e2e8f0;
+  transform: translateX(4px); /* Efecto sutil de movimiento */
+}
+
+/* MINI CALENDARIO */
+.date-box {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  width: 48px; height: 48px; border-radius: 12px;
+  flex-shrink: 0; border: 1px solid transparent;
+}
+.date-box .month { font-size: 10px; text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px; }
+.date-box .day { font-size: 18px; font-weight: 800; line-height: 1; margin-top: 2px; }
+
+/* URGENCIA COLORES (Fondo y Texto) */
+/* Rojo: Urgente */
+.date-box.urgent { background: #fef2f2; color: #ef4444; border-color: #fee2e2; }
+/* Naranja: Pronto */
+.date-box.soon { background: #fff7ed; color: #f97316; border-color: #ffedd5; }
+/* Azul: Normal */
+.date-box.normal { background: #eff6ff; color: #3b82f6; border-color: #dbeafe; }
+
+/* INFO CENTRAL */
+.info-box { flex: 1; display: flex; flex-direction: column; gap: 2px; overflow: hidden; }
+.top-row { display: flex; align-items: center; gap: 8px; }
+.code { font-size: 13px; font-weight: 700; color: #334155; }
+.status-dot { width: 6px; height: 6px; border-radius: 50%; background: #10b981; } /* Verde por defecto (en camino) */
+.provider { font-size: 12px; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* BADGE TIEMPO */
+.time-badge {
+  font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; white-space: nowrap;
+}
+.time-badge.urgent { background: #fee2e2; color: #b91c1c; }
+.time-badge.soon { background: #ffedd5; color: #c2410c; }
+.time-badge.normal { background: #f1f5f9; color: #475569; }
+.time-badge .delayed { color: #b91c1c; font-weight: 800; }
+
+/* EMPTY STATE & LOADING */
+.empty-state, .loading-state { 
+  display: flex; flex-direction: column; align-items: center; justify-content: center; 
+  height: 100%; color: #94a3b8; text-align: center; min-height: 150px;
+}
+.empty-icon-circle {
+  width: 48px; height: 48px; background: #f1f5f9; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; margin-bottom: 12px;
+  color: #10b981; /* Verde check */
+}
+.empty-state p { font-size: 14px; font-weight: 600; color: #475569; margin: 0; }
+.empty-state span { font-size: 12px; }

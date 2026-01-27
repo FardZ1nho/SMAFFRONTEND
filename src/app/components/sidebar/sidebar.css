@@ -30,51 +30,44 @@
   overflow-x: hidden;
   z-index: 1000;
   display: flex;
-  flex-direction: column; /* Importante para empujar el footer abajo */
+  flex-direction: column; 
   box-shadow: 4px 0 24px rgba(0,0,0,0.02);
 }
 
 .sidebar.collapsed {
   width: var(--sidebar-collapsed-width);
 }
+
 /* ===================================
-   LOGO AREA (ACTUALIZADO)
+   LOGO AREA
    =================================== */
 .logo-container {
-  /* 1. Más altura para que el logo grande respire */
   height: 100px; 
   display: flex;
   align-items: center;
-  justify-content: center; /* Centrado horizontal */
+  justify-content: center;
   padding: 0 20px;
   background-color: transparent;
   margin-bottom: 10px;
   flex-shrink: 0;
-  
-  /* Animación suave de la altura del contenedor */
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 .logo {
-  /* 2. LOGO GRANDE (Estado Normal) */
   width: auto;
   height: auto;
-  max-width: 180px; /* Que ocupe buen ancho */
-  max-height: 70px; /* Altura máxima para no deformarse */
+  max-width: 180px;
+  max-height: 70px;
   object-fit: contain;
-  
-  /* Animación suave del cambio de tamaño */
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
-/* --- LOGO PEQUEÑO (Cuando está colapsado) --- */
 .sidebar.collapsed .logo-container {
-  height: 70px; /* El encabezado se achica un poco */
-  padding: 0;   /* Quitamos padding para centrar exacto */
+  height: 70px; 
+  padding: 0;   
 }
 
 .sidebar.collapsed .logo {
-  /* 3. LOGO CHIKITO (Icono) */
   max-width: 40px; 
   max-height: 40px;
 }
@@ -87,7 +80,7 @@
   flex-direction: column;
   gap: 8px;
   padding: 0 16px;
-  flex: 1; /* Esto hace que el menú ocupe el espacio y empuje el footer al final */
+  flex: 1; 
 }
 
 .sidebar.collapsed .nav-menu {
@@ -109,9 +102,9 @@
   position: relative;
   overflow: hidden;
   cursor: pointer;
-  border: none; /* Para el botón */
-  background: transparent; /* Para el botón */
-  width: 100%; /* Para el botón */
+  border: none;
+  background: transparent;
+  width: 100%;
 }
 
 /* ICONOS */
@@ -129,12 +122,14 @@
 .nav-text {
   opacity: 1;
   transition: opacity 0.2s;
+  flex: 1; /* Ocupa el espacio disponible */
 }
 
 /* --- LOGICA COLAPSO --- */
 .sidebar.collapsed .nav-item { justify-content: center; padding: 0; }
 .sidebar.collapsed .nav-icon { margin-right: 0; }
 .sidebar.collapsed .nav-text { opacity: 0; width: 0; display: none; }
+.sidebar.collapsed .chevron-icon { display: none; } /* Ocultar flecha si está colapsado */
 
 /* --- ESTADOS --- */
 .nav-item:hover {
@@ -149,12 +144,85 @@
 }
 
 /* ===================================
-   FOOTER & COLLAPSE BUTTON (NUEVO)
+   ✅ NUEVOS ESTILOS SUBMENU
+   =================================== */
+.nav-item-group {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Icono Chevron (Flecha) */
+.chevron-icon {
+  width: 16px;
+  height: 16px;
+  margin-left: auto; /* Empuja a la derecha */
+  transition: transform 0.3s ease;
+  opacity: 0.7;
+}
+
+.chevron-icon.rotate {
+  transform: rotate(90deg);
+}
+
+/* Contenedor Submenú */
+.submenu {
+  display: flex;
+  flex-direction: column;
+  padding-left: 20px; /* Indentación visual */
+  margin-top: 4px;
+  gap: 4px;
+  animation: slideDown 0.3s ease-out;
+}
+
+/* Items del Submenú */
+.submenu-item {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 16px;
+  text-decoration: none;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.submenu-item:hover {
+  background-color: var(--hover-bg);
+  color: var(--text-main);
+}
+
+.submenu-item.active-sub {
+  color: var(--primary-color);
+  background-color: transparent; /* No fondo, solo texto color */
+  font-weight: 600;
+}
+
+/* Bullet (Puntito) para submenú */
+.bullet {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #cbd5e1;
+  margin-right: 12px;
+  transition: background-color 0.2s;
+}
+
+.submenu-item:hover .bullet { background-color: var(--text-muted); }
+.submenu-item.active-sub .bullet { background-color: var(--primary-color); }
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===================================
+   FOOTER & COLLAPSE BUTTON
    =================================== */
 .sidebar-footer {
   padding: 20px 16px;
   border-top: 1px solid var(--border-light);
-  margin-top: auto; /* Se pega al fondo */
+  margin-top: auto; 
   flex-shrink: 0;
 }
 
@@ -162,7 +230,6 @@
   padding: 20px 10px;
 }
 
-/* Estilo específico para el botón de colapsar */
 .btn-collapse {
   color: var(--text-muted);
   justify-content: flex-start;

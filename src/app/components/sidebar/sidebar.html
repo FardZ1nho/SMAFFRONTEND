@@ -14,15 +14,35 @@
       <span class="nav-text">Inicio</span>
     </a>
 
-    <a routerLink="/inventario" class="nav-item" routerLinkActive="active" (click)="onItemClick()" title="Inventario">
-      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-        <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-        <line x1="12" y1="22.08" x2="12" y2="12"></line>
-      </svg>
-      <span class="nav-text">Inventario</span>
-    </a>
+    <div class="nav-item-group">
+      <div class="nav-item" [class.active]="isInventarioOpen" (click)="toggleInventario()" title="Inventario">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+          <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+          <line x1="12" y1="22.08" x2="12" y2="12"></line>
+        </svg>
+        
+        <span class="nav-text">Inventario</span>
+        
+        <svg class="chevron-icon" [class.rotate]="isInventarioOpen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </div>
 
+      <div class="submenu" *ngIf="isInventarioOpen && !isCollapsed">
+        
+        <a routerLink="/inventario/productos" class="submenu-item" routerLinkActive="active-sub" (click)="onItemClick()">
+          <span class="bullet"></span>
+          <span class="sub-text">Productos</span>
+        </a>
+
+        <a routerLink="/inventario/servicios" class="submenu-item" routerLinkActive="active-sub" (click)="onItemClick()">
+          <span class="bullet"></span>
+          <span class="sub-text">Servicios</span>
+        </a>
+
+      </div>
+    </div>
     <a routerLink="/compras" class="nav-item" routerLinkActive="active" (click)="onItemClick()" title="Compras">
       <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <rect x="1" y="3" width="15" height="13" rx="2" ry="2"></rect>
@@ -92,6 +112,14 @@
         <line x1="1" y1="10" x2="23" y2="10"></line>
       </svg>
       <span class="nav-text">Cuentas</span>
+    </a>
+
+    <a routerLink="/caja-chica" class="nav-item" routerLinkActive="active" (click)="onItemClick()" title="Caja Chica">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 12V8H6a2 2 0 0 1-2-2 2 2 0 0 1 2-2h12v4"></path>
+        <path d="M4 6v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-12a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2z"></path>
+      </svg>
+      <span class="nav-text">Caja Chica</span>
     </a>
 
   </nav>

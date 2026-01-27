@@ -1,59 +1,107 @@
 // src/app/models/compra.ts
 
 // ==========================================
-// 📤 LO QUE ENVIAMOS AL BACKEND (Request)
+// 🛠️ ENUMS (Para evitar errores de texto)
+// ==========================================
+export enum TipoCompra {
+  BIEN = 'BIEN',
+  SERVICIO = 'SERVICIO'
+}
+
+export enum TipoPago {
+  CONTADO = 'CONTADO',
+  CREDITO = 'CREDITO'
+}
+
+export enum MetodoPago {
+  EFECTIVO = 'EFECTIVO',
+  TRANSFERENCIA = 'TRANSFERENCIA',
+  YAPE = 'YAPE',
+  PLIN = 'PLIN',
+  TARJETA = 'TARJETA'
+}
+
+export enum EstadoCompra {
+  REGISTRADA = 'REGISTRADA',
+  COMPLETADA = 'COMPLETADA',
+  ANULADA = 'ANULADA'
+}
+
+// ==========================================
+// 📤 REQUEST: LO QUE ENVIAMOS AL GUARDAR
 // ==========================================
 export interface CompraRequest {
-  // ✅ NUEVO: Vital para la lógica (BIEN vs SERVICIO)
-  tipoCompra: 'BIEN' | 'SERVICIO';
-  
+  tipoCompra: 'BIEN' | 'SERVICIO'; // O usa el Enum TipoCompra
   tipoComprobante: string;
+  
+  // Obligatorio para definir deuda
+  tipoPago: TipoPago; 
+
   serie: string;
   numero: string;
-  
-  // ⚠️ NOTA: Ajustado a 'fechaEmision' para coincidir con Java DTO
+
+  // ✅ NUEVO: CÓDIGO DE IMPORTACIÓN (Opcional, solo si es Factura Comercial)
+  codImportacion?: string;
+
   fechaEmision: string; // YYYY-MM-DD
-  fechaVencimiento?: string; // YYYY-MM-DD (Opcional)
+  fechaVencimiento?: string; 
 
   proveedorId: number;
   moneda: string; // 'PEN' | 'USD'
   tipoCambio: number;
   observaciones?: string;
 
-  // ✅ NUEVO: Totales (Se envían para validar o guardar directo)
+  // Totales
   subTotal: number;
   igv: number;
   total: number;
 
-  // ✅ NUEVO: Impuestos específicos del Excel
-  percepcion?: number;          // Solo Bienes
-  detraccionPorcentaje?: number; // Solo Servicios
-  detraccionMonto?: number;      // Solo Servicios
-  retencion?: number;           // Ambos
+  // Impuestos específicos
+  percepcion?: number;          
+  detraccionPorcentaje?: number; 
+  detraccionMonto?: number;      
+  retencion?: number;           
+
+  // Lista de pagos iniciales (Ej: Adelanto o Pago total)
+  pagos: PagoCompraRequest[];
 
   detalles: CompraDetalleRequest[];
 }
 
+// Sub-interfaz para registrar pagos
+export interface PagoCompraRequest {
+  metodoPago: MetodoPago;
+  monto: number;
+  moneda: string;
+  cuentaOrigenId?: number; // ID de TU cuenta bancaria de donde sale el dinero
+  referencia?: string;     // Nro de operación
+}
+
 export interface CompraDetalleRequest {
   productoId: number;
-  
-  // ✅ CAMBIO: Ahora es opcional (puede ser null si es SERVICIO)
   almacenId?: number | null; 
-  
   cantidad: number;
   precioUnitario: number;
 }
 
 // ==========================================
-// 📥 LO QUE RECIBIMOS DEL BACKEND (Response)
+// 📥 RESPONSE: LO QUE RECIBIMOS PARA VER/EDITAR
 // ==========================================
 export interface CompraResponse {
   id: number;
   
-  tipoCompra: string; // 'BIEN' | 'SERVICIO'
+  tipoCompra: string;
   tipoComprobante: string;
+  
+  // Estados
+  tipoPago: TipoPago;
+  estado: EstadoCompra; // O string si no usas el Enum estricto
+
   serie: string;
   numero: string;
+
+  // ✅ NUEVO: RECIBIR EL DATO PARA MOSTRARLO EN EL DETALLE
+  codImportacion?: string;
   
   fechaEmision: string;
   fechaVencimiento?: string;
@@ -66,18 +114,25 @@ export interface CompraResponse {
   tipoCambio: number;
   observaciones?: string;
 
-  // ✅ MONTOS
+  // Montos Base
   subTotal: number;
   igv: number;
   total: number;
 
-  // ✅ IMPUESTOS
+  // SALDOS Y DEUDA
+  montoPagadoInicial: number;
+  saldoPendiente: number;
+
+  // Impuestos
   percepcion?: number;
   detraccionPorcentaje?: number;
   detraccionMonto?: number;
   retencion?: number;
   
   detalles?: CompraDetalleResponse[]; 
+  
+  // HISTORIAL DE PAGOS REALIZADOS
+  pagos?: PagoCompraResponse[];
 }
 
 export interface CompraDetalleResponse {
@@ -86,13 +141,21 @@ export interface CompraDetalleResponse {
   nombreProducto: string;
   codigoProducto: string;
   
-  // ✅ Almacén puede venir null si fue servicio
   almacenId?: number;
   nombreAlmacen?: string;
   
   cantidad: number;
   precioUnitario: number;
-  
-  // ✅ Backend nos manda el cálculo listo
   importeTotal: number; 
+}
+
+// Sub-interfaz para listar los pagos en la vista de detalle
+export interface PagoCompraResponse {
+  id: number;
+  monto: number;
+  moneda: string;
+  metodoPago: string;       // Viene como String del backend .name()
+  fechaPago: string;
+  referencia?: string;
+  nombreCuentaOrigen?: string; // Ej: "BCP Soles - Empresa"
 }

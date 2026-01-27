@@ -4,7 +4,6 @@ export interface Producto {
   id: number;
   nombre: string;
   codigo: string;
-  // 👇 ASEGÚRATE DE QUE ESTO ESTÉ AQUÍ TAMBIÉN
   tipo: 'PRODUCTO' | 'SERVICIO'; 
   descripcion?: string;
   
@@ -14,6 +13,9 @@ export interface Producto {
   stockActual: number;
   stockMinimo: number;
   
+  // ✅ CAMBIO 1: Agregado para ver lo que viene en barco
+  stockPorLlegar?: number; 
+
   // Precios
   precioChina?: number;
   costoTotal?: number;
@@ -29,9 +31,9 @@ export interface Producto {
   porcentajeMargen?: number;
 }
 
-// 👇 AQUÍ ES DONDE TE FALTA EL CAMPO "tipo"
 export interface ProductoRequest {
-  tipo: 'PRODUCTO' | 'SERVICIO'; // 👈 ¡AGREGA ESTA LÍNEA!
+  // ✅ CAMBIO 2: Agregado el tipo obligatorio
+  tipo: 'PRODUCTO' | 'SERVICIO'; 
   
   nombre: string;
   codigo?: string;

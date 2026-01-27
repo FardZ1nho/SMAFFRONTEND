@@ -362,6 +362,7 @@ export class VentasComponent implements OnInit {
 
     this.listaPagos.push({ ...this.pagoActual });
 
+    // Reiniciar para siguiente pago, pero mantenemos la moneda actual
     this.pagoActual.monto = 0;
     this.pagoActual.referencia = '';
     this.calcularTotales();
@@ -414,7 +415,6 @@ export class VentasComponent implements OnInit {
     }
   }
 
-  // ✅ AQUÍ ESTÁ EL MÉTODO QUE FALTABA
   calcularCredito(): void {
     this.calcularTotales();
   }
@@ -450,14 +450,36 @@ export class VentasComponent implements OnInit {
   }
 
   completarVenta(): void {
-    if (this.productosEnVenta.length === 0 || !this.clienteSeleccionado) return;
+    // 1. Validaciones básicas
+    if (this.productosEnVenta.length === 0 || !this.clienteSeleccionado) {
+      this.mostrarNotificacion('Seleccione un cliente y productos para continuar', 'warning');
+      return;
+    }
     
+    // =========================================================================
+    // 🔥 CORRECCIÓN AUTOMÁTICA: Si la lista está vacía pero hay un monto puesto
+    // =========================================================================
+    if (this.listaPagos.length === 0 && this.pagoActual.monto > 0) {
+        // Validamos si es un pago digital que requiere cuenta
+        if (this.esPagoDigital(this.pagoActual.metodoPago) && !this.pagoActual.cuentaBancariaId) {
+            this.mostrarNotificacion('Seleccione la cuenta de destino para el pago', 'warning');
+            return;
+        }
+        // Agregamos el pago automáticamente
+        this.agregarPagoALista();
+        console.log("Pago agregado automáticamente al completar venta para evitar error de caja.");
+    }
+    // =========================================================================
+
+    // 2. Ahora sí validamos si la lista sigue vacía
     if (this.listaPagos.length === 0) {
-         this.mostrarNotificacion('Debe agregar al menos un pago', 'warning');
+         this.mostrarNotificacion('Debe agregar al menos un pago para procesar la venta', 'warning');
          return;
     }
 
+    // 3. Validar montos (si es al contado debe estar completo)
     if (this.tipoPago === TipoPago.CONTADO) {
+        // Permitimos un pequeño margen de error por decimales (0.10)
         if (this.totalPagadoAcumulado < (this.total - 0.10)) {
             const falta = (this.total - this.totalPagadoAcumulado).toFixed(2);
             this.mostrarNotificacion(`Pago incompleto. Faltan ${falta} ${this.moneda}`, 'error');
@@ -467,6 +489,7 @@ export class VentasComponent implements OnInit {
 
     if (!confirm('¿Estás seguro de emitir esta venta?')) return;
 
+    // 4. Guardar
     this.isSaving = true;
     const request = this.prepararRequest();
 
@@ -474,7 +497,7 @@ export class VentasComponent implements OnInit {
         next: () => {
             this.mostrarNotificacion('✅ Venta registrada exitosamente', 'success');
             this.isSaving = false;
-            this.router.navigate(['/ventas/lista']);
+            this.router.navigate(['/ventas/lista']); // Ajusta si tu ruta es diferente
         },
         error: (err: any) => {
             this.isSaving = false;

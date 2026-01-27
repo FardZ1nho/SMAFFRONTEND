@@ -1,62 +1,67 @@
-<div class="grafico-container">
+<div class="soft-card">
   
-  <div class="grafico-header">
-    <div class="grafico-titulo">
-      <span class="grafico-icono">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="18" y1="20" x2="18" y2="10"></line>
-          <line x1="12" y1="20" x2="12" y2="4"></line>
-          <line x1="6" y1="20" x2="6" y2="14"></line>
+  <div class="card-header">
+    <div class="header-left">
+      <div class="icon-box">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="20" x2="12" y2="10"></line>
+          <line x1="18" y1="20" x2="18" y2="4"></line>
+          <line x1="6" y1="20" x2="6" y2="16"></line>
         </svg>
-      </span>
-      <h2>Ventas de la Semana</h2>
+      </div>
+      <h3>Ventas</h3>
     </div>
-    <a href="#" class="ver-detalles" (click)="$event.preventDefault()">
-      Ver detalles 
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 4px; vertical-align: middle;">
-        <line x1="5" y1="12" x2="19" y2="12"></line>
-        <polyline points="12 5 19 12 12 19"></polyline>
-      </svg>
-    </a>
+
+    <button mat-button [matMenuTriggerFor]="menuFiltro" class="filter-btn">
+      {{ filtroActual }}
+      <mat-icon>expand_more</mat-icon>
+    </button>
+    
+    <mat-menu #menuFiltro="matMenu">
+      <button mat-menu-item (click)="cambiarFiltro('SEMANA')">Esta Semana</button>
+      <button mat-menu-item (click)="cambiarFiltro('MES')">Este Mes</button>
+      <button mat-menu-item (click)="cambiarFiltro('ANIO')">Este Año</button>
+    </mat-menu>
   </div>
 
-  <div *ngIf="cargando" class="loading-container">
+  <div *ngIf="cargando" class="state-container">
     <div class="spinner"></div>
-    <p>Cargando datos...</p>
   </div>
 
-  <div *ngIf="error && !cargando" class="error-message">
-    <p>{{ error }}</p>
-    <button (click)="cargarVentasSemana()" class="btn-retry">Reintentar</button>
+  <div *ngIf="error && !cargando" class="state-container">
+    <p class="error-text">{{ error }}</p>
+    <button class="retry-btn" (click)="cargarDatos()">Reintentar</button>
   </div>
 
-  <div *ngIf="!cargando && !error" class="grafico-canvas">
-    <canvas 
-      baseChart
-      [type]="barChartType"
-      [data]="barChartData"
-      [options]="barChartOptions">
-    </canvas>
+  <div *ngIf="!cargando && !error" class="chart-wrapper">
+    <apx-chart
+      [series]="chartOptions.series!"
+      [chart]="chartOptions.chart!"
+      [dataLabels]="chartOptions.dataLabels!"
+      [plotOptions]="chartOptions.plotOptions!"
+      [yaxis]="chartOptions.yaxis!"
+      [xaxis]="chartOptions.xaxis!"
+      [tooltip]="chartOptions.tooltip!"
+      [grid]="chartOptions.grid!"
+      [fill]="chartOptions.fill!"
+      [colors]="chartOptions.colors!"
+    ></apx-chart>
   </div>
 
-  <div *ngIf="!cargando && !error && ventasSemana.length > 0" class="grafico-resumen">
-    <div class="resumen-item">
-      <span class="resumen-label">Total Semana:</span>
-      <span class="resumen-valor">
-        S/ {{ calcularTotalSemana() | number:'1.2-2' }}
-      </span>
+  <div *ngIf="!cargando && !error" class="card-footer">
+    <div class="footer-item">
+      <span class="label">Total</span>
+      <span class="value">S/ {{ totalPeriodo | number:'1.2-2' }}</span>
     </div>
-    <div class="resumen-item">
-      <span class="resumen-label">Promedio Diario:</span>
-      <span class="resumen-valor">
-        S/ {{ calcularPromedioDiario() | number:'1.2-2' }}
-      </span>
+    <div class="divider"></div>
+    <div class="footer-item">
+      <span class="label">Promedio</span>
+      <span class="value">S/ {{ promedioDiario | number:'1.2-2' }}</span>
     </div>
-    <div class="resumen-item">
-      <span class="resumen-label">Transacciones:</span>
-      <span class="resumen-valor">
-        {{ calcularTotalTransacciones() }}
-      </span>
+    <div class="divider"></div>
+    <div class="footer-item">
+      <span class="label">Transacciones</span>
+      <span class="value">{{ transacciones }}</span>
     </div>
   </div>
 

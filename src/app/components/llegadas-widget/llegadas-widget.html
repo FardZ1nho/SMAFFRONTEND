@@ -1,0 +1,53 @@
+<div class="card-widget">
+  
+  <div class="widget-header">
+    <div class="title-wrap">
+      <div class="icon-box">
+        <mat-icon>schedule</mat-icon>
+      </div>
+      <h3>En Camino</h3>
+    </div>
+    <button mat-icon-button class="mini-btn" routerLink="/importaciones" matTooltip="Ver todas las importaciones">
+      <mat-icon>arrow_forward</mat-icon>
+    </button>
+  </div>
+
+  <div class="list-container">
+    
+    <div *ngIf="isLoading" class="loading-state">
+      <p>Buscando envíos...</p>
+    </div>
+
+    <div class="arrival-item" *ngFor="let item of alertas" (click)="irAImportacion(item.idImportacion)">
+      
+      <div class="date-box" [ngClass]="getUrgencyClass(item.diasRestantes)">
+        <span class="month">{{ item.fechaEta | date:'MMM' }}</span>
+        <span class="day">{{ item.fechaEta | date:'dd' }}</span>
+      </div>
+
+      <div class="info-box">
+        <div class="top-row">
+          <span class="code">{{ item.codigoImportacion }}</span>
+          <span class="status-dot" [title]="item.estado"></span>
+        </div>
+        <span class="provider" [title]="item.proveedor">{{ item.proveedor }}</span>
+      </div>
+
+      <div class="time-badge" [ngClass]="getUrgencyClass(item.diasRestantes)">
+        <span *ngIf="item.diasRestantes > 0">En {{ item.diasRestantes }} días</span>
+        <span *ngIf="item.diasRestantes === 0">¡Llega Hoy!</span>
+        <span *ngIf="item.diasRestantes < 0" class="delayed">Atrasado {{ item.diasRestantes * -1 }} días</span>
+      </div>
+
+    </div>
+
+    <div class="empty-state" *ngIf="!isLoading && alertas.length === 0">
+      <div class="empty-icon-circle">
+        <mat-icon>check</mat-icon>
+      </div>
+      <p>Todo tranquilo.</p>
+      <span>No hay llegadas próximas.</span>
+    </div>
+
+  </div>
+</div>

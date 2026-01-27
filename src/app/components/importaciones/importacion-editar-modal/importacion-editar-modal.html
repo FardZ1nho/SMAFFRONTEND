@@ -1,11 +1,18 @@
 <div class="modal-header">
   <h2>Gestionar Importación</h2>
-  <span class="invoice-badge">{{ data.compra.serie }}-{{ data.compra.numero }}</span>
+  <div class="header-actions">
+    <span class="invoice-badge clickable" (click)="irADetalleCompra()" matTooltip="Ver detalle de factura">
+      {{ data.compra.serie }}-{{ data.compra.numero }}
+      <mat-icon class="tiny-icon">open_in_new</mat-icon>
+    </span>
+    
+    <button mat-icon-button (click)="cancelar()"><mat-icon>close</mat-icon></button>
+  </div>
 </div>
 
 <mat-dialog-content class="modal-content">
   
-  <div class="layout-grid-3-col">
+  <div class="layout-grid-2-col">
 
     <div class="column-section">
       <h3><mat-icon>public</mat-icon> Origen y Transporte</h3>
@@ -35,13 +42,13 @@
         </mat-form-field>
       </div>
 
-      <mat-divider style="margin: 12px 0;"></mat-divider>
+      <mat-divider class="spacer-divider"></mat-divider>
 
       <mat-form-field appearance="outline" class="dense full-width">
         <mat-label>Tipo Transporte</mat-label>
         <mat-select [(ngModel)]="form.tipoTransporte">
           <mat-option *ngFor="let t of tiposTransporte" [value]="t">
-            <mat-icon style="margin-right: 8px;">
+            <mat-icon class="small-icon">
               {{ t === 'MARITIMO' ? 'directions_boat' : (t === 'AEREO' ? 'flight' : 'local_shipping') }}
             </mat-icon>
             {{t}}
@@ -55,89 +62,105 @@
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="dense full-width">
+        <mat-label>Nave / Viaje (Vessel)</mat-label>
+        <input matInput [(ngModel)]="form.numeroViaje" placeholder="Ej: MSC GINA / 405W">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="dense full-width">
         <mat-label>N° Contenedor</mat-label>
         <input matInput [(ngModel)]="form.numeroContenedor">
       </mat-form-field>
     </div>
 
     <div class="column-section">
-      <h3><mat-icon>visibility</mat-icon> Seguimiento</h3>
+      <h3><mat-icon>timeline</mat-icon> Tiempos y Aduanas</h3>
       
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Tracking / BL / Guía</mat-label>
-        <input matInput [(ngModel)]="form.trackingNumber">
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>N° DUA / DAM</mat-label>
-        <input matInput [(ngModel)]="form.numeroDua">
-      </mat-form-field>
-
       <div class="row-2">
-        <mat-form-field appearance="outline">
-          <mat-label>ETA (Llegada)</mat-label>
-          <input matInput [matDatepicker]="picker1" [(ngModel)]="form.fechaEstimadaLlegada">
-          <mat-datepicker-toggle matIconSuffix [for]="picker1"></mat-datepicker-toggle>
-          <mat-datepicker #picker1></mat-datepicker>
+        <mat-form-field appearance="outline" class="dense">
+          <mat-label>Tracking / BL</mat-label>
+          <input matInput [(ngModel)]="form.trackingNumber">
         </mat-form-field>
+        <mat-form-field appearance="outline" class="dense">
+          <mat-label>N° DUA / DAM</mat-label>
+          <input matInput [(ngModel)]="form.numeroDua">
+        </mat-form-field>
+      </div>
 
-        <mat-form-field appearance="outline">
+      <span class="sub-label">Cierres en Origen</span>
+      <div class="row-2">
+        <mat-form-field appearance="outline" class="dense">
+          <mat-label>Cut-Off Doc.</mat-label>
+          <input matInput [matDatepicker]="cutDoc" [(ngModel)]="form.fechaCutOffDocumental">
+          <mat-datepicker-toggle matIconSuffix [for]="cutDoc"></mat-datepicker-toggle>
+          <mat-datepicker #cutDoc></mat-datepicker>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="dense">
+          <mat-label>Cut-Off Físico</mat-label>
+          <input matInput [matDatepicker]="cutFis" [(ngModel)]="form.fechaCutOffFisico">
+          <mat-datepicker-toggle matIconSuffix [for]="cutFis"></mat-datepicker-toggle>
+          <mat-datepicker #cutFis></mat-datepicker>
+        </mat-form-field>
+      </div>
+
+      <span class="sub-label">Travesía (Transit Time)</span>
+      <div class="row-3">
+        <mat-form-field appearance="outline" class="dense">
+          <mat-label>ETD (Salida)</mat-label>
+          <input matInput [matDatepicker]="pickerETD" [(ngModel)]="form.fechaSalidaEstimada">
+          <mat-datepicker-toggle matIconSuffix [for]="pickerETD"></mat-datepicker-toggle>
+          <mat-datepicker #pickerETD></mat-datepicker>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="dense">
+          <mat-label>ETA (Llegada)</mat-label>
+          <input matInput [matDatepicker]="pickerETA" [(ngModel)]="form.fechaEstimadaLlegada">
+          <mat-datepicker-toggle matIconSuffix [for]="pickerETA"></mat-datepicker-toggle>
+          <mat-datepicker #pickerETA></mat-datepicker>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="dense">
+          <mat-label>ATA (Real)</mat-label>
+          <input matInput [matDatepicker]="pickerATA" [(ngModel)]="form.fechaLlegadaReal">
+          <mat-datepicker-toggle matIconSuffix [for]="pickerATA"></mat-datepicker-toggle>
+          <mat-datepicker #pickerATA></mat-datepicker>
+        </mat-form-field>
+      </div>
+
+      <span class="sub-label">Cierre Local y Devolución</span>
+      <div class="row-2">
+        <mat-form-field appearance="outline" class="dense">
+          <mat-label>Levante Aut.</mat-label>
+          <input matInput [matDatepicker]="pickLev" [(ngModel)]="form.fechaLevanteAutorizado">
+          <mat-datepicker-toggle matIconSuffix [for]="pickLev"></mat-datepicker-toggle>
+          <mat-datepicker #pickLev></mat-datepicker>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="dense">
           <mat-label>Nacionalización</mat-label>
-          <input matInput [matDatepicker]="picker2" [(ngModel)]="form.fechaNacionalizacion">
-          <mat-datepicker-toggle matIconSuffix [for]="picker2"></mat-datepicker-toggle>
-          <mat-datepicker #picker2></mat-datepicker>
+          <input matInput [matDatepicker]="pickNac" [(ngModel)]="form.fechaNacionalizacion">
+          <mat-datepicker-toggle matIconSuffix [for]="pickNac"></mat-datepicker-toggle>
+          <mat-datepicker #pickNac></mat-datepicker>
+        </mat-form-field>
+      </div>
+      
+      <div class="row-2-bias">
+        <mat-form-field appearance="outline" class="dense">
+          <mat-label>Días Libres</mat-label>
+          <input matInput type="number" [(ngModel)]="form.diasLibres" placeholder="21">
+          <span matSuffix style="font-size: 11px; margin-right: 8px;">días</span>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="dense warning-field">
+          <mat-label>Deadline Devolución</mat-label>
+          <input matInput [matDatepicker]="pickDev" [(ngModel)]="form.fechaLimiteDevolucion">
+          <mat-datepicker-toggle matIconSuffix [for]="pickDev"></mat-datepicker-toggle>
+          <mat-datepicker #pickDev></mat-datepicker>
         </mat-form-field>
       </div>
 
       <div class="status-box">
-        <label style="display:block; margin-bottom:8px; font-weight:600; color:#475569">Estado Actual del Flujo:</label>
         <mat-form-field appearance="fill" class="full-width no-bottom">
+          <mat-label>Estado del Flujo</mat-label>
           <mat-select [(ngModel)]="form.estado">
             <mat-option *ngFor="let e of estados" [value]="e">{{ getLabelEstado(e) }}</mat-option>
           </mat-select>
         </mat-form-field>
-      </div>
-    </div>
-
-    <div class="column-section costs-panel">
-      <h3><mat-icon>attach_money</mat-icon> Costos y Prorrateo</h3>
-      
-      <div class="cost-group">
-        <span class="group-label">Internacionales</span>
-        <mat-form-field appearance="outline" class="dense full-width cost-input">
-          <span matPrefix>$ &nbsp;</span>
-          <mat-label>Flete Internacional</mat-label>
-          <input matInput type="number" [(ngModel)]="form.costoFlete">
-        </mat-form-field>
-        <mat-form-field appearance="outline" class="dense full-width cost-input">
-          <span matPrefix>$ &nbsp;</span>
-          <mat-label>Seguro</mat-label>
-          <input matInput type="number" [(ngModel)]="form.costoSeguro">
-        </mat-form-field>
-      </div>
-
-      <div class="cost-group">
-        <span class="group-label">Nacionales</span>
-        <mat-form-field appearance="outline" class="dense full-width cost-input">
-          <span matPrefix>S/ &nbsp;</span>
-          <mat-label>Impuestos Aduanas</mat-label>
-          <input matInput type="number" [(ngModel)]="form.impuestosAduanas">
-        </mat-form-field>
-        <mat-form-field appearance="outline" class="dense full-width cost-input">
-          <span matPrefix>S/ &nbsp;</span>
-          <mat-label>Gastos Op. (Agente/Almacén)</mat-label>
-          <input matInput type="number" [(ngModel)]="form.gastosOperativos">
-        </mat-form-field>
-        <mat-form-field appearance="outline" class="dense full-width cost-input">
-          <span matPrefix>S/ &nbsp;</span>
-          <mat-label>Transporte Local</mat-label>
-          <input matInput type="number" [(ngModel)]="form.costoTransporteLocal">
-        </mat-form-field>
-      </div>
-
-      <div class="total-summary">
-        Total Costos Extra: 
-        <strong>{{ calcularTotalExtras() | number:'1.2-2' }}</strong>
       </div>
     </div>
 

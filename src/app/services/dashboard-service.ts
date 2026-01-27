@@ -1,8 +1,13 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { DashboardResponseDTO, VentasSemanaDTO } from '../models/dashboard';
-import { ProductoVendidoDTO } from '../models/dashboard';
+import { 
+  DashboardResponseDTO, 
+  GraficoVentasDTO, 
+  ProductoVendidoDTO, 
+  ReporteMetodoPagoDTO,
+  DashboardAlerta // ✅ Importamos la nueva interfaz
+} from '../models/dashboard';
 import { environment } from '../../environments/environment';
 
 @Injectable({
@@ -14,60 +19,53 @@ export class DashboardService {
 
   constructor(private http: HttpClient) { }
 
-  /**
-   * Obtiene todas las métricas del dashboard en una sola llamada
-   */
   obtenerMetricas(): Observable<DashboardResponseDTO> {
     return this.http.get<DashboardResponseDTO>(`${this.baseUrl}/metricas`);
   }
 
-  /**
-   * Obtiene las ventas del mes actual
-   */
   obtenerVentasMes(): Observable<number> {
     return this.http.get<number>(`${this.baseUrl}/ventas-mes`);
   }
 
-  /**
-   * Obtiene las ventas de hoy
-   */
   obtenerVentasHoy(): Observable<number> {
     return this.http.get<number>(`${this.baseUrl}/ventas-hoy`);
   }
 
-  /**
-   * Obtiene la cantidad total de productos en stock
-   */
   obtenerProductosEnStock(): Observable<number> {
     return this.http.get<number>(`${this.baseUrl}/productos-stock`);
   }
 
-  /**
-   * Obtiene la cantidad de clientes activos
-   */
   obtenerClientesActivos(): Observable<number> {
     return this.http.get<number>(`${this.baseUrl}/clientes-activos`);
   }
 
-  /**
-   * Obtiene el porcentaje de cambio de ventas vs mes anterior
-   */
   obtenerPorcentajeCambioVentas(): Observable<number> {
     return this.http.get<number>(`${this.baseUrl}/porcentaje-ventas`);
   }
 
-  // ✅ AGREGAR este método
   /**
-   * Obtiene las ventas de la semana actual (Lunes a Domingo)
+   * Obtiene datos para el gráfico según el periodo
+   * @param periodo 'SEMANA' | 'MES' | 'ANIO'
    */
-  obtenerVentasSemana(): Observable<VentasSemanaDTO[]> {
-    return this.http.get<VentasSemanaDTO[]>(`${this.baseUrl}/ventas-semana`);
+  obtenerVentasGrafico(periodo: string): Observable<GraficoVentasDTO[]> {
+    let params = new HttpParams().set('periodo', periodo);
+    return this.http.get<GraficoVentasDTO[]>(`${this.baseUrl}/ventas-grafico`, { params });
   }
 
-  /**
-   * Obtiene los productos más vendidos
-   */
   obtenerProductosMasVendidos(limit: number = 5): Observable<ProductoVendidoDTO[]> {
     return this.http.get<ProductoVendidoDTO[]>(`${this.baseUrl}/productos-mas-vendidos?limit=${limit}`);
+  }
+
+  obtenerReporteMetodosPago(fechaInicio?: string, fechaFin?: string): Observable<ReporteMetodoPagoDTO[]> {
+    let params = new HttpParams();
+    if (fechaInicio) params = params.set('fechaInicio', fechaInicio);
+    if (fechaFin) params = params.set('fechaFin', fechaFin);
+
+    return this.http.get<ReporteMetodoPagoDTO[]>(`${this.baseUrl}/metodos-pago`, { params });
+  }
+
+  // ✅ NUEVO MÉTODO: Obtener Alertas de Próximas Llegadas
+  obtenerProximasLlegadas(): Observable<DashboardAlerta[]> {
+    return this.http.get<DashboardAlerta[]>(`${this.baseUrl}/proximas-llegadas`);
   }
 }

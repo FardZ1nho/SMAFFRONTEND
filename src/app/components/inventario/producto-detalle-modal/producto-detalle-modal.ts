@@ -5,7 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatChipsModule } from '@angular/material/chips';
-import { MatTooltipModule } from '@angular/material/tooltip'; // Opcional para el tooltip del botón refresh
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { Producto } from '../../../models/producto';
 import { ProductoAlmacen } from '../../../models/producto-almacen';
@@ -39,7 +39,7 @@ export class ProductoDetalleModalComponent implements OnInit {
   
   mostrarStockBajo: boolean = false;
   cargandoAlmacenes: boolean = false;
-  cargandoGeneral: boolean = false; // Nuevo indicador global
+  cargandoGeneral: boolean = false;
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: { productoId: number },
@@ -47,7 +47,7 @@ export class ProductoDetalleModalComponent implements OnInit {
     private productoService: ProductoService,
     private productoAlmacenService: ProductoAlmacenService,
     private dialog: MatDialog,
-    private cdr: ChangeDetectorRef // ✅ INYECTADO
+    private cdr: ChangeDetectorRef
   ) {
     this.producto = {} as Producto;
   }
@@ -56,13 +56,9 @@ export class ProductoDetalleModalComponent implements OnInit {
     this.refrescarDatos();
   }
 
-  // ✅ Nueva función unificada para cargar todo
   refrescarDatos(): void {
     this.cargandoGeneral = true;
-    this.cdr.detectChanges(); // Avisar que empezamos a cargar
-
-    // Usamos Promesas o forkJoin si quisiéramos esperar a ambos, 
-    // pero llamarlos en paralelo también funciona bien.
+    this.cdr.detectChanges(); 
     this.cargarProducto();
     this.cargarDistribucionAlmacenes();
   }
@@ -74,7 +70,7 @@ export class ProductoDetalleModalComponent implements OnInit {
         this.calcularValores(); 
         this.verificarStockBajo();
         this.cargandoGeneral = false;
-        this.cdr.detectChanges(); // ✅ Forzar actualización
+        this.cdr.detectChanges(); 
       },
       error: (error) => {
         console.error('Error al cargar producto:', error);
@@ -91,7 +87,7 @@ export class ProductoDetalleModalComponent implements OnInit {
       next: (data) => {
         this.productosAlmacen = data;
         this.cargandoAlmacenes = false;
-        this.cdr.detectChanges(); // ✅ Forzar actualización
+        this.cdr.detectChanges(); 
       },
       error: (error) => {
         console.error('Error al cargar distribución:', error);
@@ -133,9 +129,6 @@ export class ProductoDetalleModalComponent implements OnInit {
   }
 
   editarProducto(): void {
-    // Cerramos este modal, pero retornamos una acción especial si quieres reabrirlo luego
-    // O simplemente abrimos el de edición encima (sin cerrar este)
-    // En tu código original cerrabas este:
     this.dialogRef.close(); 
     
     const dialogRef = this.dialog.open(ProductoModalComponent, {
@@ -144,15 +137,6 @@ export class ProductoDetalleModalComponent implements OnInit {
       disableClose: false,
       data: { producto: this.producto, modo: 'editar' }
     });
-    
-    // Si quisieras que al guardar se reabra el detalle actualizado:
-    /*
-    dialogRef.afterClosed().subscribe(result => {
-       if(result) { 
-          // Reabrir detalle...
-       }
-    });
-    */
   }
 
   eliminarProducto(): void {

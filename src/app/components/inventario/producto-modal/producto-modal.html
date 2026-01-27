@@ -15,7 +15,7 @@
   <div class="modal-content" *ngIf="!isLoading">
     <form [formGroup]="productoForm" class="producto-form">
       
-      <div class="type-selector-container" *ngIf="!esEdicion">
+      <div class="type-selector-container" *ngIf="!esEdicion && !tipoFijo">
         <div class="type-option" 
              [class.active]="tipoSeleccionado === 'PRODUCTO'" 
              (click)="cambiarTipo('PRODUCTO')">

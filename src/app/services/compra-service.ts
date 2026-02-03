@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { CompraRequest, CompraResponse } from '../models/compra';
+import { CompraRequest, CompraResponse, MetodoPago } from '../models/compra';
 import { environment } from '../../environments/environment';
 
 @Injectable({
@@ -9,16 +9,32 @@ import { environment } from '../../environments/environment';
 })
 export class CompraService {
 
-  // Asegúrate de que el puerto (8080) sea el correcto de tu backend
+  // Asegúrate de que apunte a tu backend (ej: http://localhost:8080/compras)
   private apiUrl = `${environment.base}/compras`;
 
   constructor(private http: HttpClient) { }
 
   /**
-   * Registra una nueva compra masiva (Cabecera + Detalles)
+   * Registra una nueva compra (Factura, Boleta o Recibo)
    */
   registrarCompra(compra: CompraRequest): Observable<CompraResponse> {
     return this.http.post<CompraResponse>(this.apiUrl, compra);
+  }
+
+  /**
+   * ✅ NUEVO: Registra un pago posterior (Amortizar deuda)
+   * Backend espera @RequestParam, por lo que usamos HttpParams
+   */
+  registrarAmortizacion(compraId: number, monto: number, metodo: MetodoPago, cuentaId?: number, referencia?: string): Observable<CompraResponse> {
+    let params = new HttpParams()
+      .set('monto', monto.toString())
+      .set('metodo', metodo);
+
+    if (cuentaId) params = params.set('cuentaId', cuentaId.toString());
+    if (referencia) params = params.set('referencia', referencia);
+
+    // POST a /compras/{id}/pagos
+    return this.http.post<CompraResponse>(`${this.apiUrl}/${compraId}/pagos`, null, { params });
   }
 
   /**
@@ -30,7 +46,6 @@ export class CompraService {
 
   /**
    * Obtiene una compra específica por su ID
-   * NOTA: Renombrado a 'obtenerPorId' para coincidir con tu Componente
    */
   obtenerPorId(id: number): Observable<CompraResponse> {
     return this.http.get<CompraResponse>(`${this.apiUrl}/${id}`);
@@ -52,8 +67,15 @@ export class CompraService {
   }
 
   /**
-   * Anular una compra (para el botón de eliminar)
-   * Esto revertirá el stock en el backend si tienes la lógica implementada
+   * ✅ NUEVO: Listar facturas vinculadas a un Código de Importación (Texto)
+   * Útil para ver qué facturas dicen "2026-01" antes de crear la carpeta
+   */
+  listarPorImportacion(codImportacion: string): Observable<CompraResponse[]> {
+    return this.http.get<CompraResponse[]>(`${this.apiUrl}/importacion/${codImportacion}`);
+  }
+
+  /**
+   * Eliminar/Anular compra (si aplica lógica en backend)
    */
   anular(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);

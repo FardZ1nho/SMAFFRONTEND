@@ -15,8 +15,14 @@ import { ProductoService } from '../../../services/producto-service';
 import { AlmacenService } from '../../../services/almacen-service';
 import { CuentaBancariaService } from '../../../services/cuenta-bancaria-service';
 
-// MODELOS
-import { CompraRequest, TipoPago, MetodoPago, PagoCompraRequest } from '../../../models/compra';
+// MODELOS (Asegúrate de importar las nuevas interfaces)
+import { 
+  CompraRequest, 
+  TipoPago, 
+  MetodoPago, 
+  PagoCompraRequest 
+} from '../../../models/compra';
+
 import { Proveedor } from '../../../models/proveedor';
 import { Almacen } from '../../../models/almacen';
 import { CuentaBancaria } from '../../../models/cuenta-bancaria';
@@ -41,17 +47,17 @@ export class CompraFormComponent implements OnInit {
   // LISTAS DE COMPROBANTES
   comprobantesBien = [
     { valor: 'FACTURA_ELECTRONICA', texto: 'FACTURA ELECTRÓNICA' },
-    { valor: 'FACTURA_COMERCIAL', texto: 'FACTURA COMERCIAL (IMPORTACIÓN)' }, // ⚠️ Valor clave
+    { valor: 'FACTURA_COMERCIAL', texto: 'FACTURA COMERCIAL (IMPORTACIÓN)' }, // ⚠️ Valor clave para vincular carpeta
     { valor: 'BOLETA', texto: 'BOLETA DE VENTA' },
     { valor: 'GUIA_REMISION', texto: 'GUIA DE REMISION' },
-    { valor: 'NOTA_DE_VENTA', texto: 'NOTA DE VENTA' },
+    { valor: 'NOTA_VENTA', texto: 'NOTA DE VENTA' },
     { valor: 'OTROS', texto: 'OTROS' }
   ];
 
   comprobantesServicio = [
     { valor: 'FACTURA_ELECTRONICA', texto: 'FACTURA ELECTRÓNICA' },
     { valor: 'BOLETA', texto: 'BOLETA DE VENTA' },
-    { valor: 'RECIBO_POR_HONORARIOS', texto: 'RECIBO POR HONORARIOS' },
+    { valor: 'RECIBO_HONORARIOS', texto: 'RECIBO POR HONORARIOS' },
     { valor: 'RECIBO_SIMPLE', texto: 'RECIBO SIMPLE' },
     { valor: 'OTROS', texto: 'OTROS' }
   ];
@@ -59,10 +65,12 @@ export class CompraFormComponent implements OnInit {
   listaComprobantes = this.comprobantesBien;
 
   // GESTIÓN DE PAGO
-  tipoPago: TipoPago = TipoPago.CONTADO;
+  tipoPago: TipoPago = TipoPago.CONTADO; // Valor por defecto
   
+  // Inicializamos el objeto de pago
+// Inicializamos el objeto de pago con TRANSFERENCIA por defecto
   pagoActual: PagoCompraRequest = {
-    metodoPago: MetodoPago.EFECTIVO,
+    metodoPago: MetodoPago.TRANSFERENCIA, // ✅ CAMBIADO: Ahora por defecto es Transferencia
     monto: 0,
     moneda: 'PEN',
     cuentaOrigenId: undefined,
@@ -79,12 +87,18 @@ export class CompraFormComponent implements OnInit {
   // MODELO INICIAL
   compra: CompraRequest = {
     tipoCompra: 'BIEN',
-    tipoComprobante: 'FACTURA_ELECTRONICA',
+    // Casting forzado para evitar error de string vs literal type inicial
+    tipoComprobante: 'FACTURA_ELECTRONICA' as any, 
     tipoPago: TipoPago.CONTADO,
     serie: '',
     numero: '',
-    codImportacion: '', // ✅ Inicializar vacío
-    fechaEmision: new Date().toISOString().split('T')[0],
+    
+    // ✅ CAMPOS DE IMPORTACIÓN
+    codImportacion: '', 
+    pesoNetoKg: 0,
+    bultos: 0,
+
+    fechaEmision: new Date(), // Cambiado a Date directo si tu modelo usa Date
     proveedorId: 0,
     moneda: 'PEN',
     tipoCambio: 3.75,
@@ -106,7 +120,7 @@ export class CompraFormComponent implements OnInit {
 
   busquedaProducto: string = '';
   productosFiltrados: any[] = [];
-  itemsAgregados: any[] = [];
+  itemsAgregados: any[] = []; // Array temporal para la tabla visual
 
   constructor(
     private compraService: CompraService,
@@ -143,9 +157,10 @@ export class CompraFormComponent implements OnInit {
 
     if (tipo === 'BIEN') {
       this.listaComprobantes = this.comprobantesBien;
-      this.compra.tipoComprobante = 'FACTURA_ELECTRONICA';
+      this.compra.tipoComprobante = 'FACTURA_ELECTRONICA' as any;
       this.compra.detraccionPorcentaje = 0;
       this.compra.detraccionMonto = 0;
+      // Asignar almacén por defecto a items existentes
       if (this.almacenes.length > 0) {
         this.itemsAgregados.forEach(i => {
           if (!i.almacenId) i.almacenId = this.almacenes[0].id;
@@ -153,23 +168,23 @@ export class CompraFormComponent implements OnInit {
       }
     } else {
       this.listaComprobantes = this.comprobantesServicio;
-      this.compra.tipoComprobante = 'RECIBO_POR_HONORARIOS';
+      this.compra.tipoComprobante = 'RECIBO_HONORARIOS' as any;
       this.compra.percepcion = 0;
       this.itemsAgregados.forEach(i => i.almacenId = null);
     }
     this.recalcularTotales();
   }
 
-  // ✅ LOGICA DE LIMPIEZA CORREGIDA
+  // ✅ LOGICA DE LIMPIEZA
   onTipoComprobanteChange() {
-    console.log('🔄 Cambio de Comprobante:', this.compra.tipoComprobante);
-    
     // Solo borramos el código si NO es Factura Comercial
     if (this.compra.tipoComprobante !== 'FACTURA_COMERCIAL') {
       if(this.compra.codImportacion) {
         console.warn('🗑️ Limpiando código de importación porque cambió el tipo');
       }
       this.compra.codImportacion = '';
+      this.compra.pesoNetoKg = 0;
+      this.compra.bultos = 0;
     }
   }
 
@@ -212,7 +227,9 @@ export class CompraFormComponent implements OnInit {
       width: '90%', height: '90vh', disableClose: true, data: { modo: 'crear' }
     });
     dialogRef.afterClosed().subscribe(result => {
-      if (result === true) { }
+      if (result === true) { 
+        // Opcional: Recargar o buscar el producto creado
+      }
     });
   }
 
@@ -230,8 +247,9 @@ export class CompraFormComponent implements OnInit {
 
   // --- GESTIÓN DE ITEMS ---
   agregarProducto(prod: any) {
+    // Si hay almacenes, usar el primero por defecto
     const almacenDefault = (this.compra.tipoCompra === 'BIEN' && this.almacenes.length > 0)
-      ? this.almacenes[0].id : null;
+      ? this.almacenes[0].id : undefined;
 
     const precioBase = prod.precioVenta || 0;
 
@@ -258,6 +276,7 @@ export class CompraFormComponent implements OnInit {
     } else {
       item.costoConIgv = item.precioUnitario * TASA_IGV;
     }
+    // Redondeo visual
     item.precioUnitario = Number(item.precioUnitario.toFixed(4));
     item.costoConIgv = Number(item.costoConIgv.toFixed(2));
     this.recalcularTotales();
@@ -288,9 +307,11 @@ export class CompraFormComponent implements OnInit {
       this.compra.detraccionMonto = 0;
     }
 
+    // Actualizar monto de pago sugerido si es al contado
     if (this.tipoPago === TipoPago.CONTADO) {
       this.pagoActual.monto = Number(this.compra.total.toFixed(2));
     } else {
+      // Si es crédito y el monto actual supera el total, ajustarlo a 0
       if (this.pagoActual.monto > this.compra.total) {
         this.pagoActual.monto = 0; 
       }
@@ -321,10 +342,17 @@ export class CompraFormComponent implements OnInit {
     }
 
     // ✅ 5. VALIDACIÓN CRÍTICA DE IMPORTACIÓN
-    if (this.compra.tipoComprobante === 'FACTURA_COMERCIAL' && !this.compra.codImportacion) {
-      // Advertencia si el usuario olvidó poner el código
-      if (!confirm("⚠️ Estás registrando una Factura de Importación SIN Código (ID). \n\nSe guardará como 'SIN_AGRUPAR'. ¿Estás seguro?")) {
-        return; // Cancela el guardado para que el usuario ponga el código
+    if (this.compra.tipoComprobante === 'FACTURA_COMERCIAL') {
+      if (!this.compra.codImportacion) {
+        if (!confirm("⚠️ Estás registrando una Factura de Importación SIN Código (ID).\n\nSe guardará como 'SIN_AGRUPAR'. ¿Estás seguro?")) {
+          return;
+        }
+      }
+      // Validar Peso (Sugerencia)
+      if ((!this.compra.pesoNetoKg || this.compra.pesoNetoKg <= 0) && this.compra.codImportacion) {
+         if(!confirm("⚠️ Estás registrando una importación SIN PESO (0 Kg).\n\nEsto hará que el prorrateo de flete sea CERO para esta factura. ¿Deseas continuar?")) {
+           return;
+         }
       }
     }
 
@@ -336,17 +364,17 @@ export class CompraFormComponent implements OnInit {
       return alert("⚠️ Una compra al CONTADO debe tener un monto de pago.");
     }
 
+    // ✅ CORRECCIÓN CRÍTICA DE TIPOS AQUÍ
+    // Usamos 'undefined' en lugar de 'null' para el almacénId
     this.compra.detalles = this.itemsAgregados.map(item => ({
       productoId: item.productoId,
-      almacenId: item.almacenId ? Number(item.almacenId) : null,
+      almacenId: item.almacenId ? Number(item.almacenId) : undefined, // <-- FIXED: undefined en vez de null
       cantidad: item.cantidad,
       precioUnitario: item.precioUnitario
     }));
 
-    // 🕵️‍♂️ DEBUG FINAL: Verificar qué se envía
     console.log('🚀 ENVIANDO AL BACKEND:', this.compra); 
-    console.log('📌 COD IMPORTACION:', this.compra.codImportacion);
-
+    
     this.compraService.registrarCompra(this.compra).subscribe({
       next: () => {
         alert("✅ Compra registrada correctamente.");
@@ -354,13 +382,20 @@ export class CompraFormComponent implements OnInit {
       },
       error: (err) => {
         console.error(err);
-        alert("❌ Error: " + (err.error?.message || err.message));
+        const msg = err.error?.message || err.message || 'Error desconocido';
+        alert("❌ Error: " + msg);
       }
     });
   }
 
-  getSimboloMoneda(): string { return this.compra.moneda === 'USD' ? '$' : 'S/'; }
-  cancelar() { this.router.navigate(['/compras']); }
+  // ✅ CORRECCIÓN DE SINTAXIS (Estaba roto el return)
+  getSimboloMoneda(): string { 
+    return this.compra.moneda === 'USD' ? '$' : 'S/'; 
+  }
+
+  cancelar() { 
+    this.router.navigate(['/compras']); 
+  }
   
   getSaldoPendiente(): number {
     return Math.max(0, this.compra.total - this.pagoActual.monto);

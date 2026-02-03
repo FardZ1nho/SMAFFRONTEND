@@ -61,37 +61,67 @@
                         </div>
                     </div>
 
-                    <div class="form-group-custom">
+                    <div class="form-group-custom product-search-group">
                         <label class="input-label-header">
                             <mat-icon>inventory_2</mat-icon> PRODUCTO:
                         </label>
-                        <div class="select-wrapper">
-                            <select [(ngModel)]="productoId" name="producto" (ngModelChange)="onProductoChange()"
-                                [disabled]="!almacenOrigenId" class="custom-input">
-                                <option [ngValue]="null">
-                                    {{ almacenOrigenId ? '-- Seleccionar Producto --' : '-- Seleccione Origen Primero
-                                    --' }}
-                                </option>
-                                <option *ngFor="let producto of productos" [ngValue]="producto.id">
-                                    {{ producto.nombre }} ({{ producto.codigo }})
-                                </option>
-                            </select>
+
+                        <div class="search-wrapper" *ngIf="!productoSeleccionado">
+                            <div class="input-icon-wrap">
+                                <mat-icon class="search-icon">search</mat-icon>
+                                <input type="text" 
+                                       class="custom-input search-input" 
+                                       placeholder="Escribe nombre o código del producto..." 
+                                       [(ngModel)]="busquedaProducto" 
+                                       name="busqueda"
+                                       (input)="buscarProducto()"
+                                       [disabled]="!almacenOrigenId"
+                                       autocomplete="off">
+                            </div>
+                            
+                            <div class="hint-text" *ngIf="!almacenOrigenId">
+                                * Selecciona un almacén de origen primero
+                            </div>
+
+                            <div class="search-results-list shadow-sm" *ngIf="mostrarResultados && productosSugeridos.length > 0">
+                                <div class="result-item" *ngFor="let prod of productosSugeridos" (click)="seleccionarProducto(prod)">
+                                    <div class="r-name">{{ prod.nombre }}</div>
+                                    <div class="r-code">{{ prod.codigo }}</div>
+                                </div>
+                            </div>
+                            
+                            <div class="search-results-list shadow-sm" *ngIf="mostrarResultados && productosSugeridos.length === 0">
+                                <div class="no-result-item">No se encontraron productos</div>
+                            </div>
                         </div>
 
-                        <div class="stock-status-bar" *ngIf="productoId && almacenOrigenId && !verificandoStock">
+                        <div class="selected-product-card" *ngIf="productoSeleccionado">
+                            <div class="sp-icon">
+                                <mat-icon>check</mat-icon>
+                            </div>
+                            <div class="sp-info">
+                                <div class="sp-name">{{ productoSeleccionado.nombre }}</div>
+                                <div class="sp-code">{{ productoSeleccionado.codigo }}</div>
+                            </div>
+                            <button type="button" class="btn-change" (click)="borrarSeleccionProducto()">
+                                <mat-icon>close</mat-icon>
+                            </button>
+                        </div>
+
+                        <div class="stock-status-bar" *ngIf="productoSeleccionado && !verificandoStock">
                             <div class="status-alert error" *ngIf="!existeEnOrigen">
                                 <mat-icon>block</mat-icon>
-                                <span>Este producto no está registrado en el almacén de origen.</span>
+                                <span>Este producto no existe en el origen.</span>
                             </div>
 
                             <div class="status-alert warning" *ngIf="existeEnOrigen && stockEnOrigen === 0">
                                 <mat-icon>warning</mat-icon>
-                                <span>Stock agotado en origen. No se puede realizar traslado.</span>
+                                <span>Stock agotado en origen.</span>
                             </div>
 
                             <div class="status-alert success" *ngIf="existeEnOrigen && stockEnOrigen > 0">
                                 <mat-icon>check_circle</mat-icon>
-                                <span>Disponible en Origen: <strong>{{ stockEnOrigen }} unidades</strong></span>
+                                <span>Disponible: <strong>{{ stockEnOrigen }} unidades</strong></span>
                             </div>
                         </div>
 

@@ -298,23 +298,23 @@ export class VentasComponent implements OnInit {
 
   // --- GESTIÓN PRODUCTOS ---
   agregarProducto(producto: Producto): void {
-     if (producto.stockActual <= 0) { this.mostrarNotificacion('Stock Agotado', 'error'); return; }
-     
-     const existe = this.productosEnVenta.find(p => p.producto.id === producto.id);
-     if (existe) {
-       if (existe.cantidad >= producto.stockActual) {
-          this.mostrarNotificacion('Stock máximo alcanzado', 'warning'); return;
-       }
-       existe.cantidad++;
-       this.calcularSubtotalProducto(existe);
-     } else {
-       const precioFinal = this.convertirPrecio(producto);
-       this.productosEnVenta.push({
-         producto: producto, cantidad: 1, precioUnitario: precioFinal, descuento: 0, subtotal: precioFinal
-       });
-     }
-     this.calcularTotales();
-     this.terminoBusqueda = '';
+      if (producto.stockActual <= 0) { this.mostrarNotificacion('Stock Agotado', 'error'); return; }
+      
+      const existe = this.productosEnVenta.find(p => p.producto.id === producto.id);
+      if (existe) {
+        if (existe.cantidad >= producto.stockActual) {
+           this.mostrarNotificacion('Stock máximo alcanzado', 'warning'); return;
+        }
+        existe.cantidad++;
+        this.calcularSubtotalProducto(existe);
+      } else {
+        const precioFinal = this.convertirPrecio(producto);
+        this.productosEnVenta.push({
+          producto: producto, cantidad: 1, precioUnitario: precioFinal, descuento: 0, subtotal: precioFinal
+        });
+      }
+      this.calcularTotales();
+      this.terminoBusqueda = '';
   }
 
   eliminarProducto(index: number): void {
@@ -343,11 +343,27 @@ export class VentasComponent implements OnInit {
   }
 
   // ============================================
-  // ✅ GESTIÓN DE PAGOS MÚLTIPLES
+  // ✅ GESTIÓN DE PAGOS MÚLTIPLES Y HELPERS
   // ============================================
 
   esPagoDigital(metodo: MetodoPago): boolean {
     return [MetodoPago.YAPE, MetodoPago.PLIN, MetodoPago.TRANSFERENCIA, MetodoPago.TARJETA].includes(metodo);
+  }
+
+  // ✅ NUEVO: Seleccionar texto al hacer click (solución al 0)
+  seleccionarTexto(event: any) {
+    event.target.select();
+  }
+
+  // ✅ NUEVO: Calcular monto restante
+  getMontoRestante(): number {
+    const restante = this.total - this.totalPagadoAcumulado;
+    return restante > 0 ? Number(restante.toFixed(2)) : 0;
+  }
+
+  // ✅ NUEVO: Llenar el monto automáticamente con el botón TODO
+  fijarMontoCompleto() {
+    this.pagoActual.monto = this.getMontoRestante();
   }
 
   agregarPagoALista(): void {

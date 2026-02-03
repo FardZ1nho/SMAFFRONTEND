@@ -17,7 +17,13 @@ export interface DashboardResponseDTO {
   cantidadVentasMes: number;
   valorInventario: number;
 }
-
+export interface ProductoVendidoDTO {
+    id: number;
+    nombreProducto: string; // Antes seguro tenías 'nombre'
+    codigo: string;
+    cantidad: number;
+    total: number;
+}
 export interface MetricaCard {
   titulo: string;
   valor: string | number;

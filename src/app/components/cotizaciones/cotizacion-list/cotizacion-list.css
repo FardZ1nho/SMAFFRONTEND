@@ -1,0 +1,22 @@
+.container { padding: 24px; }
+
+.header {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
+}
+
+.codigo-badge {
+  font-family: monospace; font-weight: bold; background: #f1f5f9; padding: 4px 8px; border-radius: 4px; color: #475569;
+}
+
+.cliente-row { display: flex; flex-direction: column; }
+.cliente-row .nombre { font-weight: 500; }
+.cliente-row .doc { font-size: 11px; color: #64748b; }
+
+.monto { font-weight: 700; color: #0f172a; }
+
+/* Badges de Estado */
+.badge { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; }
+.badge.ENVIADA { background: #dbeafe; color: #1e40af; }
+.badge.APROBADA { background: #dcfce7; color: #166534; }
+.badge.RECHAZADA { background: #fee2e2; color: #991b1b; }
+.badge.BORRADOR { background: #f3f4f6; color: #374151; }

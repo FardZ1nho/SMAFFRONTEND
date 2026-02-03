@@ -217,10 +217,19 @@
             <div class="pago-row">
               <mat-form-field appearance="outline" class="dense-input" style="flex: 1;">
                 <mat-label>Monto</mat-label>
-                <input matInput type="number" [(ngModel)]="pagoActual.monto" min="0">
+                <input matInput type="number" [(ngModel)]="pagoActual.monto" min="0" 
+                       (click)="seleccionarTexto($event)" (focus)="seleccionarTexto($event)">
+                
+                <button mat-icon-button matSuffix (click)="fijarMontoCompleto()" 
+                        matTooltip="Completar saldo restante"
+                        class="btn-suffix-discreto">
+                    <mat-icon>account_balance_wallet</mat-icon>
+                </button>
               </mat-form-field>
               
-              <button mat-mini-fab color="primary" (click)="agregarPagoALista()" [disabled]="pagoActual.monto <= 0">
+              <button mat-mini-fab color="primary" (click)="agregarPagoALista()" 
+                      [disabled]="pagoActual.monto <= 0" 
+                      class="btn-add-pago">
                 <mat-icon>add</mat-icon>
               </button>
             </div>

@@ -18,16 +18,8 @@ import { ImportacionEditarModalComponent } from '../importacion-editar-modal/imp
 import { ImportacionService } from '../../../services/importacion-service'; 
 import { ImportacionResponse, EstadoImportacion, TipoTransporte } from '../../../models/importacion';
 
-export interface ImportacionGroup {
-  id: string;
-  items: ImportacionResponse[];
-  totalFob: number;
-  totalCosto: number;
-  moneda: string; 
-  estadoGeneral: string; 
-  proveedores: string; 
-  fechaEta: Date | null;
-  expanded: boolean;
+interface ImportacionUI extends ImportacionResponse {
+  expanded?: boolean;
 }
 
 @Component({
@@ -44,8 +36,8 @@ export interface ImportacionGroup {
 })
 export class ImportacionesListComponent implements OnInit {
 
-  importaciones: ImportacionResponse[] = [];
-  gruposFiltrados: ImportacionGroup[] = [];
+  importaciones: ImportacionUI[] = [];
+  importacionesFiltradas: ImportacionUI[] = [];
   loading: boolean = true;
 
   mostrarFiltros: boolean = false;
@@ -72,7 +64,7 @@ export class ImportacionesListComponent implements OnInit {
     this.loading = true;
     this.importacionService.listarTodas().subscribe({
       next: (data) => {
-        this.importaciones = data;
+        this.importaciones = data.map(i => ({ ...i, expanded: false }));
         this.filtrar(); 
         this.loading = false;
         this.cdr.detectChanges();
@@ -80,7 +72,6 @@ export class ImportacionesListComponent implements OnInit {
       error: (err) => {
         console.error('Error cargando importaciones', err);
         this.loading = false;
-        this.cdr.detectChanges();
       }
     });
   }
@@ -91,27 +82,23 @@ export class ImportacionesListComponent implements OnInit {
     if (this.filtroTexto.trim()) {
       const texto = this.filtroTexto.toLowerCase();
       lista = lista.filter(imp => 
-        ((imp.compra as any).codImportacion && (imp.compra as any).codImportacion.toLowerCase().includes(texto)) ||
-        (imp.compra.nombreProveedor && imp.compra.nombreProveedor.toLowerCase().includes(texto)) ||
-        (imp.compra.numero && imp.compra.numero.toLowerCase().includes(texto)) ||
+        (imp.codigoAgrupador && imp.codigoAgrupador.toLowerCase().includes(texto)) ||
+        (imp.numeroDua && imp.numeroDua.toLowerCase().includes(texto)) ||
         (imp.trackingNumber && imp.trackingNumber.toLowerCase().includes(texto)) ||
-        (imp.numeroDua && imp.numeroDua.toLowerCase().includes(texto))
+        (imp.facturasComerciales && imp.facturasComerciales.some(f => 
+            f.nombreProveedor.toLowerCase().includes(texto) || 
+            f.numero.toLowerCase().includes(texto)
+        ))
       );
     }
 
-    if (this.filtroEstado !== 'TODOS') {
-      lista = lista.filter(imp => imp.estado === this.filtroEstado);
-    }
-
-    if (this.filtroTransporte !== 'TODOS') {
-      lista = lista.filter(imp => imp.tipoTransporte === this.filtroTransporte);
-    }
+    if (this.filtroEstado !== 'TODOS') lista = lista.filter(imp => imp.estado === this.filtroEstado);
+    if (this.filtroTransporte !== 'TODOS') lista = lista.filter(imp => imp.tipoTransporte === this.filtroTransporte);
 
     if (this.filtroFechaInicio) {
       lista = lista.filter(imp => {
         if (!imp.fechaEstimadaLlegada) return false;
-        const fecha = new Date(imp.fechaEstimadaLlegada);
-        return fecha >= this.filtroFechaInicio!;
+        return new Date(imp.fechaEstimadaLlegada) >= this.filtroFechaInicio!;
       });
     }
     if (this.filtroFechaFin) {
@@ -119,86 +106,40 @@ export class ImportacionesListComponent implements OnInit {
       finDia.setHours(23, 59, 59);
       lista = lista.filter(imp => {
         if (!imp.fechaEstimadaLlegada) return false;
-        const fecha = new Date(imp.fechaEstimadaLlegada);
-        return fecha <= finDia;
+        return new Date(imp.fechaEstimadaLlegada) <= finDia;
       });
     }
 
-    this.gruposFiltrados = this.agruparImportaciones(lista);
-  }
-
-  agruparImportaciones(lista: ImportacionResponse[]): ImportacionGroup[] {
-    const gruposMap = new Map<string, ImportacionGroup>();
-
-    lista.forEach(item => {
-      let codigo = (item.compra as any).codImportacion;
-      const key = (codigo && codigo.trim() !== '') ? codigo : 'SIN_AGRUPAR';
-
-      if (!gruposMap.has(key)) {
-        gruposMap.set(key, {
-          id: key,
-          items: [],
-          totalFob: 0,
-          totalCosto: 0,
-          moneda: item.compra.moneda,
-          estadoGeneral: item.estado,
-          proveedores: '',
-          fechaEta: item.fechaEstimadaLlegada ? new Date(item.fechaEstimadaLlegada) : null,
-          expanded: false
-        });
-      }
-
-      const grupo = gruposMap.get(key)!;
-      grupo.items.push(item);
-
-      grupo.totalFob += item.compra.total;
-      grupo.totalCosto += (item.compra.total + this.calcularCostosExtra(item));
-      
-      if (item.fechaEstimadaLlegada) {
-        const itemDate = new Date(item.fechaEstimadaLlegada);
-        if (!grupo.fechaEta || itemDate < grupo.fechaEta) {
-          grupo.fechaEta = itemDate;
-        }
-      }
-    });
-
-    return Array.from(gruposMap.values()).map(grupo => {
-      const uniqueProveedores = [...new Set(grupo.items.map(i => i.compra.nombreProveedor))];
-      grupo.proveedores = uniqueProveedores.join(', ');
-      return grupo;
-    });
+    this.importacionesFiltradas = lista;
   }
 
   toggleFiltros(): void { this.mostrarFiltros = !this.mostrarFiltros; }
   limpiarBusqueda(): void { this.filtroTexto = ''; this.filtrar(); }
   limpiarFiltros(): void { 
-    this.filtroEstado = 'TODOS'; 
-    this.filtroTransporte = 'TODOS'; 
-    this.filtroFechaInicio = null; 
-    this.filtroFechaFin = null; 
-    this.filtroTexto = ''; 
+    this.filtroEstado = 'TODOS'; this.filtroTransporte = 'TODOS'; 
+    this.filtroFechaInicio = null; this.filtroFechaFin = null; this.filtroTexto = ''; 
     this.filtrar(); 
   }
-  toggleGroup(group: ImportacionGroup): void { group.expanded = !group.expanded; }
+  
+  toggleGroup(imp: ImportacionUI): void { imp.expanded = !imp.expanded; }
 
-  editarImportacion(id: number): void {
-    const importacion = this.importaciones.find(i => i.id === id);
-    if (!importacion) return;
-    
+  editarImportacion(imp: ImportacionResponse): void {
     const dialogRef = this.dialog.open(ImportacionEditarModalComponent, {
-      width: '1200px', maxWidth: '95vw', data: importacion, disableClose: true
+      width: '1200px', maxWidth: '95vw', data: imp, disableClose: true
     });
     dialogRef.afterClosed().subscribe(result => { if (result === true) this.cargarDatos(); });
   }
+
+  // --- HELPERS VISUALES (Estos son los que te faltaban) ---
 
   getClassEstado(estado: string): string {
     switch (estado) {
       case 'ORDENADO': return 'badge-ordenado';
       case 'EN_TRANSITO': return 'badge-transito';
       case 'EN_ADUANAS': return 'badge-aduanas';
-      case 'NACIONALIZADO': return 'badge-nacionalizado';
       case 'EN_ALMACEN': return 'badge-almacen';
-      case 'CERRADO': return 'badge-cerrado';
+      case 'CERRADA': return 'badge-cerrado';
+      case 'LIQUIDADA': return 'badge-liquidada';
       default: return '';
     }
   }
@@ -212,11 +153,33 @@ export class ImportacionesListComponent implements OnInit {
     return 'help_outline';
   }
 
-  calcularCostosExtra(imp: ImportacionResponse): number {
-    return (imp.costoFlete || 0) + 
-           (imp.costoSeguro || 0) + 
-           (imp.impuestosAduanas || 0) + 
-           (imp.gastosOperativos || 0) + 
-           (imp.costoTransporteLocal || 0);
+  getProveedoresResumen(imp: ImportacionResponse): string {
+    if (!imp.facturasComerciales || imp.facturasComerciales.length === 0) return 'Sin Facturas';
+    const nombres = [...new Set(imp.facturasComerciales.map(f => f.nombreProveedor))];
+    return nombres.join(', ');
+  }
+
+  getTotalCostoEstimado(imp: ImportacionResponse): number {
+      const fob = imp.sumaFobTotal || 0;
+      const gastos = (imp.totalFleteInternacional || 0) + 
+                     (imp.totalSeguro || 0) + 
+                     (imp.totalGastosAduana || 0) +
+                     (imp.totalGastosAlmacen || 0) +
+                     (imp.totalTransporteLocal || 0) +
+                     (imp.otrosGastosGlobales || 0);
+      return fob + gastos;
+  }
+
+  // ✅ ESTA ES LA FUNCIÓN CRÍTICA QUE FALTABA
+  isStepComplete(estadoActual: string, paso: string): boolean {
+    const orden = ['ORDENADO', 'EN_TRANSITO', 'EN_ADUANAS', 'EN_ALMACEN', 'CERRADA', 'LIQUIDADA'];
+    let estadoNormalizado = estadoActual;
+    if (estadoActual === 'NACIONALIZADO') estadoNormalizado = 'EN_ADUANAS'; 
+    
+    const idxActual = orden.indexOf(estadoNormalizado);
+    const idxPaso = orden.indexOf(paso);
+
+    if (idxActual === -1) return false;
+    return idxActual >= idxPaso;
   }
 }

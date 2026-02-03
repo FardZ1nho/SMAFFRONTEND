@@ -28,6 +28,7 @@
   </div>
 
   <div *ngIf="!cargando && !error" class="productos-lista">
+    
     <div *ngIf="productos.length === 0" class="empty-estado">
       <span class="icono-vacio">
         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -41,15 +42,19 @@
 
     <div *ngIf="productos.length > 0">
       <div *ngFor="let producto of productos; let i = index" class="producto-item">
+        
         <div class="ranking">
-          <span class="numero-ranking">{{ i + 1 }}</span>
+          <span class="numero-ranking" [ngClass]="'rank-' + (i + 1)">{{ i + 1 }}</span>
         </div>
+
         <div class="producto-info">
-          <h4 class="producto-nombre">{{ producto.nombre }}</h4>
-          <p class="producto-meta">{{ producto.cantidadVendida }} unidades vendidas</p>
+          <h4 class="producto-nombre">{{ producto.nombreProducto }}</h4>
+          
+          <p class="producto-meta">{{ producto.cantidad }} unidades vendidas</p>
         </div>
+
         <div class="producto-valor">
-          <span class="total-ventas">{{ formatearMoneda(producto.totalVentas) }}</span>
+          <span class="total-ventas">{{ formatearMoneda(producto.total) }}</span>
         </div>
       </div>
     </div>

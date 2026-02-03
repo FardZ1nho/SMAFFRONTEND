@@ -5,7 +5,12 @@
       <mat-icon>arrow_back</mat-icon>
     </button>
     <div class="header-content">
-      <h1>Detalle de {{ compra.tipoCompra | titlecase }}</h1>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <h1>Detalle de {{ compra.tipoCompra | titlecase }}</h1>
+        <span class="status-badge" [ngClass]="compra.estado">
+          {{ compra.estado }}
+        </span>
+      </div>
       <h3>{{ compra.tipoComprobante }} {{ compra.serie }}-{{ compra.numero }}</h3>
     </div>
     <button class="btn-print" (click)="imprimir()"><mat-icon>print</mat-icon> Imprimir</button>
@@ -14,6 +19,7 @@
   <div class="content-wrapper">
     
     <div class="info-column">
+      
       <div class="card info-card">
         <h3><mat-icon>store</mat-icon> Proveedor</h3>
         <div class="info-row">
@@ -29,31 +35,106 @@
       <div class="card info-card">
         <h3><mat-icon>event</mat-icon> Emisión</h3>
         <div class="info-row">
-          <span class="label">Fecha:</span>
+          <span class="label">Fecha Emisión:</span>
           <span class="value">{{ compra.fechaEmision | date:'dd/MM/yyyy' }}</span>
+        </div>
+        <div class="info-row" *ngIf="compra.fechaVencimiento">
+          <span class="label">Vencimiento:</span>
+          <span class="value">{{ compra.fechaVencimiento | date:'dd/MM/yyyy' }}</span>
         </div>
         <div class="info-row">
           <span class="label">Moneda:</span>
           <span class="value">{{ compra.moneda }} (TC: {{compra.tipoCambio}})</span>
         </div>
+        <div class="info-row" *ngIf="compra.observaciones">
+          <span class="label">Observaciones:</span>
+          <span class="value" style="font-size: 12px;">{{ compra.observaciones }}</span>
+        </div>
+      </div>
+
+      <div class="card info-card import-highlight" *ngIf="compra.codImportacion">
+        <h3><mat-icon>local_shipping</mat-icon> Datos de Importación</h3>
+        
+        <div class="info-row">
+          <span class="label">Carpeta Logística:</span>
+          <span class="value link-action" (click)="verImportacion()">
+            {{ compra.codImportacion }} <mat-icon class="tiny-icon">launch</mat-icon>
+          </span>
+        </div>
+        
+        <div class="info-row" *ngIf="compra.pesoNetoKg">
+          <span class="label">Peso Neto:</span>
+          <span class="value">{{ compra.pesoNetoKg | number:'1.2-2' }} Kg</span>
+        </div>
+
+        <div class="divider-dashed"></div>
+
+        <div class="prorrateo-breakdown" *ngIf="compra.costoTotalImportacion">
+          <p class="breakdown-title">Estructura de Costos Asignados:</p>
+          
+          <div class="breakdown-row">
+            <span>+ Flete Int.:</span>
+            <span class="amount">{{ compra.moneda }} {{ compra.prorrateoFlete | number:'1.2-2' }}</span>
+          </div>
+          
+          <div class="breakdown-row">
+            <span>+ Seguro:</span>
+            <span class="amount">{{ compra.moneda }} {{ compra.prorrateoSeguro | number:'1.2-2' }}</span>
+          </div>
+          
+          <div class="breakdown-row">
+            <span>+ Gastos (Aduana/Alm):</span>
+            <span class="amount">{{ compra.moneda }} {{ compra.prorrateoGastosAduanas | number:'1.2-2' }}</span>
+          </div>
+
+          <div class="divider-solid"></div>
+
+          <div class="total-landed">
+            <span class="label">COSTO REAL (LANDED):</span>
+            <span class="value">{{ compra.moneda }} {{ compra.costoTotalImportacion | number:'1.2-2' }}</span>
+          </div>
+        </div>
+
+        <div *ngIf="!compra.costoTotalImportacion" class="alert-pending">
+          <mat-icon>info</mat-icon> Costos no prorrateados aún.
+        </div>
       </div>
       
-      <div class="card info-card" *ngIf="compra.percepcion > 0 || compra.detraccionMonto > 0">
+      <div class="card info-card" *ngIf="(compra.percepcion || 0) > 0 || (compra.detraccionMonto || 0) > 0">
          <h3><mat-icon>account_balance</mat-icon> Impuestos</h3>
-         <div class="info-row" *ngIf="compra.percepcion > 0">
+         <div class="info-row" *ngIf="(compra.percepcion || 0) > 0">
            <span class="label">Percepción:</span>
            <span class="value">{{ compra.percepcion | number:'1.2-2' }}</span>
          </div>
-         <div class="info-row" *ngIf="compra.detraccionMonto > 0">
+         <div class="info-row" *ngIf="(compra.detraccionMonto || 0) > 0">
            <span class="label">Detracción ({{compra.detraccionPorcentaje}}%):</span>
            <span class="value">{{ compra.detraccionMonto | number:'1.2-2' }}</span>
          </div>
       </div>
+
+      <div class="card info-card" *ngIf="compra.pagos && compra.pagos.length > 0">
+        <h3><mat-icon>payments</mat-icon> Historial de Pagos</h3>
+        <div class="payments-list">
+          <div class="payment-item" *ngFor="let p of compra.pagos">
+            <div class="pay-header">
+              <span class="pay-date">{{ p.fechaPago | date:'dd/MM/yyyy' }}</span>
+              <span class="pay-amount">{{ p.moneda }} {{ p.monto | number:'1.2-2' }}</span>
+            </div>
+            <div class="pay-detail">
+              {{ p.metodoPago }} <span *ngIf="p.referencia">- Ref: {{p.referencia}}</span>
+            </div>
+            <div class="pay-account" *ngIf="p.nombreCuentaOrigen">
+              <small>{{ p.nombreCuentaOrigen }}</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
 
     <div class="products-column">
       <div class="card table-card">
-        <h3><mat-icon>shopping_cart</mat-icon> Items</h3>
+        <h3><mat-icon>shopping_cart</mat-icon> Items de la Compra</h3>
         <div class="table-responsive">
           <table class="custom-table">
             <thead>
@@ -61,18 +142,24 @@
                 <th>Descripción</th>
                 <th class="text-center">Cant.</th>
                 <th class="text-right">P. Unit.</th>
-                <th class="text-right">Total</th>
+                <th class="text-right">Total FOB</th>
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let item of compra.detalles">
                 <td>
                   <div class="prod-name">{{ item.nombreProducto }}</div>
-                  <div class="prod-code">{{ item.codigoProducto }}</div>
+                  <div class="prod-code">
+                    <mat-icon style="font-size: 10px; height: 10px; width: 10px;">qr_code</mat-icon>
+                    {{ item.codigoProducto }}
+                  </div>
+                  <div class="prod-code" *ngIf="item.nombreAlmacen" style="color: #059669;">
+                    <mat-icon style="font-size: 10px; height: 10px; width: 10px;">warehouse</mat-icon> {{ item.nombreAlmacen }}
+                  </div>
                 </td>
                 <td class="text-center">{{ item.cantidad }}</td>
-                <td class="text-right">{{ item.precioUnitario | number:'1.2-2' }}</td>
-                <td class="text-right fw-bold">{{ item.importeTotal | number:'1.2-2' }}</td>
+                <td class="text-right">{{ item.precioUnitario | number:'1.2-4' }}</td>
+                <td class="text-right fw-bold">{{ item.importe | number:'1.2-2' }}</td>
               </tr>
             </tbody>
             <tfoot>
@@ -84,9 +171,25 @@
                 <td colspan="3" class="text-right label-total">IGV:</td>
                 <td class="text-right">{{ compra.igv | number:'1.2-2' }}</td>
               </tr>
+              <tr *ngIf="(compra.percepcion || 0) > 0">
+                <td colspan="3" class="text-right label-total">PERCEPCIÓN:</td>
+                <td class="text-right">{{ compra.percepcion | number:'1.2-2' }}</td>
+              </tr>
               <tr class="total-row-highlight">
-                <td colspan="3" class="text-right label-total-lg">TOTAL:</td>
-                <td class="text-right amount-total-lg">{{ compra.total | number:'1.2-2' }}</td>
+                <td colspan="3" class="text-right label-total-lg">TOTAL DOCUMENTO:</td>
+                <td class="text-right amount-total-lg">{{ compra.moneda }} {{ compra.total | number:'1.2-2' }}</td>
+              </tr>
+              
+              <tr *ngIf="(compra.montoPagado || 0) > 0">
+                <td colspan="3" class="text-right label-total text-success">PAGADO:</td>
+                <td class="text-right text-success">- {{ compra.montoPagado | number:'1.2-2' }}</td>
+              </tr>
+              
+              <tr *ngIf="(compra.saldoPendiente || 0) > 0">
+                <td colspan="3" class="text-right label-total text-danger" style="font-size: 15px;">SALDO PENDIENTE:</td>
+                <td class="text-right text-danger fw-bold" style="font-size: 15px;">
+                  {{ compra.moneda }} {{ compra.saldoPendiente | number:'1.2-2' }}
+                </td>
               </tr>
             </tfoot>
           </table>
@@ -98,5 +201,5 @@
 </div>
 
 <ng-template #loadingTemplate>
-  <div class="loading-container"><p>Cargando...</p></div>
+  <div class="loading-container"><p>Cargando información...</p></div>
 </ng-template>

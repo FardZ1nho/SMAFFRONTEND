@@ -1,1 +1,18 @@
-/* You can add global styles to this file, and also import other style files */
+/* src/styles.css */
+
+html {
+    /* El tamaño por defecto es 16px. */
+    /* 14.4px es exactamente el 90% de 16px. */
+    font-size: 14.4px; 
+    
+    height: 100%; /* Asegura que ocupe todo el alto */
+}
+
+body {
+    height: 100%;
+    margin: 0;
+    font-family: Roboto, "Helvetica Neue", sans-serif;
+    
+    /* ELIMINA el zoom que pusiste antes */
+    /* zoom: 0.9;  <-- Bórralo */
+}

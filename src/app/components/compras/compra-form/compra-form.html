@@ -31,25 +31,55 @@
           </select>
         </div>
 
-        <div class="grid-input" *ngIf="compra.tipoComprobante === 'FACTURA_COMERCIAL'">
-          <label class="section-title" style="color: #2563eb;">ID Importación</label>
-          <input type="text" class="form-control-smaf full-width" 
-                 [(ngModel)]="compra.codImportacion" 
-                 placeholder="Ej. IMP-2026-001">
+        <div class="grid-input" *ngIf="compra.tipoComprobante === 'FACTURA_COMERCIAL'" style="grid-column: span 3;">
+             <div style="display: flex; gap: 15px;">
+                <div style="flex: 2;">
+                  <label class="section-title" style="color: #2563eb;">📂 ID Importación (Agrupador)</label>
+                  <input type="text" class="form-control-smaf full-width" 
+                         [(ngModel)]="compra.codImportacion" 
+                         placeholder="Ej. IMP-2026-001"
+                         style="border-color: #2563eb; background-color: #eff6ff;">
+                </div>
+                <div style="flex: 1;">
+                  <label class="section-title">Peso Neto (Kg)</label>
+                  <input type="number" class="form-control-smaf full-width" 
+                         [(ngModel)]="compra.pesoNetoKg" placeholder="0.00">
+                </div>
+                <div style="flex: 1;">
+                   <label class="section-title">N° Bultos</label>
+                   <input type="number" class="form-control-smaf full-width" 
+                          [(ngModel)]="compra.bultos" placeholder="0">
+                 </div>
+             </div>
         </div>
 
-        <div class="grid-input">
+        <div class="grid-input" *ngIf="compra.tipoComprobante !== 'FACTURA_COMERCIAL'">
           <label class="section-title">Serie <span class="text-danger">*</span></label>
           <input type="text" class="form-control-smaf full-width" [(ngModel)]="compra.serie" placeholder="F001">
         </div>
-        <div class="grid-input">
+        <div class="grid-input" *ngIf="compra.tipoComprobante !== 'FACTURA_COMERCIAL'">
           <label class="section-title">Número <span class="text-danger">*</span></label>
           <input type="text" class="form-control-smaf full-width" [(ngModel)]="compra.numero" placeholder="000001">
         </div>
-        <div class="grid-input">
+        <div class="grid-input" *ngIf="compra.tipoComprobante !== 'FACTURA_COMERCIAL'">
           <label class="section-title">Fecha Emisión</label>
           <input type="date" class="form-control-smaf full-width" [(ngModel)]="compra.fechaEmision">
         </div>
+      </div>
+
+      <div class="config-row four-cols" *ngIf="compra.tipoComprobante === 'FACTURA_COMERCIAL'">
+        <div class="grid-input">
+            <label class="section-title">Serie <span class="text-danger">*</span></label>
+            <input type="text" class="form-control-smaf full-width" [(ngModel)]="compra.serie" placeholder="F001">
+          </div>
+          <div class="grid-input">
+            <label class="section-title">Número <span class="text-danger">*</span></label>
+            <input type="text" class="form-control-smaf full-width" [(ngModel)]="compra.numero" placeholder="000001">
+          </div>
+          <div class="grid-input">
+            <label class="section-title">Fecha Emisión</label>
+            <input type="date" class="form-control-smaf full-width" [(ngModel)]="compra.fechaEmision">
+          </div>
       </div>
 
       <div class="config-row custom-grid-2">

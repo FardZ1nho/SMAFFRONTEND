@@ -56,7 +56,76 @@
 .custom-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
 .warehouses-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 
-/* NUEVOS ESTILOS: ALERTAS DE STOCK */
+/* =========================================================
+   BUSCADOR DE PRODUCTOS Y RESULTADOS
+   ========================================================= */
+.product-search-group { position: relative; }
+
+.search-wrapper { position: relative; }
+
+.input-icon-wrap { position: relative; }
+.search-icon {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    color: var(--text-sub); font-size: 20px; width: 20px; height: 20px;
+    pointer-events: none;
+}
+.search-input { padding-left: 40px; } /* Espacio para la lupa */
+
+.hint-text { font-size: 11px; color: #94a3b8; margin-top: 4px; font-style: italic; }
+
+/* Lista Flotante */
+.search-results-list {
+    position: absolute; top: 100%; left: 0; right: 0;
+    background: white; border: 1px solid var(--border); border-radius: 8px;
+    margin-top: 4px; z-index: 100;
+    max-height: 250px; overflow-y: auto;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.result-item {
+    padding: 10px 16px; border-bottom: 1px solid #f8fafc; cursor: pointer;
+    transition: background 0.1s;
+}
+.result-item:hover { background-color: #f1f5f9; }
+.result-item:last-child { border-bottom: none; }
+
+.r-name { font-weight: 600; font-size: 14px; color: var(--text-main); }
+.r-code { font-size: 11px; color: var(--text-sub); font-family: monospace; }
+
+.no-result-item { padding: 12px; text-align: center; color: var(--text-sub); font-size: 13px; }
+
+/* =========================================================
+   PRODUCTO SELECCIONADO (TARJETA EN FORMULARIO)
+   ========================================================= */
+.selected-product-card {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px;
+    border: 1px solid var(--primary); /* Borde azul para destacar selección */
+    background-color: #eff6ff;
+    border-radius: 10px;
+}
+
+.sp-icon {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--primary); color: white;
+    display: flex; align-items: center; justify-content: center;
+}
+.sp-icon mat-icon { font-size: 18px; width: 18px; height: 18px; }
+
+.sp-info { flex: 1; }
+.sp-name { font-weight: 700; font-size: 14px; color: var(--text-main); }
+.sp-code { font-size: 12px; color: var(--text-sub); }
+
+.btn-change {
+    background: none; border: none; cursor: pointer;
+    color: #94a3b8; display: flex; align-items: center;
+    padding: 4px; border-radius: 50%; transition: all 0.2s;
+}
+.btn-change:hover { background-color: #dbeafe; color: var(--primary); }
+
+/* ========================================================= */
+
+/* ALERTAS DE STOCK */
 .stock-status-bar { margin-top: 8px; }
 .status-alert {
     display: flex; align-items: center; gap: 8px;
@@ -113,97 +182,52 @@
     padding: 12px 16px; border-radius: 10px; display: flex; align-items: center; gap: 12px; color: #dc2626;
 }
 .btn-close-error { background: none; border: none; cursor: pointer; color: #dc2626; }
-/* DISEÑO MEJORADO PARA EL RESUMEN DEL PRODUCTO */
 
+/* DISEÑO RESUMEN PRODUCTO SIDEBAR */
 .summary-box {
     background: var(--white);
     border: 1px solid var(--border);
-    padding: 20px; /* Un poco más de espacio */
+    padding: 20px;
     border-radius: 16px;
     margin-bottom: 24px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.02);
 }
 
 .summary-box h3 {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin: 0 0 16px 0;
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--text-main);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    border-bottom: 1px solid var(--border);
-    padding-bottom: 12px;
+    display: flex; align-items: center; gap: 8px;
+    margin: 0 0 16px 0; font-size: 14px; font-weight: 700; color: var(--text-main);
+    text-transform: uppercase; letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border); padding-bottom: 12px;
 }
 
-.summary-box h3 mat-icon {
-    color: var(--primary);
-    font-size: 18px;
-    width: 18px;
-    height: 18px;
-}
+.summary-box h3 mat-icon { color: var(--primary); font-size: 18px; width: 18px; height: 18px; }
 
-/* Tarjeta Mini de Producto */
 .product-card-mini {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    background: #f8fafc;
-    border: 1px solid var(--border);
-    padding: 12px;
-    border-radius: 10px;
-    margin-bottom: 16px;
+    display: flex; align-items: center; gap: 12px;
+    background: #f8fafc; border: 1px solid var(--border);
+    padding: 12px; border-radius: 10px; margin-bottom: 16px;
 }
 
 .p-icon {
-    width: 42px;
-    height: 42px;
-    background: white;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-sub);
+    width: 42px; height: 42px; background: white;
+    border: 1px solid #e2e8f0; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center; color: var(--text-sub);
 }
 
-.p-info {
-    display: flex;
-    flex-direction: column;
-}
-
-.p-name {
-    font-weight: 700;
-    font-size: 14px;
-    color: var(--text-main);
-    line-height: 1.2;
-}
-
+.p-info { display: flex; flex-direction: column; }
+.p-name { font-weight: 700; font-size: 14px; color: var(--text-main); line-height: 1.2; }
 .p-sku {
-    font-size: 11px;
-    color: var(--text-sub);
-    font-family: monospace;
-    background: #e2e8f0;
-    padding: 2px 6px;
-    border-radius: 4px;
-    margin-top: 4px;
-    width: fit-content;
+    font-size: 11px; color: var(--text-sub); font-family: monospace;
+    background: #e2e8f0; padding: 2px 6px; border-radius: 4px;
+    margin-top: 4px; width: fit-content;
 }
 
 .stock-info-row {
-    display: flex;
-    justify-content: space-between;
-    font-size: 13px;
-    color: var(--text-sub);
-    padding-top: 4px;
+    display: flex; justify-content: space-between;
+    font-size: 13px; color: var(--text-sub); padding-top: 4px;
 }
+.stock-info-row strong { color: var(--text-main); font-weight: 600; }
 
-.stock-info-row strong {
-    color: var(--text-main);
-    font-weight: 600;
-}
 /* SPINNER */
 .state-container { padding: 60px; text-align: center; color: var(--text-sub); }
 

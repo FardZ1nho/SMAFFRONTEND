@@ -1,0 +1,188 @@
+/* Contenedor Principal */
+.page-container {
+  padding: 32px;
+  background-color: #f8fafc;
+  min-height: 100vh;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Header */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.title-group h1 { margin: 0; font-size: 24px; color: #1e293b; font-weight: 700; }
+.subtitle { margin: 4px 0 0; color: #64748b; font-size: 14px; }
+
+/* Grid Principal */
+.content-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr; /* Columna Izq más ancha */
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+/* Cards */
+.section-card {
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: none; /* Diseño flat */
+}
+
+mat-card-header { margin-bottom: 16px; }
+mat-card-title { font-size: 16px; font-weight: 600; color: #334155; }
+mat-icon { color: #64748b; }
+
+/* Formularios */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.col-span-2 { grid-column: span 2; }
+
+/* Caja de Agregar Producto */
+.add-product-box {
+  background: #f1f5f9;
+  padding: 20px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.row-inputs {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.full-width { width: 100%; }
+.small-input { flex: 1; }
+.medium-input { flex: 2; }
+
+.btn-add { 
+  box-shadow: none; 
+  width: 48px; height: 48px; 
+}
+
+/* Tabla de Detalles */
+.details-card {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.custom-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.custom-table th {
+  background: #f8fafc;
+  color: #475569;
+  padding: 14px;
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.custom-table td {
+  padding: 14px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+  font-size: 14px;
+  vertical-align: middle;
+}
+
+.code-badge {
+  background: #eef2ff;
+  color: #6366f1;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: monospace;
+}
+
+.product-name { font-weight: 500; }
+.font-bold { font-weight: 700; }
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+
+/* Estado Vacío */
+.empty-state {
+  text-align: center;
+  padding: 40px !important;
+  color: #94a3b8;
+}
+.empty-state mat-icon { font-size: 40px; width: 40px; height: 40px; margin-bottom: 8px; opacity: 0.5; }
+
+/* Footer y Totales */
+.footer-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-end; /* Alinea botón abajo */
+  gap: 40px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.totals-box {
+  width: 280px;
+}
+
+.total-line {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #64748b;
+}
+
+.grand-total {
+  font-size: 20px;
+  font-weight: 800;
+  color: #2563eb;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 2px solid #e2e8f0;
+}
+
+.btn-submit {
+  height: 48px;
+  padding: 0 32px;
+  font-size: 16px;
+  border-radius: 8px;
+}
+/* ... el resto del CSS que te pasé antes ... */
+
+/* Estilos para el Autocomplete */
+.product-option {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.code-text {
+  color: #6366f1;
+  font-family: monospace;
+  margin-right: 10px;
+}
+
+.name-text {
+  color: #1e293b;
+}
+
+.search-product mat-icon {
+  color: #64748b;
+}
+/* Responsive */
+@media (max-width: 900px) {
+  .content-grid { grid-template-columns: 1fr; }
+  .footer-actions { flex-direction: column; align-items: stretch; }
+  .totals-box { width: 100%; }
+}

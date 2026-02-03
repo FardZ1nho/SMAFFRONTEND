@@ -1,15 +1,11 @@
-// importacion.ts
-
-import { CompraResponse } from './compra';
-
 // --- ENUMS ---
 export enum EstadoImportacion {
   ORDENADO = 'ORDENADO',
   EN_TRANSITO = 'EN_TRANSITO',
   EN_ADUANAS = 'EN_ADUANAS',
-  NACIONALIZADO = 'NACIONALIZADO',
   EN_ALMACEN = 'EN_ALMACEN',
-  CERRADO = 'CERRADO'
+  CERRADA = 'CERRADA',
+  LIQUIDADA = 'LIQUIDADA'
 }
 
 export enum Incoterm {
@@ -22,69 +18,101 @@ export enum TipoTransporte {
   TERRESTRE = 'TERRESTRE'
 }
 
-// --- INTERFACES ---
+// ✅ NUEVA INTERFAZ: Para leer el resumen ligero que envía el Backend
+// Esto evita cargar todos los detalles de productos de cada factura
+export interface FacturaResumen {
+    id: number;
+    serie: string;
+    numero: string;
+    nombreProveedor: string;
+    total: number;
+    moneda: string;
+    pesoNetoKg: number;
+}
 
+// ==========================================
+// 📥 RESPONSE (CONSULTA)
+// ==========================================
 export interface ImportacionResponse {
   id: number;
-  compra: CompraResponse;
-  
-  // --- Seguimiento General ---
+  codigoAgrupador: string; 
   estado: EstadoImportacion;
+
+  // ✅ CORREGIDO: Usamos FacturaResumen[] en lugar de CompraResponse[]
+  // Esto hace match con el DTO "CompraResumenDTO" de Java
+  facturasComerciales?: FacturaResumen[];
+
+  // --- LOGÍSTICA Y SEGUIMIENTO ---
   numeroDua?: string;
   trackingNumber?: string;
+  
+  // ✅ CAMPOS NUEVOS (Que agregamos al Backend hace un momento)
+  canal?: string;          // VERDE, ROJO, NARANJA
+  agenteAduanas?: string;
 
-  // --- Fechas Críticas (NUEVO) ---
+  // Fechas Críticas
   fechaCutOffDocumental?: string;
   fechaCutOffFisico?: string;
   fechaSalidaEstimada?: string; // ETD
   fechaEstimadaLlegada?: string; // ETA
   fechaLlegadaReal?: string;     // ATA
-
-  // --- Cierre y Penalidades (NUEVO) ---
   fechaLevanteAutorizado?: string;
   fechaNacionalizacion?: string;
-  diasLibres?: number;
-  fechaLimiteDevolucion?: string;
 
-  // --- Logística ---
+  // Transporte
   paisOrigen?: string;
   puertoEmbarque?: string;
   puertoLlegada?: string;
   incoterm?: Incoterm;
   tipoTransporte?: TipoTransporte;
   navieraAerolinea?: string;
-  numeroViaje?: string;      // Nuevo (Vessel/Voyage)
+  numeroViaje?: string;      
   numeroContenedor?: string;
+  diasLibres?: number;
+  fechaLimiteDevolucion?: string;
 
-  // --- Costos ---
-  costoFlete: number;
-  costoSeguro: number;
-  impuestosAduanas: number;
-  gastosOperativos: number;
-  costoTransporteLocal: number;
+  // --- COSTOS GLOBALES ---
+  totalFleteInternacional: number;
+  totalSeguro: number;
+  totalGastosAduana: number;    
+  totalGastosAlmacen: number;    
+  totalTransporteLocal: number;  
+  otrosGastosGlobales: number;
+
+  // --- TOTALIZADORES ---
+  sumaFobTotal: number;  
+  pesoTotalKg: number;   
 
   fechaCreacion: string;
 }
 
+// ==========================================
+// 📤 REQUEST (GUARDAR / EDITAR)
+// ==========================================
 export interface ImportacionRequest {
-  // --- Seguimiento ---
+  codigoAgrupador: string; 
+  estado: EstadoImportacion; // O string si prefieres simpleza
+
+  // --- LOGÍSTICA ---
   numeroDua?: string;
   trackingNumber?: string;
   
-  // --- Fechas Críticas ---
-  fechaCutOffDocumental?: Date;
-  fechaCutOffFisico?: Date;
-  fechaSalidaEstimada?: Date;
-  fechaEstimadaLlegada?: Date;
-  fechaLlegadaReal?: Date;
-
-  // --- Cierre y Penalidades ---
-  fechaLevanteAutorizado?: Date;
-  fechaNacionalizacion?: Date;
-  diasLibres?: number;
-  fechaLimiteDevolucion?: Date;
+  // ✅ CAMPOS NUEVOS EN EL FORMULARIO
+  canal?: string;
+  agenteAduanas?: string;
   
-  // --- Logística ---
+  fechaCutOffDocumental?: string;
+  fechaCutOffFisico?: string;
+  fechaSalidaEstimada?: string;
+  fechaEstimadaLlegada?: string; // El datepicker de Angular devuelve Date o string
+  fechaLlegadaReal?: string;
+
+  fechaLevanteAutorizado?: string;
+  fechaNacionalizacion?: string;
+  
+  diasLibres?: number;
+  fechaLimiteDevolucion?: string;
+  
   paisOrigen?: string;
   puertoEmbarque?: string;
   puertoLlegada?: string;
@@ -94,12 +122,11 @@ export interface ImportacionRequest {
   numeroViaje?: string;
   numeroContenedor?: string;
 
-  // --- Costos ---
-  costoFlete: number;
-  costoSeguro: number;
-  impuestosAduanas: number;
-  gastosOperativos: number;
-  costoTransporteLocal: number;
-
-  estado: EstadoImportacion;
+  // --- COSTOS GLOBALES ---
+  totalFleteInternacional: number;
+  totalSeguro: number;
+  totalGastosAduana: number;
+  totalGastosAlmacen: number;
+  totalTransporteLocal: number;
+  otrosGastosGlobales: number;
 }

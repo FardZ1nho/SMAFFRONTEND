@@ -33,7 +33,6 @@ export class ProductoDetalleModalComponent implements OnInit {
   producto: Producto;
   productosAlmacen: ProductoAlmacen[] = [];
   
-  // VARIABLES PARA VALORIZACIÓN
   valorInventarioCosto: number = 0; 
   valorInventarioVenta: number = 0; 
   
@@ -60,21 +59,17 @@ export class ProductoDetalleModalComponent implements OnInit {
     this.cargandoGeneral = true;
     this.cdr.detectChanges(); 
     this.cargarProducto();
-    this.cargarDistribucionAlmacenes();
   }
 
   cargarProducto(): void {
     this.productoService.obtenerProducto(this.data.productoId).subscribe({
       next: (producto) => {
         this.producto = producto;
-        this.calcularValores(); 
-        this.verificarStockBajo();
-        this.cargandoGeneral = false;
-        this.cdr.detectChanges(); 
+        // Encadenamos para corregir el stock inmediatamente
+        this.cargarDistribucionAlmacenes(); 
       },
       error: (error) => {
         console.error('Error al cargar producto:', error);
-        alert('Error al cargar el producto');
         this.cargandoGeneral = false;
         this.dialogRef.close();
       }
@@ -86,13 +81,25 @@ export class ProductoDetalleModalComponent implements OnInit {
     this.productoAlmacenService.listarUbicacionesPorProducto(this.data.productoId).subscribe({
       next: (data) => {
         this.productosAlmacen = data;
+        
+        // 1. Calculamos el stock real sumando los almacenes
+        const stockReal = this.productosAlmacen.reduce((acc, item) => acc + item.stock, 0);
+        
+        // 2. Corregimos el objeto producto
+        this.producto.stockActual = stockReal; 
+
+        // 3. Recalculamos valores
+        this.calcularValores(); 
+        this.verificarStockBajo();
+
         this.cargandoAlmacenes = false;
+        this.cargandoGeneral = false;
         this.cdr.detectChanges(); 
       },
       error: (error) => {
-        console.error('Error al cargar distribución:', error);
-        this.productosAlmacen = [];
+        console.error(error);
         this.cargandoAlmacenes = false;
+        this.cargandoGeneral = false;
         this.cdr.detectChanges();
       }
     });
@@ -107,9 +114,7 @@ export class ProductoDetalleModalComponent implements OnInit {
   calcularMargen(): string {
     const venta = this.producto.precioVenta || 0;
     const costo = this.producto.costoTotal || 0;
-    
     if (venta === 0 || costo === 0) return '0%';
-    
     const margen = ((venta - costo) / venta) * 100;
     return `${margen.toFixed(1)}%`;
   }
@@ -130,11 +135,8 @@ export class ProductoDetalleModalComponent implements OnInit {
 
   editarProducto(): void {
     this.dialogRef.close(); 
-    
     const dialogRef = this.dialog.open(ProductoModalComponent, {
-      width: '1000px',
-      maxWidth: '95vw',
-      disableClose: false,
+      width: '1000px', maxWidth: '95vw', disableClose: false,
       data: { producto: this.producto, modo: 'editar' }
     });
   }
@@ -150,7 +152,6 @@ export class ProductoDetalleModalComponent implements OnInit {
         confirmColor: 'warn'
       }
     });
-
     dialogRef.afterClosed().subscribe(confirmado => {
       if (confirmado) this.ejecutarEliminacion();
     });
@@ -164,16 +165,16 @@ export class ProductoDetalleModalComponent implements OnInit {
   }
 
   cerrar(): void {
-    this.dialogRef.close();
+    // ✅ CAMBIO CLAVE: Devolvemos el producto (que ya tiene el stock corregido) al cerrar
+    this.dialogRef.close(this.producto);
   }
 
   getEstadoStockClass(): string {
-    switch(this.producto.estadoStock) {
-      case 'AGOTADO': return 'estado-agotado';
-      case 'BAJO': return 'estado-bajo';
-      case 'NORMAL': return 'estado-normal';
-      case 'ALTO': return 'estado-alto';
-      default: return '';
-    }
+    const stock = this.producto.stockActual || 0;
+    const min = this.producto.stockMinimo || 0;
+    if (stock <= 0) return 'estado-agotado';
+    if (stock < min) return 'estado-bajo';
+    if (stock > min * 2) return 'estado-alto'; 
+    return 'estado-normal';
   }
 }

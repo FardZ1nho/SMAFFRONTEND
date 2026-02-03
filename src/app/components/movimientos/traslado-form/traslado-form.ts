@@ -25,8 +25,14 @@ import { Almacen } from '../../../models/almacen';
 })
 export class TrasladoFormComponent implements OnInit {
 
+  // Datos Maestros
   productos: Producto[] = [];
   almacenes: Almacen[] = [];
+
+  // Búsqueda
+  busquedaProducto: string = '';
+  productosSugeridos: Producto[] = [];
+  mostrarResultados: boolean = false;
 
   // Formulario
   almacenOrigenId: number | null = null;
@@ -35,7 +41,7 @@ export class TrasladoFormComponent implements OnInit {
   cantidad: number = 1;
   motivo: string = '';
 
-  // Estados y Validación
+  // Estados
   cargando: boolean = false;
   guardando: boolean = false;
   verificandoStock: boolean = false;
@@ -56,7 +62,6 @@ export class TrasladoFormComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    // Timeout para evitar conflictos de ciclo de vida inicial
     setTimeout(() => {
       this.cargarDatos();
     }, 0);
@@ -72,30 +77,54 @@ export class TrasladoFormComponent implements OnInit {
       this.almacenes = almacenesData || [];
       this.productos = productosData || [];
       this.cargando = false;
-      
-      // ⭐ AQUÍ ESTÁ EL ARREGLO: Forzamos la actualización de la vista al terminar de cargar
       this.cdr.detectChanges(); 
-
     }).catch(err => {
       console.error('Error cargando datos:', err);
       this.errorMensaje = 'Error al cargar los datos iniciales.';
       this.cargando = false;
-      this.cdr.detectChanges(); // También en caso de error
+      this.cdr.detectChanges();
     });
   }
 
-  onAlmacenOrigenChange(): void {
+  // --- LÓGICA DE BÚSQUEDA INTELIGENTE ---
+  buscarProducto(): void {
+    const termino = this.busquedaProducto.toLowerCase().trim();
+    if (termino.length > 0) {
+      this.productosSugeridos = this.productos.filter(p => 
+        p.nombre.toLowerCase().includes(termino) || 
+        p.codigo.toLowerCase().includes(termino)
+      ).slice(0, 6); // Limitamos a 6 resultados para no saturar
+      this.mostrarResultados = true;
+    } else {
+      this.productosSugeridos = [];
+      this.mostrarResultados = false;
+    }
+  }
+
+  seleccionarProducto(producto: Producto): void {
+    this.productoId = producto.id;
+    this.productoSeleccionado = producto;
+    
+    // Reseteamos buscador
+    this.busquedaProducto = '';
+    this.mostrarResultados = false;
+    
+    // Verificamos stock
     this.verificarStockReal();
   }
 
-  onProductoChange(): void {
-    if (this.productoId) {
-      this.productoSeleccionado = this.productos.find(p => p.id === this.productoId) || null;
-      this.verificarStockReal();
-    } else {
-      this.productoSeleccionado = null;
-      this.stockEnOrigen = 0;
-    }
+  borrarSeleccionProducto(): void {
+    this.productoId = null;
+    this.productoSeleccionado = null;
+    this.stockEnOrigen = 0;
+    this.existeEnOrigen = true;
+    this.cantidad = 1;
+  }
+
+  // --- LOGICA GENERAL ---
+
+  onAlmacenOrigenChange(): void {
+    this.verificarStockReal();
   }
 
   verificarStockReal(): void {
@@ -121,7 +150,7 @@ export class TrasladoFormComponent implements OnInit {
         }
         
         this.verificandoStock = false;
-        this.cdr.detectChanges(); // Forzamos actualización visual del stock
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Error verificando stock:', err);
@@ -156,7 +185,7 @@ export class TrasladoFormComponent implements OnInit {
         this.guardando = false;
         console.error(error);
         this.errorMensaje = error.error?.message || 'Error al procesar el traslado.';
-        this.cdr.detectChanges(); // Importante para mostrar el error
+        this.cdr.detectChanges();
       }
     });
   }

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { CompraService } from '../../../services/compra-service';
+import { CompraResponse } from '../../../models/compra';
 
 @Component({
   selector: 'app-compra-detalle',
@@ -13,7 +14,7 @@ import { CompraService } from '../../../services/compra-service';
 })
 export class CompraDetalleComponent implements OnInit {
 
-  compra: any = null;
+  compra: CompraResponse | null = null;
   cargando: boolean = true;
 
   constructor(
@@ -33,24 +34,41 @@ export class CompraDetalleComponent implements OnInit {
   cargarDetalle(id: number) {
     this.cargando = true;
     this.compraService.obtenerPorId(id).subscribe({
-      next: (data: any) => {
+      next: (data) => {
         this.compra = data;
-        
-        // Corrección por si el backend manda nombre distinto
-        if (!this.compra.detalles) {
-           this.compra.detalles = this.compra.items || [];
-        }
-
         this.cargando = false;
         this.cd.detectChanges();
       },
       error: (e) => {
         console.error(e);
         this.cargando = false;
+        alert('Error al cargar la compra');
+        this.volver();
       }
     });
   }
 
-  imprimir() { window.print(); }
-  volver() { this.router.navigate(['/compras']); }
+  imprimir() {
+    window.print();
+  }
+
+  volver() {
+    this.router.navigate(['/compras']);
+  }
+
+  // ✅ Navegación inteligente a la Importación
+  verImportacion() {
+    if (!this.compra) return;
+
+    if (this.compra.importacionId) {
+       // Si tenemos el ID, navegamos directamente (Ajusta la ruta según tu router)
+       // Opción A: Ir a la lista filtrando (si tienes filtros por query params)
+       this.router.navigate(['/importaciones']); 
+       // Opción B: Ir al detalle (si lo tienes implementado)
+       // this.router.navigate(['/importaciones/detalle', this.compra.importacionId]);
+    } else if (this.compra.codImportacion) {
+       // Fallback: Ir a la lista
+       this.router.navigate(['/importaciones']);
+    }
+  }
 }

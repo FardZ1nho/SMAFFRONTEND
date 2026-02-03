@@ -1,24 +1,33 @@
 import { ApplicationConfig } from '@angular/core';
-// 1. IMPORTAR withInMemoryScrolling
 import { provideRouter, withInMemoryScrolling } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
+// 1. IMPORTAR ANIMACIONES (Necesario para que el calendario se abra suavemente)
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
+
+// 2. IMPORTAR ADAPTADORES DE FECHA
+import { provideNativeDateAdapter, MAT_DATE_LOCALE } from '@angular/material/core';
+
 import { routes } from './app.routes';
 import { jwtInterceptor } from './interceptors/jw.interceptor'; 
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    // 2. CONFIGURAR EL SCROLL AQUÍ 👇
     provideRouter(
       routes,
       withInMemoryScrolling({
-        scrollPositionRestoration: 'enabled', // Resetea el scroll al cambiar de página
-        anchorScrolling: 'enabled'            // Permite usar anclas #seccion
+        scrollPositionRestoration: 'enabled', 
+        anchorScrolling: 'enabled'            
       })
     ),
     provideHttpClient(
       withInterceptors([jwtInterceptor])
     ),
-    provideCharts(withDefaultRegisterables())
+    provideCharts(withDefaultRegisterables()),
+
+    // ✅ 3. AGREGADOS AQUÍ:
+    provideAnimationsAsync(),        // Habilita animaciones (modales, datepickers)
+    provideNativeDateAdapter(),      // Habilita el manejo de fechas nativo
+    { provide: MAT_DATE_LOCALE, useValue: 'es-PE' } // Pone el calendario en Español Perú
   ]
 };

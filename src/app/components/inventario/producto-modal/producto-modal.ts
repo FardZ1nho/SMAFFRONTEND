@@ -34,10 +34,10 @@ export class ProductoModalComponent implements OnInit {
   isSaving = false;
   esEdicion = false;
   productoId: number | null = null;
-  
+   
   // ✅ Control de tipo
   tipoSeleccionado: 'PRODUCTO' | 'SERVICIO' = 'PRODUCTO';
-  tipoFijo: boolean = false; // Nueva variable para bloquear el selector
+  tipoFijo: boolean = false; 
 
   coincidencias: any[] = [];
   buscandoCoincidencias = false;
@@ -67,11 +67,10 @@ export class ProductoModalComponent implements OnInit {
       }
     });
 
-    // ✅ LÓGICA DE TIPO FIJO (Separación Productos/Servicios)
     if (this.data && this.data.tipoFijo) {
       this.tipoSeleccionado = this.data.tipoFijo;
-      this.tipoFijo = true; // Bloquea el cambio manual
-      this.cambiarTipo(this.tipoSeleccionado, true); // Forzar la configuración del formulario
+      this.tipoFijo = true; 
+      this.cambiarTipo(this.tipoSeleccionado, true); 
     }
 
     if (this.data && (this.data.modo === 'editar' || this.data.producto)) {
@@ -90,9 +89,10 @@ export class ProductoModalComponent implements OnInit {
       tipo: [this.tipoSeleccionado], 
       nombre: ['', [Validators.required, Validators.minLength(3)]],
       codigo: [''],
+      codigoInternacional: [''], // ✅ NUEVO CAMPO
       idCategoria: [null, Validators.required],
       descripcion: [''],
-      stockMinimo: [5], // Validadores dinámicos
+      stockMinimo: [5], 
       moneda: ['USD', Validators.required],
       precioChina: [null],
       costoTotal: [null],
@@ -114,7 +114,6 @@ export class ProductoModalComponent implements OnInit {
       })
     ).subscribe({
       next: (resultados) => {
-        // Filtrar también por tipo para que no sugiera servicios si creamos producto
         const filtrados = resultados.filter((p: any) => p.tipo === this.tipoSeleccionado);
         
         if (this.esEdicion && this.productoId) {
@@ -142,7 +141,6 @@ export class ProductoModalComponent implements OnInit {
     const tipo = producto.tipo || 'PRODUCTO';
     this.tipoSeleccionado = tipo;
     
-    // Si el modal está forzado a un tipo pero el producto es de otro, mostrar alerta (seguridad)
     if (this.tipoFijo && this.tipoSeleccionado !== this.data.tipoFijo) {
       console.warn("Editando un registro que no corresponde al tipo de la vista actual");
     }
@@ -153,6 +151,7 @@ export class ProductoModalComponent implements OnInit {
       tipo: tipo,
       nombre: producto.nombre,
       codigo: producto.codigo,
+      codigoInternacional: producto.codigoInternacional, // ✅ CARGAR NUEVO CAMPO
       idCategoria: categoriaId,
       descripcion: producto.descripcion,
       stockMinimo: producto.stockMinimo,
@@ -181,7 +180,8 @@ export class ProductoModalComponent implements OnInit {
           costoTotal: 0,
           idCategoria: idCategoriaDefault, 
           unidadMedida: 'Global', 
-          codigo: '' 
+          codigo: '',
+          codigoInternacional: '' // ✅ LIMPIAR SI ES SERVICIO (OPCIONAL)
         });
       }
       this.productoForm.get('stockMinimo')?.clearValidators();
@@ -206,10 +206,12 @@ export class ProductoModalComponent implements OnInit {
     this.isSaving = true;
     const val = this.productoForm.value;
     
+    // ✅ ASEGURARSE QUE LA INTERFAZ ProductoRequest TENGA codigoInternacional
     const request: ProductoRequest = {
       tipo: this.tipoSeleccionado, 
       nombre: val.nombre,
       codigo: val.codigo,
+      codigoInternacional: val.codigoInternacional, // ✅ ENVIAR NUEVO CAMPO
       idCategoria: val.idCategoria, 
       descripcion: val.descripcion,
       stockMinimo: val.stockMinimo,
@@ -233,6 +235,12 @@ export class ProductoModalComponent implements OnInit {
   finalizarGuardado(mensaje: string) {
     this.isSaving = false;
     this.dialogRef.close(true);
+  }
+
+  getSimboloMoneda(): string {
+    const codigo = this.productoForm.get('moneda')?.value;
+    const moneda = this.monedas.find(m => m.codigo === codigo);
+    return moneda ? moneda.simbolo : '$'; 
   }
 
   manejarError(e: any) {

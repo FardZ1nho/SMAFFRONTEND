@@ -309,7 +309,7 @@
 .pago-row {
   display: flex;
   gap: 8px;
-  align-items: center;
+  align-items: flex-start; /* Alineado para que coincida con el input */
 }
 
 /* Contenedor de la lista */
@@ -436,4 +436,23 @@
   background-color: #f0fdf4;
   color: #15803d;
   border: 1px solid #bbf7d0;
+}
+
+/* ================= NUEVO: Estilo del botón "Add" alineado ================= */
+.btn-add-pago {
+  margin-top: 4px; /* Alineación fina */
+  box-shadow: none !important;
+}
+
+/* ================= NUEVO: Estilo del botón Suffix Discreto ================= */
+.btn-suffix-discreto {
+  color: var(--primary);
+  opacity: 0.7;
+  transform: scale(0.9);
+  transition: all 0.2s;
+}
+
+.btn-suffix-discreto:hover {
+  opacity: 1;
+  background-color: rgba(37, 99, 235, 0.1);
 }

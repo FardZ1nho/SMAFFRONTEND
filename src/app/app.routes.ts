@@ -13,6 +13,8 @@ import { ProveedorComponent } from './components/proveedor/proveedor';
 import { CompraDetalleComponent } from './components/compras/compra-detalle/compra-detalle';
 import { CuentasListaComponent } from './components/configuracion/cuentas-lista/cuentas-lista';
 import { ImportacionesListComponent } from './components/importaciones/importaciones-list/importaciones-list';
+import { CotizacionListComponent } from './components/cotizaciones/cotizacion-list/cotizacion-list';
+import { CotizacionFormComponent } from './components/cotizaciones/cotizacion-form/cotizacion-form';
 
 export const routes: Routes = [
   {
@@ -86,7 +88,8 @@ export const routes: Routes = [
     component: VentasListaComponent,
     canActivate: [seguridadGuard]
   },
-
+{ path: 'cotizaciones', component: CotizacionListComponent },
+{ path: 'cotizaciones/nuevo', component: CotizacionFormComponent },
   {
     path: 'caja-chica',
     loadComponent: () => import('./components/caja-chica/caja-chica').then(m => m.CajaChicaComponent),

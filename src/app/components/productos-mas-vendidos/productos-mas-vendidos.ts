@@ -1,5 +1,3 @@
-// src/app/components/productos-mas-vendidos/productos-mas-vendidos.component.ts
-
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DashboardService } from '../../services/dashboard-service';
@@ -19,7 +17,7 @@ export class ProductosMasVendidosComponent implements OnInit {
 
   constructor(
     private dashboardService: DashboardService,
-    private cdr: ChangeDetectorRef // ⭐ AGREGAR
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -30,28 +28,30 @@ export class ProductosMasVendidosComponent implements OnInit {
     this.cargando = true;
     this.error = '';
     
-    this.dashboardService.obtenerProductosMasVendidos(4).subscribe({
+    // Pedimos los top 5 productos
+    this.dashboardService.obtenerProductosMasVendidos(5).subscribe({
       next: (data) => {
         console.log('✅ Productos más vendidos:', data);
         this.productos = data;
         this.cargando = false;
-        this.cdr.detectChanges(); // ⭐ AGREGAR
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('❌ Error al cargar productos:', err);
-        this.error = 'Error al cargar productos más vendidos';
+        this.error = 'Error al cargar datos.';
         this.cargando = false;
-        this.cdr.detectChanges(); // ⭐ AGREGAR
+        this.cdr.detectChanges();
       }
     });
   }
 
-  formatearMoneda(valor: number): string {
+  // Se adapta para aceptar null o undefined por seguridad
+  formatearMoneda(valor: number | undefined): string {
+    if (valor === undefined || valor === null) return 'S/ 0.00';
     return `S/ ${valor.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   }
 
   verTodos(): void {
     console.log('Navegar a todos los productos');
-    // TODO: Implementar navegación
   }
 }

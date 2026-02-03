@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
@@ -8,9 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { ChangeDetectorRef } from '@angular/core'; // 👈 1. Importar
 
-// Ajusta estas rutas según tu estructura de carpetas
 import { ProductoService } from '../../../services/producto-service';
 import { AlmacenService } from '../../../services/almacen-service';
 import { Almacen } from '../../../models/almacen';
@@ -80,7 +78,7 @@ import { Almacen } from '../../../models/almacen';
   styles: [`
     .modal-header { padding: 24px 24px 0; margin-bottom: 10px; }
     .title-row { display: flex; align-items: center; gap: 10px; color: #1e293b; }
-    .header-icon { color: #16a34a; } /* Verde éxito */
+    .header-icon { color: #16a34a; } 
     h2 { margin: 0; font-size: 20px; font-weight: 700; }
     .subtitle { margin: 5px 0 0 34px; color: #64748b; font-size: 14px; }
     .sku-badge { margin: 5px 0 0 34px; background: #f1f5f9; display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-family: monospace; color: #475569; border: 1px solid #e2e8f0; }
@@ -108,22 +106,20 @@ export class StockModalComponent implements OnInit {
     private productoService: ProductoService,
     private almacenService: AlmacenService,
     private snackBar: MatSnackBar,
-    private cdr: ChangeDetectorRef // 👈 2. Inyectar
+    private cdr: ChangeDetectorRef 
   ) {}
 
   ngOnInit(): void {
-    // 1. Inicializar Formulario
     this.stockForm = this.fb.group({
       idAlmacen: [null, Validators.required],
       cantidad: [null, [Validators.required, Validators.min(1)]],
       ubicacionFisica: ['']
     });
 
-    // 2. Cargar Almacenes
-  this.almacenService.listarAlmacenesActivos().subscribe({
+    this.almacenService.listarAlmacenesActivos().subscribe({
       next: (data) => {
         this.almacenes = data;
-        this.cdr.detectChanges(); // 👈 3. ¡Magia! Esto elimina el error NG0100
+        this.cdr.detectChanges(); 
       },
       error: (e) => console.error(e)
     });
@@ -135,7 +131,6 @@ export class StockModalComponent implements OnInit {
     this.isSaving = true;
     const formVal = this.stockForm.value;
 
-    // Preparamos el DTO exacto que espera tu Backend
     const request = {
       productoId: this.data.producto.id,
       almacenId: formVal.idAlmacen,
@@ -149,7 +144,8 @@ export class StockModalComponent implements OnInit {
           duration: 3000, 
           panelClass: 'snackbar-success' 
         });
-        this.dialogRef.close(true); // Retorna true para refrescar la tabla
+        // ✅ DEVOLVEMOS TRUE PARA QUE EL PADRE RECALCULE
+        this.dialogRef.close(true); 
       },
       error: (err) => {
         this.isSaving = false;

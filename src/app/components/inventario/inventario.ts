@@ -1,11 +1,10 @@
-import { Component, OnInit, ChangeDetectorRef, OnDestroy } from '@angular/core'; // ✅ Agregado OnDestroy
+import { Component, OnInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, NavigationEnd, Event } from '@angular/router'; // ✅ Importar NavigationEnd y Event
-import { filter } from 'rxjs/operators'; // ✅ Importar filter
-import { Subscription } from 'rxjs'; // ✅ Importar Subscription
+import { Router, NavigationEnd, Event } from '@angular/router'; 
+import { filter } from 'rxjs/operators'; 
+import { Subscription } from 'rxjs'; 
 
-// ... (MANTÉN TUS IMPORTS DE MATERIAL Y MODELOS IGUAL QUE ANTES) ...
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -21,6 +20,8 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatOptionModule } from '@angular/material/core';
 
 import { ProductoService } from '../../services/producto-service';
+// ✅ 1. IMPORTANTE: Importamos el servicio de almacenes para consultar el stock real
+import { ProductoAlmacenService } from '../../services/producto-almacen-service';
 import { Producto } from '../../models/producto';
 import { ProductoModalComponent } from './producto-modal/producto-modal';
 import { ConfirmDialogComponent } from './confirm-dialog';
@@ -42,7 +43,7 @@ import { StockModalComponent } from './stock-modal/stock-modal';
 export class InventarioComponent implements OnInit, OnDestroy {
   
   vistaActual: 'PRODUCTO' | 'SERVICIO' = 'PRODUCTO';
-  routerSubscription: Subscription | undefined; // ✅ Para evitar fugas de memoria
+  routerSubscription: Subscription | undefined;
 
   productos: Producto[] = [];
   productosFiltrados = new MatTableDataSource<Producto>([]);
@@ -61,20 +62,19 @@ export class InventarioComponent implements OnInit, OnDestroy {
 
   constructor(
     private productoService: ProductoService,
+    // ✅ 2. INYECCIÓN: Inyectamos el servicio aquí
+    private productoAlmacenService: ProductoAlmacenService,
     private cdr: ChangeDetectorRef,
     private dialog: MatDialog,
     private snackBar: MatSnackBar,
     private router: Router
   ) { 
-    // Configuración inicial
     this.configurarVista();
   }
 
   ngOnInit(): void {
     this.cargarDatos();
 
-    // ✅ DETECCIÓN DINÁMICA DE CAMBIO DE RUTA
-    // Esto hace que si pasas de "Productos" a "Servicios", la tabla se recargue
     this.routerSubscription = this.router.events.pipe(
       filter((event: Event): event is NavigationEnd => event instanceof NavigationEnd)
     ).subscribe(() => {
@@ -89,7 +89,6 @@ export class InventarioComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ✅ LÓGICA EXTRAÍDA PARA REUTILIZARSE
   configurarVista(): void {
     if (this.router.url.includes('servicios')) {
       this.vistaActual = 'SERVICIO';
@@ -98,7 +97,6 @@ export class InventarioComponent implements OnInit, OnDestroy {
       this.vistaActual = 'PRODUCTO';
       this.displayedColumns = ['codigo', 'nombre', 'categoria', 'stock', 'precio', 'acciones'];
     }
-    // Reiniciar filtros al cambiar de vista para evitar confusiones
     this.filtroCategoria = 'TODAS';
     this.filtroEstadoStock = 'TODOS';
     this.terminoBusqueda = '';
@@ -108,7 +106,6 @@ export class InventarioComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.productoService.listarProductosActivos().subscribe({
       next: (data) => {
-        // Filtrado estricto
         this.productos = data.filter(p => {
           const tipoItem = p.tipo || 'PRODUCTO';
           return tipoItem === this.vistaActual;
@@ -131,8 +128,6 @@ export class InventarioComponent implements OnInit, OnDestroy {
     });
   }
 
-  // ... (EL RESTO DE TUS MÉTODOS SIGUEN IGUAL: aplicarFiltros, abrirModal, etc.) ...
-  
   aplicarFiltros(): void {
     let resultado = this.productos;
 
@@ -197,11 +192,35 @@ export class InventarioComponent implements OnInit, OnDestroy {
     dialogRef.afterClosed().subscribe(result => { if (result) this.cargarDatos(); });
   }
 
+  // ✅ 3. CORRECCIÓN DEFINITIVA: Actualización automática del stock
   abrirModalStock(producto: Producto): void {
     const dialogRef = this.dialog.open(StockModalComponent, {
       width: '450px', disableClose: false, data: { producto: producto }
     });
-    dialogRef.afterClosed().subscribe(result => { if (result) this.cargarDatos(); });
+    
+    dialogRef.afterClosed().subscribe(result => { 
+      // Si el modal se cerró exitosamente (result es true o un objeto)
+      if (result) {
+         // AQUÍ ESTÁ LA SOLUCIÓN:
+         // No confiamos en el producto local ni en la carga general.
+         // Consultamos EXPLICITAMENTE el desglose de almacenes para este producto y sumamos.
+         this.productoAlmacenService.listarUbicacionesPorProducto(producto.id).subscribe({
+            next: (ubicaciones) => {
+               // Sumamos lo que hay en TODOS los almacenes
+               const stockRealCalculado = ubicaciones.reduce((acc, item) => acc + item.stock, 0);
+               
+               console.log('Stock actualizado desde almacenes:', stockRealCalculado);
+
+               // Actualizamos la fila de la tabla inmediatamente con el dato real
+               producto.stockActual = stockRealCalculado;
+               
+               // Forzamos a Angular a pintar el cambio
+               this.cdr.detectChanges();
+            },
+            error: (err) => console.error("Error al refrescar stock real", err)
+         });
+      }
+    });
   }
 
   editarProducto(producto: Producto): void {
@@ -217,7 +236,18 @@ export class InventarioComponent implements OnInit, OnDestroy {
       width: '1400px', maxWidth: '98vw', height: '85vh', panelClass: 'detalle-modal-panel',
       data: { productoId: producto.id }
     });
-    dialogRef.afterClosed().subscribe(result => { if (result) this.cargarDatos(); });
+
+    dialogRef.afterClosed().subscribe(resultado => { 
+      if (resultado && typeof resultado === 'object' && resultado.id) {
+         const index = this.productos.findIndex(p => p.id === resultado.id);
+         if (index !== -1) {
+           this.productos[index] = resultado; 
+           this.aplicarFiltros(); 
+         }
+      } else if (resultado === true || (resultado && resultado.accion === 'eliminado')) {
+         this.cargarDatos(); 
+      }
+    });
   }
 
   eliminarProducto(producto: Producto): void {

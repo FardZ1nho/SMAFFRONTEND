@@ -1,5 +1,5 @@
 <div class="page-container">
-  
+
   <div class="page-header animate-fade-in">
     <div class="header-content">
       <div class="icon-box">
@@ -10,7 +10,7 @@
         <p class="subtitle">Seguimiento logístico, DUA y costeo agrupado por carpetas</p>
       </div>
     </div>
-    
+
     <button mat-stroked-button class="btn-secondary" routerLink="/compras/nueva">
       <mat-icon>add</mat-icon> Nueva Factura Comercial
     </button>
@@ -19,8 +19,8 @@
   <div class="filters-bar card animate-fade-in">
     <div class="search-wrapper">
       <mat-icon>search</mat-icon>
-      <input type="text" placeholder="Buscar por Importación, DUA, proveedor..." 
-             [(ngModel)]="filtroTexto" (input)="filtrar()">
+      <input type="text" placeholder="Buscar por Importación, DUA, proveedor..." [(ngModel)]="filtroTexto"
+        (input)="filtrar()">
       <button class="btn-clear" *ngIf="filtroTexto" (click)="limpiarBusqueda()">
         <mat-icon>close</mat-icon>
       </button>
@@ -34,11 +34,44 @@
     </div>
   </div>
 
-  <div class="advanced-filters card animate-fade-in" *ngIf="mostrarFiltros">
-     </div>
+  <div class="advanced-filters card animate-fade-in" *ngIf="mostrarFiltros" style="margin-bottom: 20px; padding: 20px;">
+    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+      <mat-form-field appearance="outline" style="flex: 1;">
+        <mat-label>Estado</mat-label>
+        <mat-select [(ngModel)]="filtroEstado" (selectionChange)="filtrar()">
+          <mat-option value="TODOS">Todos</mat-option>
+          <mat-option *ngFor="let e of estados" [value]="e">{{ getLabelEstado(e) }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" style="flex: 1;">
+        <mat-label>Transporte</mat-label>
+        <mat-select [(ngModel)]="filtroTransporte" (selectionChange)="filtrar()">
+          <mat-option value="TODOS">Todos</mat-option>
+          <mat-option *ngFor="let t of transportes" [value]="t">{{ t }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" style="flex: 1;">
+        <mat-label>Fecha Inicio (ETA)</mat-label>
+        <input matInput [matDatepicker]="picker1" [(ngModel)]="filtroFechaInicio" (dateChange)="filtrar()">
+        <mat-datepicker-toggle matIconSuffix [for]="picker1"></mat-datepicker-toggle>
+        <mat-datepicker #picker1></mat-datepicker>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" style="flex: 1;">
+        <mat-label>Fecha Fin (ETA)</mat-label>
+        <input matInput [matDatepicker]="picker2" [(ngModel)]="filtroFechaFin" (dateChange)="filtrar()">
+        <mat-datepicker-toggle matIconSuffix [for]="picker2"></mat-datepicker-toggle>
+        <mat-datepicker #picker2></mat-datepicker>
+      </mat-form-field>
+
+      <button mat-button color="warn" (click)="limpiarFiltros()">Limpiar</button>
+    </div>
+  </div>
 
   <div class="table-card card animate-fade-in delay-1">
-    
+
     <div class="loading-overlay" *ngIf="loading">
       <p>Cargando datos...</p>
     </div>
@@ -48,118 +81,158 @@
         <thead>
           <tr>
             <th class="col-expander"></th>
-            <th class="col-id">ID IMPORTACIÓN</th>
-            <th class="col-estado">ESTADO GENERAL</th>
+            <th class="col-id">CÓDIGO CARPETA</th>
+            <th class="col-estado">ESTADO</th>
             <th class="col-proveedor">PROVEEDORES</th>
             <th class="col-eta">ETA (LLEGADA)</th>
-            <th class="col-items text-center">ITEMS</th>
+            <th class="col-items text-center">FACTURAS</th>
             <th class="col-money text-right">TOTAL FOB</th>
-            <th class="col-money text-right">TOTAL COSTO</th>
+            <th class="col-money text-right">COSTO TOTAL</th>
+            <th class="text-center">ACCIÓN</th>
           </tr>
         </thead>
         <tbody>
-          
-          <ng-container *ngFor="let group of gruposFiltrados">
-            
-            <tr class="master-row" [class.expanded-row]="group.expanded" (click)="toggleGroup(group)">
+
+          <ng-container *ngFor="let imp of importacionesFiltradas">
+
+            <tr class="master-row" [class.expanded-row]="imp.expanded" (click)="toggleGroup(imp)">
               <td class="col-expander">
-                <mat-icon class="chevron-icon" [class.rotated]="group.expanded">expand_more</mat-icon>
+                <mat-icon class="chevron-icon" [class.rotated]="imp.expanded">expand_more</mat-icon>
               </td>
               <td class="col-id">
                 <div class="folder-cell">
                   <mat-icon class="folder-icon">folder</mat-icon>
-                  <span class="folder-name">{{ group.id }}</span>
+                  <span class="folder-name">{{ imp.codigoAgrupador }}</span>
                 </div>
               </td>
               <td class="col-estado">
-                <span class="status-badge" [ngClass]="getClassEstado(group.estadoGeneral)">
-                  {{ getLabelEstado(group.estadoGeneral) }}
+                <span class="status-badge" [ngClass]="getClassEstado(imp.estado)">
+                  {{ getLabelEstado(imp.estado) }}
                 </span>
               </td>
               <td class="col-proveedor">
-                <div class="prov-list" [title]="group.proveedores">{{ group.proveedores || 'Varios' }}</div>
+                <div class="prov-list" [title]="getProveedoresResumen(imp)">
+                  {{ getProveedoresResumen(imp) }}
+                </div>
               </td>
               <td class="col-eta">
-                <span *ngIf="group.fechaEta">{{ group.fechaEta | date:'dd MMM yyyy' }}</span>
-                <span *ngIf="!group.fechaEta" class="placeholder-text">--</span>
+                <span *ngIf="imp.fechaEstimadaLlegada">{{ imp.fechaEstimadaLlegada | date:'dd MMM yyyy' }}</span>
+                <span *ngIf="!imp.fechaEstimadaLlegada" class="placeholder-text">--</span>
               </td>
               <td class="col-items text-center">
-                <span class="badge-count">{{ group.items.length }} doc</span>
+                <span class="badge-count">{{ imp.facturasComerciales?.length || 0 }}</span>
               </td>
               <td class="col-money text-right">
-                <span class="currency">{{ group.moneda === 'USD' ? '$' : 'S/' }}</span> 
-                {{ group.totalFob | number:'1.2-2' }}
+                <span class="currency">$</span>
+                {{ imp.sumaFobTotal | number:'1.2-2' }}
               </td>
               <td class="col-money total-highlight text-right">
-                <span class="currency">{{ group.moneda === 'USD' ? '$' : 'S/' }}</span> 
-                {{ group.totalCosto | number:'1.2-2' }}
+                <span class="currency">$</span>
+                {{ getTotalCostoEstimado(imp) | number:'1.2-2' }}
+              </td>
+              <td class="text-center" (click)="$event.stopPropagation()">
+                <button mat-icon-button color="primary" (click)="editarImportacion(imp)"
+                  matTooltip="Gestionar Carpeta y Costos">
+                  <mat-icon>edit_note</mat-icon>
+                </button>
               </td>
             </tr>
 
-            <tr class="detail-row" *ngIf="group.expanded">
-              <td colspan="8" class="detail-cell">
-                <div class="detail-container">
-                  
-                  <table class="inner-table">
-                    <colgroup>
-                        <col class="i-col-tipo">
-                        <col class="i-col-doc">
-                        <col class="i-col-track">
-                        <col class="i-col-log">
-                        <col class="i-col-money">
-                        <col class="i-col-money">
-                        <col class="i-col-money">
-                        <col class="i-col-action">
-                    </colgroup>
-                    <thead>
-                      <tr>
-                        <th class="text-center">TIPO</th>
-                        <th>DOCUMENTO</th>
-                        <th>TRACKING / DUA</th>
-                        <th class="text-center">LOGÍSTICA</th>
-                        <th class="text-right">FOB</th>
-                        <th class="text-right">COSTOS IMP.</th>
-                        <th class="text-right">TOTAL</th>
-                        <th class="text-center">GESTIONAR</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr *ngFor="let item of group.items">
-                        <td class="text-center">
-                          <span class="type-tag">{{ item.compra.tipoComprobante }}</span>
-                        </td>
-                        <td>
-                          <div class="cell-primary">{{ item.compra.nombreProveedor }}</div>
-                          <div class="cell-secondary">{{ item.compra.serie }}-{{ item.compra.numero }}</div>
-                        </td>
-                        <td>
-                          <div *ngIf="item.numeroDua" class="dua-tag">{{ item.numeroDua }}</div>
-                          <div *ngIf="item.trackingNumber" class="track-tag">{{ item.trackingNumber }}</div>
-                          <div *ngIf="!item.numeroDua && !item.trackingNumber" class="placeholder-text">--</div>
-                        </td>
-                        <td>
-                          <div class="logistics-mini">
-                            <mat-icon class="tiny-icon">{{ getIconoTransporte(item.tipoTransporte) }}</mat-icon>
-                            <span>{{ item.paisOrigen || 'ND' }}</span>
-                          </div>
-                        </td>
-                        <td class="text-right">
-                          {{ item.compra.total | number:'1.2-2' }}
-                        </td>
-                        <td class="text-right text-muted">
-                          + {{ calcularCostosExtra(item) | number:'1.2-2' }}
-                        </td>
-                        <td class="text-right font-weight-bold">
-                          {{ (item.compra.total + calcularCostosExtra(item)) | number:'1.2-2' }}
-                        </td>
-                        <td class="text-center">
-                          <button mat-icon-button class="btn-mini-edit" (click)="editarImportacion(item.id)">
-                            <mat-icon>edit</mat-icon>
-                          </button>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
+            <tr class="detail-row" *ngIf="imp.expanded">
+              <td colspan="9" class="detail-cell">
+                <div class="detail-panel">
+
+                  <div class="timeline-container">
+                    <div class="step" [class.completed]="isStepComplete(imp.estado, 'ORDENADO')">
+                      <div class="circle"><mat-icon>shopping_cart</mat-icon></div>
+                      <span class="label">Ordenado</span>
+                    </div>
+                    <div class="line" [class.active]="isStepComplete(imp.estado, 'EN_TRANSITO')"></div>
+
+                    <div class="step" [class.completed]="isStepComplete(imp.estado, 'EN_TRANSITO')">
+                      <div class="circle"><mat-icon>directions_boat</mat-icon></div>
+                      <span class="label">En Tránsito</span>
+                      <small *ngIf="imp.estado === 'EN_TRANSITO'" class="etd-tag">ETA: {{imp.fechaEstimadaLlegada |
+                        date:'dd/MM'}}</small>
+                    </div>
+                    <div class="line" [class.active]="isStepComplete(imp.estado, 'EN_ADUANAS')"></div>
+
+                    <div class="step" [class.completed]="isStepComplete(imp.estado, 'EN_ADUANAS')">
+                      <div class="circle"><mat-icon>gavel</mat-icon></div>
+                      <span class="label">Aduanas</span>
+                    </div>
+                    <div class="line" [class.active]="isStepComplete(imp.estado, 'EN_ALMACEN')"></div>
+
+                    <div class="step" [class.completed]="isStepComplete(imp.estado, 'EN_ALMACEN')">
+                      <div class="circle"><mat-icon>inventory_2</mat-icon></div>
+                      <span class="label">En Almacén</span>
+                    </div>
+                  </div>
+
+                  <div class="info-grid">
+
+                    <div class="info-box logistics">
+                      <h4><mat-icon>local_shipping</mat-icon> Datos de Embarque</h4>
+                      <div class="data-pair">
+                        <span>Tracking / BL:</span>
+                        <strong>{{ imp.trackingNumber || '---' }}</strong>
+                      </div>
+                      <div class="data-pair">
+                        <span>Naviera:</span>
+                        <strong>{{ imp.navieraAerolinea || '---' }}</strong>
+                      </div>
+                      <div class="data-pair">
+                        <span>Origen:</span>
+                        <strong>{{ imp.paisOrigen }} ({{ imp.incoterm }})</strong>
+                      </div>
+                      <div class="data-pair">
+                        <span>DUA:</span>
+                        <strong class="text-primary">{{ imp.numeroDua || 'Pendiente' }}</strong>
+                      </div>
+                    </div>
+
+                    <div class="info-box financial">
+                      <h4><mat-icon>monetization_on</mat-icon> Estructura de Costos</h4>
+                      <div class="cost-row">
+                        <span>Total FOB (Mercadería):</span>
+                        <span>$ {{ imp.sumaFobTotal | number:'1.2-2' }}</span>
+                      </div>
+                      <div class="cost-row text-muted">
+                        <span>+ Flete & Seguro:</span>
+                        <span>$ {{ (imp.totalFleteInternacional + imp.totalSeguro) | number:'1.2-2' }}</span>
+                      </div>
+                      <div class="cost-row text-muted">
+                        <span>+ Gastos Aduana/Almacén:</span>
+                        <span>$ {{ (imp.totalGastosAduana + imp.totalGastosAlmacen + imp.otrosGastosGlobales) |
+                          number:'1.2-2' }}</span>
+                      </div>
+                      <div class="cost-divider"></div>
+                      <div class="cost-row total">
+                        <span>COSTO TOTAL (LANDED):</span>
+                        <span class="highlight">$ {{ getTotalCostoEstimado(imp) | number:'1.2-2' }}</span>
+                      </div>
+                    </div>
+
+                    <div class="info-box invoices">
+                      <h4><mat-icon>receipt</mat-icon> Facturas Vinculadas ({{ imp.facturasComerciales?.length }})</h4>
+                      <div class="mini-table-container">
+                        <table class="mini-table">
+                          <tbody>
+                            <tr *ngFor="let f of imp.facturasComerciales">
+                              <td><span class="serie-badge">{{ f.serie }}-{{ f.numero }}</span></td>
+                              <td class="supplier-name">{{ f.nombreProveedor }}</td>
+                              <td class="text-right">{{ f.moneda }} {{ f.total | number:'1.2-2' }}</td>
+                              <td class="text-center">
+                                <a [routerLink]="['/compras/detalle', f.id]"
+                                  class="link-icon"><mat-icon>visibility</mat-icon></a>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                  </div>
 
                 </div>
               </td>
@@ -169,7 +242,7 @@
         </tbody>
       </table>
 
-      <div *ngIf="gruposFiltrados.length === 0" class="empty-state">
+      <div *ngIf="importacionesFiltradas.length === 0" class="empty-state">
         <mat-icon>travel_explore</mat-icon>
         <p>No se encontraron importaciones.</p>
       </div>

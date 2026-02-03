@@ -1,18 +1,22 @@
 /* ================= VARIABLES GLOBALES ================= */
 :host {
   --primary: #2563eb;
+  --primary-light: #eff6ff; /* Fondo suave para destacados */
   --bg-body: #f5f5f5;
   --text-main: #1e293b;
   --text-sub: #64748b;
   --border: #e2e8f0;
   --white: #ffffff;
+  --danger: #dc2626;
+  --success: #16a34a;
+  --warning: #d97706;
 }
 
 .detalle-container {
   padding: 24px;
   background-color: var(--bg-body);
   min-height: 100vh;
-  font-family: 'Roboto', sans-serif;
+  font-family: 'Roboto', 'Inter', sans-serif;
 }
 
 /* ================= HEADER SUPERIOR ================= */
@@ -29,6 +33,7 @@
   background: white; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   transition: all 0.2s;
+  color: var(--text-sub);
 }
 .btn-back:hover { background: var(--primary); color: white; border-color: var(--primary); }
 
@@ -43,6 +48,14 @@
 
 .header-content h1 { margin: 0; font-size: 24px; color: var(--text-main); }
 .header-content h3 { margin: 0; font-size: 16px; color: var(--text-sub); font-weight: 400; }
+
+/* BADGES DE ESTADO */
+.status-badge {
+  padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+}
+.status-badge.COMPLETADA { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+.status-badge.REGISTRADA { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+.status-badge.ANULADA { background: #f3f4f6; color: #6b7280; border: 1px solid #d1d5db; text-decoration: line-through; }
 
 /* ================= LAYOUT PRINCIPAL ================= */
 .content-wrapper {
@@ -61,9 +74,9 @@
 }
 
 .card h3 {
-  font-size: 14px; color: var(--text-sub); text-transform: uppercase;
+  font-size: 13px; color: var(--text-sub); text-transform: uppercase; letter-spacing: 0.5px;
   margin: 0 0 16px 0; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px;
-  display: flex; align-items: center; gap: 8px;
+  display: flex; align-items: center; gap: 8px; font-weight: 700;
 }
 .card h3 mat-icon { font-size: 18px; width: 18px; height: 18px; }
 
@@ -76,6 +89,76 @@
 .info-row .label { color: var(--text-sub); font-size: 13px; }
 .info-row .value { color: var(--text-main); font-size: 14px; font-weight: 500; text-align: right; }
 .fw-bold { font-weight: 700; }
+.text-primary { color: var(--primary) !important; }
+.text-danger { color: var(--danger) !important; }
+.text-success { color: var(--success) !important; }
+
+/* ================= ESTILOS ESPECÍFICOS DE IMPORTACIÓN ================= */
+.import-highlight {
+  border-left: 4px solid var(--primary); 
+  background: #fdfdfe;
+}
+
+.import-highlight h3 mat-icon { color: var(--primary); }
+
+.link-action {
+  color: var(--primary) !important; cursor: pointer; display: flex; align-items: center; gap: 4px; font-weight: 600;
+}
+.link-action:hover { text-decoration: underline; }
+
+.tiny-icon { font-size: 12px; width: 12px; height: 12px; }
+
+/* Divisores Visuales */
+.divider-dashed { border-bottom: 1px dashed #cbd5e1; margin: 12px 0; }
+.divider-solid { border-bottom: 1px solid #94a3b8; margin: 8px 0; }
+
+/* Desglose de Costos (Mini Tabla Azul) */
+.prorrateo-breakdown {
+  background: var(--primary-light); 
+  padding: 12px;
+  border-radius: 8px;
+  margin-top: 8px;
+  font-size: 12px;
+  border: 1px solid #dbeafe;
+}
+
+.breakdown-title {
+  margin: 0 0 8px 0;
+  font-weight: 700;
+  color: #475569;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.breakdown-row {
+  display: flex; justify-content: space-between; margin-bottom: 5px; color: #64748b;
+}
+
+.breakdown-row .amount {
+  font-family: monospace; font-weight: 600; color: #334155; font-size: 13px;
+}
+
+/* Total Landed Destacado */
+.total-landed {
+  display: flex; justify-content: space-between; align-items: center; margin-top: 6px;
+}
+.total-landed .label { color: #1e40af; font-weight: 800; font-size: 11px; text-transform: uppercase; }
+.total-landed .value { color: #1e40af; font-weight: 800; font-size: 15px; }
+
+/* Alerta Pendiente */
+.alert-pending {
+  font-size: 11px; color: var(--warning); display: flex; align-items: center; gap: 6px; margin-top: 8px; font-style: italic; background: #fffbeb; padding: 6px; border-radius: 6px;
+}
+
+/* ================= LISTA DE PAGOS ================= */
+.payments-list { display: flex; flex-direction: column; gap: 10px; }
+.payment-item {
+  background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 10px;
+}
+.pay-header { display: flex; justify-content: space-between; font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+.pay-amount { color: var(--success); }
+.pay-detail { font-size: 12px; color: var(--text-main); }
+.pay-account { font-size: 11px; color: var(--text-sub); margin-top: 2px; font-style: italic; }
 
 /* ================= TABLA DE PRODUCTOS ================= */
 .table-responsive { overflow-x: auto; }
@@ -90,9 +173,8 @@
   font-size: 14px; color: var(--text-main); vertical-align: middle;
 }
 
-/* Estilos de celdas */
 .prod-name { font-weight: 600; color: var(--text-main); }
-.prod-code { font-size: 11px; color: var(--text-sub); margin-top: 2px; }
+.prod-code { font-size: 11px; color: var(--text-sub); margin-top: 2px; display: flex; align-items: center; gap: 6px; }
 
 .text-center { text-align: center; }
 .text-right { text-align: right; }
@@ -100,40 +182,35 @@
 /* ================= FOOTER DE LA TABLA (TOTALES) ================= */
 tfoot td { border-bottom: none; }
 
-/* Filas normales del footer (Subtotal, IGV) */
-.label-total { 
-  font-weight: 700; color: var(--text-sub); font-size: 13px; 
-}
+.label-total { font-weight: 700; color: var(--text-sub); font-size: 13px; }
 
-/* Fila Final Resaltada (TOTAL A PAGAR) */
 .total-row-highlight td { 
-  background-color: #eff6ff; /* Fondo Azul Suave */
-  border-top: 2px solid #bfdbfe; /* Borde Azul */
+  background-color: #eff6ff; 
+  border-top: 2px solid #bfdbfe; 
   padding: 16px 12px;
 }
 
-.label-total-lg { 
-  font-weight: 800; font-size: 14px; color: #1e3a8a; /* Azul Oscuro */
-}
-.amount-total-lg { 
-  font-weight: 800; font-size: 18px; color: var(--primary); /* Azul Principal */
+.label-total-lg { font-weight: 800; font-size: 14px; color: #1e3a8a; }
+.amount-total-lg { font-weight: 800; font-size: 18px; color: var(--primary); }
+
+/* ================= LOADING ================= */
+.loading-container { 
+  display: flex; justify-content: center; align-items: center; 
+  height: 50vh; color: var(--text-sub); font-size: 14px;
 }
 
 /* ================= IMPRESIÓN ================= */
 @media print {
-  .no-print, .btn-back, .btn-print { display: none; }
+  .no-print, .btn-back, .btn-print { display: none !important; }
   .detalle-container { padding: 0; background: white; }
   .content-wrapper { grid-template-columns: 1fr; gap: 20px; }
   .card { border: none; box-shadow: none; padding: 0; margin-bottom: 20px; border-bottom: 1px solid #000; padding-bottom: 20px; border-radius: 0; }
-  .total-row-highlight td { background-color: #eee !important; border-top: 2px solid #000 !important; }
+  
+  /* Asegurar que los colores de fondo se impriman (navegadores modernos) */
+  .total-row-highlight td { -webkit-print-color-adjust: exact; print-color-adjust: exact; background-color: #eee !important; border-top: 2px solid #000 !important; }
+  .prorrateo-breakdown { border: 1px solid #000; background: none; }
 }
 
 @media (max-width: 900px) {
   .content-wrapper { grid-template-columns: 1fr; }
-}
-
-/* Loading */
-.loading-container { 
-  display: flex; justify-content: center; align-items: center; 
-  height: 50vh; color: var(--text-sub); 
 }

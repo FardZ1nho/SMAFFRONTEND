@@ -1,0 +1,151 @@
+<div class="page-container">
+  
+  <div class="page-header">
+    <div class="title-group">
+      <h1>Nueva Cotización</h1>
+      <p class="subtitle">Complete los datos para generar un documento</p>
+    </div>
+    <button mat-stroked-button color="warn" routerLink="/cotizaciones">
+      <mat-icon>close</mat-icon> Cancelar
+    </button>
+  </div>
+
+  <div class="content-grid">
+    
+    <mat-card class="section-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar>info</mat-icon>
+        <mat-card-title>Información General</mat-card-title>
+      </mat-card-header>
+      
+      <mat-card-content class="form-grid">
+        <mat-form-field appearance="outline" class="col-span-2">
+          <mat-label>Cliente</mat-label>
+          <mat-select [(ngModel)]="cotizacion.idCliente" placeholder="Seleccione un cliente">
+            <mat-option *ngFor="let c of clientes" [value]="c.id">
+              {{ c.nombreCompleto }} - {{ c.numeroDocumento }}
+            </mat-option>
+          </mat-select>
+          <mat-icon matSuffix>person</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Moneda</mat-label>
+          <mat-select [(ngModel)]="cotizacion.moneda">
+            <mat-option value="PEN">Soles (S/)</mat-option>
+            <mat-option value="USD">Dólares ($)</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Válido Hasta</mat-label>
+          <input matInput [matDatepicker]="picker" [(ngModel)]="cotizacion.fechaVencimiento">
+          <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+          <mat-datepicker #picker></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="col-span-2">
+           <mat-label>Observaciones (Opcional)</mat-label>
+           <textarea matInput [(ngModel)]="cotizacion.observaciones" rows="3" placeholder="Notas internas..."></textarea>
+        </mat-form-field>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="section-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar>shopping_cart</mat-icon>
+        <mat-card-title>Agregar Items</mat-card-title>
+      </mat-card-header>
+      
+      <mat-card-content>
+        <div class="add-product-box">
+          
+          <mat-form-field appearance="outline" class="full-width search-product">
+            <mat-label>Buscar Producto (Nombre o SKU)</mat-label>
+            <input type="text"
+                   placeholder="Escribe para buscar..."
+                   matInput
+                   [formControl]="productoControl"
+                   [matAutocomplete]="auto">
+            <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayFn" (optionSelected)="seleccionarProducto($event)">
+              <mat-option *ngFor="let p of productosFiltrados | async" [value]="p">
+                 <span class="product-option">
+                   <strong class="code-text">{{ p.codigo }}</strong> 
+                   <span class="name-text">{{ p.nombre }}</span>
+                 </span>
+              </mat-option>
+            </mat-autocomplete>
+            <mat-icon matSuffix>search</mat-icon>
+          </mat-form-field>
+
+          <div class="row-inputs">
+            <mat-form-field appearance="outline" class="small-input">
+              <mat-label>Cant.</mat-label>
+              <input matInput type="number" [(ngModel)]="cantidadTemp" min="1">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="medium-input">
+              <mat-label>Precio Unit.</mat-label>
+              <input matInput type="number" [(ngModel)]="precioTemp" min="0">
+              <span matPrefix>{{ cotizacion.moneda === 'PEN' ? 'S/' : '$' }}&nbsp;</span>
+            </mat-form-field>
+
+            <button mat-fab color="primary" (click)="agregarDetalle()" [disabled]="!prodSeleccionado" class="btn-add">
+              <mat-icon>add</mat-icon>
+            </button>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <mat-card class="details-card mat-elevation-z3">
+    <mat-card-content>
+      <div class="table-responsive">
+        <table class="custom-table">
+          <thead>
+            <tr>
+              <th width="10%">Código</th>
+              <th width="40%">Descripción</th>
+              <th width="10%" class="text-center">Cant.</th>
+              <th width="15%" class="text-right">P. Unit</th>
+              <th width="15%" class="text-right">Total</th>
+              <th width="10%" class="text-center">Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let det of cotizacion.detalles; let i = index">
+              <td><span class="code-badge">{{ det.codigo || 'S/C' }}</span></td>
+              <td class="product-name">{{ det.nombreProducto }}</td>
+              <td class="text-center">{{ det.cantidad }}</td>
+              <td class="text-right">{{ det.precioUnitario | number:'1.2-2' }}</td>
+              <td class="text-right font-bold">{{ (det.cantidad * det.precioUnitario) | number:'1.2-2' }}</td>
+              <td class="text-center">
+                <button mat-icon-button color="warn" (click)="eliminarDetalle(i)">
+                  <mat-icon>delete_outline</mat-icon>
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="cotizacion.detalles.length === 0">
+              <td colspan="6" class="empty-state">
+                <mat-icon>production_quantity_limits</mat-icon>
+                <p>No has agregado productos a la cotización</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="footer-actions">
+        <div class="totals-box">
+          <div class="total-line"><span>Subtotal:</span><span>{{ subTotal | number:'1.2-2' }}</span></div>
+          <div class="total-line"><span>IGV (18%):</span><span>{{ igv | number:'1.2-2' }}</span></div>
+          <div class="total-line grand-total"><span>TOTAL:</span><span>{{ cotizacion.moneda }} {{ total | number:'1.2-2' }}</span></div>
+        </div>
+        <button mat-raised-button color="primary" class="btn-submit" (click)="guardar()" [disabled]="cotizacion.detalles.length === 0">
+          <mat-icon>save</mat-icon> Generar Cotización
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

@@ -1,38 +1,21 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core'; // ✅ Importar ChangeDetectorRef
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 
-// Material Modules
-import { MatTableModule } from '@angular/material/table';
-import { MatIconModule } from "@angular/material/icon";
-import { MatButtonModule } from "@angular/material/button";
-import { MatTooltipModule } from "@angular/material/tooltip";
-import { MatSelectModule } from '@angular/material/select';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
+// MATERIAL
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
-import { CompraService } from '../../../services/compra-service'; 
+// SERVICIOS Y MODELOS
+import { CompraService } from '../../../services/compra-service';
 import { CompraResponse } from '../../../models/compra';
 
 @Component({
   selector: 'app-compras-list',
   standalone: true,
-  imports: [
-    CommonModule, 
-    FormsModule, 
-    MatTableModule, 
-    MatIconModule, 
-    MatButtonModule, 
-    MatTooltipModule,
-    MatSelectModule,
-    MatDatepickerModule,
-    MatNativeDateModule,
-    MatFormFieldModule,
-    MatInputModule
-  ],
+  imports: [CommonModule, FormsModule, RouterModule, MatIconModule, MatButtonModule, MatTooltipModule],
   templateUrl: './compras-list.html',
   styleUrls: ['./compras-list.css']
 })
@@ -40,135 +23,98 @@ export class ComprasListComponent implements OnInit {
 
   compras: CompraResponse[] = [];
   comprasFiltradas: CompraResponse[] = [];
-  
-  // Estado de carga
-  cargando: boolean = false;
-
-  // --- FILTROS ---
-  mostrarFiltros: boolean = false;
-  terminoBusqueda: string = '';
-  
-  // Variables para los selectores
-  proveedoresUnicos: string[] = [];
-  tiposComprobante: string[] = ['FACTURA_ELECTRONICA', 'FACTURA_COMERCIAL', 'BOLETA', 'GUIA_REMISION', 'RECIBO_HONORARIOS'];
-
-  // Valores de los filtros
-  filtroFechaInicio: Date | null = null;
-  filtroFechaFin: Date | null = null;
-  filtroProveedor: string = 'TODOS';
-  filtroTipo: string = 'TODOS';
+  filtroTexto: string = '';
+  cargando: boolean = true;
 
   constructor(
     private compraService: CompraService,
     private router: Router,
-    private cd: ChangeDetectorRef 
-  ) { }
+    private cdr: ChangeDetectorRef // ✅ Inyección para forzar actualización de vista
+  ) {}
 
   ngOnInit(): void {
     this.cargarCompras();
   }
 
-  cargarCompras(): void {
+  cargarCompras() {
     this.cargando = true;
+    console.log('🔄 Iniciando carga de compras...'); // DEBUG
+
     this.compraService.listarTodas().subscribe({
       next: (data) => {
-        console.log('Datos recibidos:', data);
-        this.compras = data;
-        
-        // Extraer proveedores únicos para el filtro
-        this.proveedoresUnicos = [...new Set(data.map(c => c.nombreProveedor).filter(p => !!p))].sort();
+        console.log('✅ DATOS RECIBIDOS DEL BACKEND:', data); // DEBUG IMPORTANTE
 
-        this.filtrar(); // Aplicar filtros iniciales
+        // Si data es null o vacío, avisa
+        if (!data || data.length === 0) {
+            console.warn('⚠️ El backend devolvió una lista vacía.');
+        }
+
+        // Filtro de seguridad
+        const dataLimpia = data.filter(item => item && item.id !== null);
+        console.log('🧹 Datos limpios (sin nulos):', dataLimpia); // DEBUG
+
+        this.compras = dataLimpia.sort((a, b) => b.id - a.id);
+        this.filtrar();
         this.cargando = false;
-        this.cd.detectChanges();
+        this.cdr.detectChanges();
       },
       error: (err) => {
-        console.error('Error al cargar compras', err);
+        console.error('❌ ERROR CRÍTICO al cargar compras:', err);
         this.cargando = false;
+        this.cdr.detectChanges();
       }
     });
   }
 
-  // --- LÓGICA DE FILTRADO MAESTRA ---
-  filtrar(): void {
-    let resultado = [...this.compras];
-
-    // 1. Búsqueda por Texto (Numero, Serie, RUC)
-    if (this.terminoBusqueda.trim()) {
-      const termino = this.terminoBusqueda.toLowerCase();
-      resultado = resultado.filter(c => 
-        (c.numero && c.numero.toLowerCase().includes(termino)) || 
-        (c.serie && c.serie.toLowerCase().includes(termino)) ||
-        (c.rucProveedor && c.rucProveedor.includes(termino))
-      );
+  filtrar() {
+    if (!this.filtroTexto.trim()) {
+      this.comprasFiltradas = this.compras;
+      return;
     }
 
-    // 2. Filtro por Proveedor
-    if (this.filtroProveedor !== 'TODOS') {
-      resultado = resultado.filter(c => c.nombreProveedor === this.filtroProveedor);
-    }
-
-    // 3. Filtro por Tipo de Comprobante
-    if (this.filtroTipo !== 'TODOS') {
-      resultado = resultado.filter(c => c.tipoComprobante === this.filtroTipo);
-    }
-
-    // 4. Filtro por Rango de Fechas
-    if (this.filtroFechaInicio) {
-      resultado = resultado.filter(c => new Date(c.fechaEmision) >= this.filtroFechaInicio!);
-    }
-    if (this.filtroFechaFin) {
-      // Ajustamos al final del día para incluir la fecha seleccionada completa
-      const finDia = new Date(this.filtroFechaFin);
-      finDia.setHours(23, 59, 59);
-      resultado = resultado.filter(c => new Date(c.fechaEmision) <= finDia);
-    }
-
-    this.comprasFiltradas = resultado;
+    const texto = this.filtroTexto.toLowerCase();
+    this.comprasFiltradas = this.compras.filter(c => 
+      (c.nombreProveedor && c.nombreProveedor.toLowerCase().includes(texto)) ||
+      (c.serie && c.serie.toLowerCase().includes(texto)) ||
+      (c.numero && c.numero.toLowerCase().includes(texto)) ||
+      (c.rucProveedor && c.rucProveedor.includes(texto))
+    );
   }
 
-  // --- CONTROLADORES UI ---
-
-  toggleFiltros(): void {
-    this.mostrarFiltros = !this.mostrarFiltros;
-  }
-
-  limpiarFiltros(): void {
-    this.terminoBusqueda = '';
-    this.filtroProveedor = 'TODOS';
-    this.filtroTipo = 'TODOS';
-    this.filtroFechaInicio = null;
-    this.filtroFechaFin = null;
+  limpiarFiltro() {
+    this.filtroTexto = '';
     this.filtrar();
   }
 
-  limpiarBusqueda(): void {
-    this.terminoBusqueda = '';
-    this.filtrar();
+  /**
+   * ✅ BLINDAJE CONTRA EL ERROR "replace of null"
+   */
+  formatearTipo(tipo: string | null | undefined): string {
+    if (!tipo) return 'ND'; 
+    return tipo.replace(/_/g, ' ');
   }
 
-  // --- ACCIONES DE NAVEGACIÓN ---
-
-  irANuevaCompra(): void {
-    this.router.navigate(['/compras/nueva']);
-  }
-
-  verDetalle(id: number): void {
+  verDetalle(id: number | null | undefined) {
+    if (!id) return;
     this.router.navigate(['/compras/detalle', id]);
   }
 
-  editarCompra(id: number): void {
-    console.log('Editar compra', id);
+  nuevaCompra() {
+    this.router.navigate(['/compras/nueva']);
   }
 
-  eliminarCompra(id: number): void {
-    if(confirm('¿Está seguro de anular esta compra? Esta acción revertirá el stock.')) {
-        console.log('Anulando compra ID:', id);
+  anularCompra(id: number) {
+    if (confirm('¿Está seguro de anular esta compra? Esto revertirá el stock.')) {
+      this.compraService.anular(id).subscribe({
+        next: () => {
+          this.cargarCompras();
+        },
+        error: (e) => alert('Error al anular: ' + e.message)
+      });
     }
   }
-
-  // Helper visual para tipos de comprobante
-  formatearTipo(tipo: string): string {
-    return tipo.replace(/_/g, ' ');
+  
+  getMonedaSymbol(moneda: string): string {
+    return moneda === 'USD' ? '$' : 'S/';
   }
 }

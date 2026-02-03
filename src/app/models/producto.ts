@@ -40,7 +40,7 @@ export interface ProductoRequest {
   descripcion?: string;
   idCategoria: number;
   stockMinimo: number;
-  
+  codigoInternacional?: string; // ✅ NUEVO CAMPO (Opcional)
   precioChina?: number;
   costoTotal?: number;
   precioVenta?: number;

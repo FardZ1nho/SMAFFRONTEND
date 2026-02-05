@@ -1,0 +1,93 @@
+<div class="modal-header">
+  <div class="header-content">
+    <h2 mat-dialog-title>📊 Sábana de Costos (Detalle Completo)</h2>
+    <span class="code-badge">{{ data.codigoAgrupador }}</span>
+  </div>
+  <button mat-icon-button mat-dialog-close><mat-icon>close</mat-icon></button>
+</div>
+
+<div mat-dialog-content>
+  
+  <div class="summary-bar">
+    <div class="stat"><label>FOB Total</label><span>$ {{ data.sumaFobTotal | number:'1.2-2' }}</span></div>
+    <div class="stat"><label>Peso Total</label><span>{{ data.pesoTotalKg | number:'1.2-2' }} Kg</span></div>
+    <div class="stat"><label>Volumen Total</label><span>{{ data.cbmTotal | number:'1.2-3' }} m³</span></div>
+  </div>
+
+  <div class="table-container">
+    <table class="detail-table">
+      <thead>
+        <tr>
+          <th class="sticky-col name-col">Factura</th>
+          <th class="sticky-col-2 val-col">FOB</th>
+          
+          <th class="group-vol">Flete</th>
+          <th class="group-vol">Almacén</th>
+          <th class="group-vol">Transp.</th>
+          <th class="group-vol">Descarga</th>
+          <th class="group-vol">Montacarga</th>
+
+          <th class="group-weight">Desconsol.</th>
+
+          <th class="group-value">Vistos B.</th>
+          <th class="group-value">Transm.</th>
+          <th class="group-value">Agente</th>
+          <th class="group-value">VºBº Extra</th>
+          <th class="group-value">Gastos Op.</th>
+          <th class="group-value">Resguardo</th>
+
+          <th class="group-tax">Ad Val.</th>
+          <th class="group-tax">IGV</th>
+          <th class="group-tax">IPM</th>
+          <th class="group-tax">Percep.</th>
+
+          <th class="group-other" *ngIf="hasValue('costoOtros1')">Otros 1</th>
+          <th class="group-other" *ngIf="hasValue('costoOtros2')">Otros 2</th>
+
+          <th class="sticky-end total-col">TOTAL</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let f of data.facturasComerciales">
+          
+          <td class="sticky-col name-col">
+            <div class="serie">{{f.serie}}-{{f.numero}}</div>
+            <small>{{f.nombreProveedor | slice:0:15}}</small>
+          </td>
+          <td class="sticky-col-2 val-col text-right">$ {{ f.total | number:'1.2-2' }}</td>
+
+          <td class="text-right">{{ f.proFlete | number:'1.2-2' }}</td>
+          <td class="text-right">{{ f.proAlmacenaje | number:'1.2-2' }}</td>
+          <td class="text-right">{{ f.proTransporte | number:'1.2-2' }}</td>
+          <td class="text-right">{{ f.proPersonalDescarga | number:'1.2-2' }}</td>
+          <td class="text-right">{{ f.proMontacarga | number:'1.2-2' }}</td>
+
+          <td class="text-right">{{ f.proDesconsolidacion | number:'1.2-2' }}</td>
+
+          <td class="text-right">{{ f.proVistosBuenos | number:'1.2-2' }}</td>
+          <td class="text-right">{{ f.proTransmision | number:'1.2-2' }}</td>
+          <td class="text-right">{{ f.proComisionAgencia | number:'1.2-2' }}</td>
+          <td class="text-right">{{ f.proVobo | number:'1.2-2' }}</td>
+          <td class="text-right">{{ f.proGastosOperativos | number:'1.2-2' }}</td>
+          <td class="text-right">{{ f.proResguardo | number:'1.2-2' }}</td>
+
+          <td class="text-right">{{ f.proAdv | number:'1.2-2' }}</td>
+          <td class="text-right">{{ f.proIgv | number:'1.2-2' }}</td>
+          <td class="text-right">{{ f.proIpm | number:'1.2-2' }}</td>
+          <td class="text-right">{{ f.proPercepcion | number:'1.2-2' }}</td>
+
+          <td class="text-right" *ngIf="hasValue('costoOtros1')">{{ f.proOtros1 | number:'1.2-2' }}</td>
+          <td class="text-right" *ngIf="hasValue('costoOtros2')">{{ f.proOtros2 | number:'1.2-2' }}</td>
+
+          <td class="sticky-end total-col text-right">
+            <strong>$ {{ f.costoTotalImportacion | number:'1.2-2' }}</strong>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>Cerrar</button>
+</div>

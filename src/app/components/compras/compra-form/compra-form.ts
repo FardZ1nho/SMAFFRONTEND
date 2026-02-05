@@ -15,7 +15,7 @@ import { ProductoService } from '../../../services/producto-service';
 import { AlmacenService } from '../../../services/almacen-service';
 import { CuentaBancariaService } from '../../../services/cuenta-bancaria-service';
 
-// MODELOS (Asegúrate de importar las nuevas interfaces)
+// MODELOS
 import { 
   CompraRequest, 
   TipoPago, 
@@ -40,14 +40,12 @@ import { ProveedorFormComponent } from '../../proveedor/proveedor-form/proveedor
 })
 export class CompraFormComponent implements OnInit {
 
-  // ✅ EXPOSICIÓN DE ENUMS PARA EL HTML
   public eTipoPago = TipoPago;
   public eMetodoPago = MetodoPago;
 
-  // LISTAS DE COMPROBANTES
   comprobantesBien = [
     { valor: 'FACTURA_ELECTRONICA', texto: 'FACTURA ELECTRÓNICA' },
-    { valor: 'FACTURA_COMERCIAL', texto: 'FACTURA COMERCIAL (IMPORTACIÓN)' }, // ⚠️ Valor clave para vincular carpeta
+    { valor: 'FACTURA_COMERCIAL', texto: 'FACTURA COMERCIAL (IMPORTACIÓN)' }, 
     { valor: 'BOLETA', texto: 'BOLETA DE VENTA' },
     { valor: 'GUIA_REMISION', texto: 'GUIA DE REMISION' },
     { valor: 'NOTA_VENTA', texto: 'NOTA DE VENTA' },
@@ -64,15 +62,13 @@ export class CompraFormComponent implements OnInit {
 
   listaComprobantes = this.comprobantesBien;
 
-  // GESTIÓN DE PAGO
-  tipoPago: TipoPago = TipoPago.CONTADO; // Valor por defecto
+  tipoPago: TipoPago = TipoPago.CONTADO;
   
-  // Inicializamos el objeto de pago
-// Inicializamos el objeto de pago con TRANSFERENCIA por defecto
+  // Moneda por defecto: USD
   pagoActual: PagoCompraRequest = {
-    metodoPago: MetodoPago.TRANSFERENCIA, // ✅ CAMBIADO: Ahora por defecto es Transferencia
+    metodoPago: MetodoPago.TRANSFERENCIA,
     monto: 0,
-    moneda: 'PEN',
+    moneda: 'USD', 
     cuentaOrigenId: undefined,
     referencia: ''
   };
@@ -84,28 +80,32 @@ export class CompraFormComponent implements OnInit {
     { valor: MetodoPago.TARJETA, texto: 'Tarjeta de Crédito/Débito' }
   ];
 
-  // MODELO INICIAL
   compra: CompraRequest = {
     tipoCompra: 'BIEN',
-    // Casting forzado para evitar error de string vs literal type inicial
-    tipoComprobante: 'FACTURA_ELECTRONICA' as any, 
+    
+    // Por defecto Factura Comercial (para importaciones)
+    tipoComprobante: 'FACTURA_COMERCIAL' as any, 
+    
     tipoPago: TipoPago.CONTADO,
     serie: '',
     numero: '',
     
-    // ✅ CAMPOS DE IMPORTACIÓN
+    // ✅ DATOS LOGÍSTICOS
     codImportacion: '', 
     pesoNetoKg: 0,
-    bultos: 0,
+    cbm: 0, // ✅ REEMPLAZO DE BULTOS POR CBM
 
-    fechaEmision: new Date(), // Cambiado a Date directo si tu modelo usa Date
+    fechaEmision: new Date().toISOString().split('T')[0] as any, // Inicializar como string YYYY-MM-DD
     proveedorId: 0,
-    moneda: 'PEN',
+    moneda: 'USD', 
     tipoCambio: 3.75,
     observaciones: '',
+    
     subTotal: 0,
+    fob: 0,
     igv: 0,
     total: 0,
+    
     percepcion: 0,
     detraccionPorcentaje: 0,
     detraccionMonto: 0,
@@ -120,7 +120,7 @@ export class CompraFormComponent implements OnInit {
 
   busquedaProducto: string = '';
   productosFiltrados: any[] = [];
-  itemsAgregados: any[] = []; // Array temporal para la tabla visual
+  itemsAgregados: any[] = [];
 
   constructor(
     private compraService: CompraService,
@@ -157,10 +157,10 @@ export class CompraFormComponent implements OnInit {
 
     if (tipo === 'BIEN') {
       this.listaComprobantes = this.comprobantesBien;
-      this.compra.tipoComprobante = 'FACTURA_ELECTRONICA' as any;
+      this.compra.tipoComprobante = 'FACTURA_COMERCIAL' as any; 
+      
       this.compra.detraccionPorcentaje = 0;
       this.compra.detraccionMonto = 0;
-      // Asignar almacén por defecto a items existentes
       if (this.almacenes.length > 0) {
         this.itemsAgregados.forEach(i => {
           if (!i.almacenId) i.almacenId = this.almacenes[0].id;
@@ -175,16 +175,14 @@ export class CompraFormComponent implements OnInit {
     this.recalcularTotales();
   }
 
-  // ✅ LOGICA DE LIMPIEZA
   onTipoComprobanteChange() {
-    // Solo borramos el código si NO es Factura Comercial
     if (this.compra.tipoComprobante !== 'FACTURA_COMERCIAL') {
-      if(this.compra.codImportacion) {
-        console.warn('🗑️ Limpiando código de importación porque cambió el tipo');
-      }
+      // Limpiar datos de importación si no es comercial
       this.compra.codImportacion = '';
       this.compra.pesoNetoKg = 0;
-      this.compra.bultos = 0;
+      this.compra.cbm = 0; // ✅ Limpiar CBM
+      this.compra.fob = 0; 
+      this.recalcularTotales();
     }
   }
 
@@ -204,7 +202,6 @@ export class CompraFormComponent implements OnInit {
     this.recalcularTotales();
   }
 
-  // --- MODALES Y BÚSQUEDA ---
   nuevoProveedor(): void {
     const dialogRef = this.dialog.open(ProveedorFormComponent, {
       width: '700px', disableClose: true, data: { idProveedor: null }
@@ -228,7 +225,6 @@ export class CompraFormComponent implements OnInit {
     });
     dialogRef.afterClosed().subscribe(result => {
       if (result === true) { 
-        // Opcional: Recargar o buscar el producto creado
       }
     });
   }
@@ -245,9 +241,7 @@ export class CompraFormComponent implements OnInit {
     }
   }
 
-  // --- GESTIÓN DE ITEMS ---
   agregarProducto(prod: any) {
-    // Si hay almacenes, usar el primero por defecto
     const almacenDefault = (this.compra.tipoCompra === 'BIEN' && this.almacenes.length > 0)
       ? this.almacenes[0].id : undefined;
 
@@ -259,7 +253,6 @@ export class CompraFormComponent implements OnInit {
       codigo: prod.codigo,
       cantidad: 1,
       precioUnitario: precioBase,
-      costoConIgv: precioBase * 1.18,
       almacenId: almacenDefault
     };
 
@@ -269,32 +262,26 @@ export class CompraFormComponent implements OnInit {
     this.recalcularTotales();
   }
 
-  actualizarPrecios(item: any, origen: 'BASE' | 'TOTAL') {
-    const TASA_IGV = 1.18;
-    if (origen === 'TOTAL') {
-      item.precioUnitario = item.costoConIgv / TASA_IGV;
-    } else {
-      item.costoConIgv = item.precioUnitario * TASA_IGV;
-    }
-    // Redondeo visual
-    item.precioUnitario = Number(item.precioUnitario.toFixed(4));
-    item.costoConIgv = Number(item.costoConIgv.toFixed(2));
-    this.recalcularTotales();
-  }
-
   eliminarItem(index: number) {
     this.itemsAgregados.splice(index, 1);
     this.recalcularTotales();
   }
 
-  // --- CÁLCULOS ---
+  // ✅ LOGICA SIN IGV
   recalcularTotales() {
     const sumaItems = this.itemsAgregados.reduce((acc, item) => acc + (item.cantidad * item.precioUnitario), 0);
     this.compra.subTotal = sumaItems;
-    this.compra.igv = sumaItems * 0.18;
+    
+    // ✅ SIN IGV
+    this.compra.igv = 0; 
 
-    let totalDoc = this.compra.subTotal + this.compra.igv;
+    // 2. Sumamos FOB Adicional
+    const fobAdicional = Number(this.compra.fob) || 0;
 
+    // 3. Calculamos Total Documento (Subtotal + FOB)
+    let totalDoc = this.compra.subTotal + fobAdicional;
+
+    // Sumar Percepción si aplica
     if (this.compra.tipoCompra === 'BIEN' && this.compra.percepcion) {
       totalDoc += Number(this.compra.percepcion);
     }
@@ -307,48 +294,40 @@ export class CompraFormComponent implements OnInit {
       this.compra.detraccionMonto = 0;
     }
 
-    // Actualizar monto de pago sugerido si es al contado
+    // Actualizar monto de pago sugerido
     if (this.tipoPago === TipoPago.CONTADO) {
       this.pagoActual.monto = Number(this.compra.total.toFixed(2));
     } else {
-      // Si es crédito y el monto actual supera el total, ajustarlo a 0
       if (this.pagoActual.monto > this.compra.total) {
         this.pagoActual.monto = 0; 
       }
     }
   }
 
-  // --- GUARDAR ---
   guardarCompra() {
-    // 1. Validaciones Básicas
     if (this.compra.proveedorId === 0) return alert("⚠️ Seleccione un proveedor.");
     if (!this.compra.serie || !this.compra.numero) return alert("⚠️ Ingrese Serie y Número del comprobante.");
     if (this.itemsAgregados.length === 0) return alert("⚠️ Agregue productos.");
 
-    // 2. Validación de Almacén
     if (this.compra.tipoCompra === 'BIEN' && this.itemsAgregados.some(i => !i.almacenId)) {
       return alert("⚠️ Todos los bienes deben tener almacén destino.");
     }
 
-    // 3. Validación de Bancos
     if (this.esPagoBancarizado() && !this.pagoActual.cuentaOrigenId) {
       return alert("⚠️ Para transferencias o Yape, debe seleccionar la Cuenta de Origen.");
     }
 
-    // 4. Validación de Crédito/Contado
     if (this.tipoPago === TipoPago.CREDITO && this.pagoActual.monto >= this.compra.total) {
       if(!confirm("⚠️ El monto inicial cubre todo el total. ¿Desea cambiar a CONTADO?")) return;
       this.compra.tipoPago = TipoPago.CONTADO;
     }
 
-    // ✅ 5. VALIDACIÓN CRÍTICA DE IMPORTACIÓN
     if (this.compra.tipoComprobante === 'FACTURA_COMERCIAL') {
       if (!this.compra.codImportacion) {
         if (!confirm("⚠️ Estás registrando una Factura de Importación SIN Código (ID).\n\nSe guardará como 'SIN_AGRUPAR'. ¿Estás seguro?")) {
           return;
         }
       }
-      // Validar Peso (Sugerencia)
       if ((!this.compra.pesoNetoKg || this.compra.pesoNetoKg <= 0) && this.compra.codImportacion) {
          if(!confirm("⚠️ Estás registrando una importación SIN PESO (0 Kg).\n\nEsto hará que el prorrateo de flete sea CERO para esta factura. ¿Deseas continuar?")) {
            return;
@@ -356,7 +335,6 @@ export class CompraFormComponent implements OnInit {
       }
     }
 
-    // 6. Preparar Payload
     this.compra.pagos = [];
     if (this.pagoActual.monto > 0) {
       this.compra.pagos.push({ ...this.pagoActual });
@@ -364,11 +342,9 @@ export class CompraFormComponent implements OnInit {
       return alert("⚠️ Una compra al CONTADO debe tener un monto de pago.");
     }
 
-    // ✅ CORRECCIÓN CRÍTICA DE TIPOS AQUÍ
-    // Usamos 'undefined' en lugar de 'null' para el almacénId
     this.compra.detalles = this.itemsAgregados.map(item => ({
       productoId: item.productoId,
-      almacenId: item.almacenId ? Number(item.almacenId) : undefined, // <-- FIXED: undefined en vez de null
+      almacenId: item.almacenId ? Number(item.almacenId) : undefined,
       cantidad: item.cantidad,
       precioUnitario: item.precioUnitario
     }));
@@ -388,7 +364,6 @@ export class CompraFormComponent implements OnInit {
     });
   }
 
-  // ✅ CORRECCIÓN DE SINTAXIS (Estaba roto el return)
   getSimboloMoneda(): string { 
     return this.compra.moneda === 'USD' ? '$' : 'S/'; 
   }

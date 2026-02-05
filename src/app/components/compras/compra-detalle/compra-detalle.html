@@ -1,205 +1,161 @@
-<div class="detalle-container" *ngIf="compra; else loadingTemplate">
-
-  <div class="header-action-row no-print">
-    <button class="btn-back" (click)="volver()" title="Volver">
-      <mat-icon>arrow_back</mat-icon>
+<div class="page-container">
+  
+  <div class="header-action">
+    <button class="btn-back" routerLink="/compras">
+      <mat-icon>arrow_back</mat-icon> Volver
     </button>
-    <div class="header-content">
-      <div style="display: flex; align-items: center; gap: 12px;">
-        <h1>Detalle de {{ compra.tipoCompra | titlecase }}</h1>
-        <span class="status-badge" [ngClass]="compra.estado">
-          {{ compra.estado }}
+    <div class="title-group">
+      <h1>Detalle de Compra</h1>
+      <span class="serie-badge">{{ compra?.serie }} - {{ compra?.numero }}</span>
+      <span class="status-badge" [class.pagada]="compra?.estado === 'COMPLETADA'">
+        {{ compra?.estado }}
+      </span>
+    </div>
+  </div>
+
+  <div class="dashboard-grid" *ngIf="compra">
+
+    <div class="card info-card">
+      <h3><mat-icon>info</mat-icon> Información General</h3>
+      <div class="data-row">
+        <label>Proveedor:</label>
+        <strong>{{ compra?.nombreProveedor }}</strong>
+      </div>
+      <div class="data-row">
+        <label>RUC:</label>
+        <span>{{ compra?.rucProveedor }}</span>
+      </div>
+      <div class="data-row">
+        <label>Fecha Emisión:</label>
+        <span>{{ compra?.fechaEmision | date:'dd/MM/yyyy' }}</span>
+      </div>
+      <div class="data-row">
+        <label>Tipo:</label>
+        <span>{{ compra?.tipoCompra }} / {{ compra?.tipoPago }}</span>
+      </div>
+      <div class="data-row" *ngIf="compra?.codImportacion">
+        <label>Carpeta Importación:</label>
+        <span class="link-import" [routerLink]="['/importaciones']">
+          <mat-icon>folder</mat-icon> {{ compra?.codImportacion }}
         </span>
       </div>
-      <h3>{{ compra.tipoComprobante }} {{ compra.serie }}-{{ compra.numero }}</h3>
-    </div>
-    <button class="btn-print" (click)="imprimir()"><mat-icon>print</mat-icon> Imprimir</button>
-  </div>
-
-  <div class="content-wrapper">
-    
-    <div class="info-column">
-      
-      <div class="card info-card">
-        <h3><mat-icon>store</mat-icon> Proveedor</h3>
-        <div class="info-row">
-          <span class="label">Razón Social:</span>
-          <span class="value fw-bold">{{ compra.nombreProveedor }}</span>
-        </div>
-        <div class="info-row">
-          <span class="label">RUC:</span>
-          <span class="value">{{ compra.rucProveedor }}</span>
-        </div>
-      </div>
-
-      <div class="card info-card">
-        <h3><mat-icon>event</mat-icon> Emisión</h3>
-        <div class="info-row">
-          <span class="label">Fecha Emisión:</span>
-          <span class="value">{{ compra.fechaEmision | date:'dd/MM/yyyy' }}</span>
-        </div>
-        <div class="info-row" *ngIf="compra.fechaVencimiento">
-          <span class="label">Vencimiento:</span>
-          <span class="value">{{ compra.fechaVencimiento | date:'dd/MM/yyyy' }}</span>
-        </div>
-        <div class="info-row">
-          <span class="label">Moneda:</span>
-          <span class="value">{{ compra.moneda }} (TC: {{compra.tipoCambio}})</span>
-        </div>
-        <div class="info-row" *ngIf="compra.observaciones">
-          <span class="label">Observaciones:</span>
-          <span class="value" style="font-size: 12px;">{{ compra.observaciones }}</span>
-        </div>
-      </div>
-
-      <div class="card info-card import-highlight" *ngIf="compra.codImportacion">
-        <h3><mat-icon>local_shipping</mat-icon> Datos de Importación</h3>
-        
-        <div class="info-row">
-          <span class="label">Carpeta Logística:</span>
-          <span class="value link-action" (click)="verImportacion()">
-            {{ compra.codImportacion }} <mat-icon class="tiny-icon">launch</mat-icon>
-          </span>
-        </div>
-        
-        <div class="info-row" *ngIf="compra.pesoNetoKg">
-          <span class="label">Peso Neto:</span>
-          <span class="value">{{ compra.pesoNetoKg | number:'1.2-2' }} Kg</span>
-        </div>
-
-        <div class="divider-dashed"></div>
-
-        <div class="prorrateo-breakdown" *ngIf="compra.costoTotalImportacion">
-          <p class="breakdown-title">Estructura de Costos Asignados:</p>
-          
-          <div class="breakdown-row">
-            <span>+ Flete Int.:</span>
-            <span class="amount">{{ compra.moneda }} {{ compra.prorrateoFlete | number:'1.2-2' }}</span>
-          </div>
-          
-          <div class="breakdown-row">
-            <span>+ Seguro:</span>
-            <span class="amount">{{ compra.moneda }} {{ compra.prorrateoSeguro | number:'1.2-2' }}</span>
-          </div>
-          
-          <div class="breakdown-row">
-            <span>+ Gastos (Aduana/Alm):</span>
-            <span class="amount">{{ compra.moneda }} {{ compra.prorrateoGastosAduanas | number:'1.2-2' }}</span>
-          </div>
-
-          <div class="divider-solid"></div>
-
-          <div class="total-landed">
-            <span class="label">COSTO REAL (LANDED):</span>
-            <span class="value">{{ compra.moneda }} {{ compra.costoTotalImportacion | number:'1.2-2' }}</span>
-          </div>
-        </div>
-
-        <div *ngIf="!compra.costoTotalImportacion" class="alert-pending">
-          <mat-icon>info</mat-icon> Costos no prorrateados aún.
-        </div>
-      </div>
-      
-      <div class="card info-card" *ngIf="(compra.percepcion || 0) > 0 || (compra.detraccionMonto || 0) > 0">
-         <h3><mat-icon>account_balance</mat-icon> Impuestos</h3>
-         <div class="info-row" *ngIf="(compra.percepcion || 0) > 0">
-           <span class="label">Percepción:</span>
-           <span class="value">{{ compra.percepcion | number:'1.2-2' }}</span>
-         </div>
-         <div class="info-row" *ngIf="(compra.detraccionMonto || 0) > 0">
-           <span class="label">Detracción ({{compra.detraccionPorcentaje}}%):</span>
-           <span class="value">{{ compra.detraccionMonto | number:'1.2-2' }}</span>
-         </div>
-      </div>
-
-      <div class="card info-card" *ngIf="compra.pagos && compra.pagos.length > 0">
-        <h3><mat-icon>payments</mat-icon> Historial de Pagos</h3>
-        <div class="payments-list">
-          <div class="payment-item" *ngFor="let p of compra.pagos">
-            <div class="pay-header">
-              <span class="pay-date">{{ p.fechaPago | date:'dd/MM/yyyy' }}</span>
-              <span class="pay-amount">{{ p.moneda }} {{ p.monto | number:'1.2-2' }}</span>
-            </div>
-            <div class="pay-detail">
-              {{ p.metodoPago }} <span *ngIf="p.referencia">- Ref: {{p.referencia}}</span>
-            </div>
-            <div class="pay-account" *ngIf="p.nombreCuentaOrigen">
-              <small>{{ p.nombreCuentaOrigen }}</small>
-            </div>
-          </div>
-        </div>
-      </div>
-
     </div>
 
-    <div class="products-column">
-      <div class="card table-card">
-        <h3><mat-icon>shopping_cart</mat-icon> Items de la Compra</h3>
-        <div class="table-responsive">
-          <table class="custom-table">
-            <thead>
-              <tr>
-                <th>Descripción</th>
-                <th class="text-center">Cant.</th>
-                <th class="text-right">P. Unit.</th>
-                <th class="text-right">Total FOB</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let item of compra.detalles">
-                <td>
-                  <div class="prod-name">{{ item.nombreProducto }}</div>
-                  <div class="prod-code">
-                    <mat-icon style="font-size: 10px; height: 10px; width: 10px;">qr_code</mat-icon>
-                    {{ item.codigoProducto }}
-                  </div>
-                  <div class="prod-code" *ngIf="item.nombreAlmacen" style="color: #059669;">
-                    <mat-icon style="font-size: 10px; height: 10px; width: 10px;">warehouse</mat-icon> {{ item.nombreAlmacen }}
-                  </div>
-                </td>
-                <td class="text-center">{{ item.cantidad }}</td>
-                <td class="text-right">{{ item.precioUnitario | number:'1.2-4' }}</td>
-                <td class="text-right fw-bold">{{ item.importe | number:'1.2-2' }}</td>
-              </tr>
-            </tbody>
-            <tfoot>
-              <tr>
-                <td colspan="3" class="text-right label-total">SUBTOTAL:</td>
-                <td class="text-right">{{ compra.subTotal | number:'1.2-2' }}</td>
-              </tr>
-              <tr>
-                <td colspan="3" class="text-right label-total">IGV:</td>
-                <td class="text-right">{{ compra.igv | number:'1.2-2' }}</td>
-              </tr>
-              <tr *ngIf="(compra.percepcion || 0) > 0">
-                <td colspan="3" class="text-right label-total">PERCEPCIÓN:</td>
-                <td class="text-right">{{ compra.percepcion | number:'1.2-2' }}</td>
-              </tr>
-              <tr class="total-row-highlight">
-                <td colspan="3" class="text-right label-total-lg">TOTAL DOCUMENTO:</td>
-                <td class="text-right amount-total-lg">{{ compra.moneda }} {{ compra.total | number:'1.2-2' }}</td>
-              </tr>
-              
-              <tr *ngIf="(compra.montoPagado || 0) > 0">
-                <td colspan="3" class="text-right label-total text-success">PAGADO:</td>
-                <td class="text-right text-success">- {{ compra.montoPagado | number:'1.2-2' }}</td>
-              </tr>
-              
-              <tr *ngIf="(compra.saldoPendiente || 0) > 0">
-                <td colspan="3" class="text-right label-total text-danger" style="font-size: 15px;">SALDO PENDIENTE:</td>
-                <td class="text-right text-danger fw-bold" style="font-size: 15px;">
-                  {{ compra.moneda }} {{ compra.saldoPendiente | number:'1.2-2' }}
-                </td>
-              </tr>
-            </tfoot>
-          </table>
+    <div class="card totals-card">
+      <h3><mat-icon>monetization_on</mat-icon> Totales Factura</h3>
+      <div class="total-row">
+        <span>Subtotal:</span>
+        <span>{{ compra?.moneda }} {{ compra?.subTotal | number:'1.2-2' }}</span>
+      </div>
+      
+      <div class="total-row" *ngIf="(compra?.fob || 0) > 0">
+        <span>FOB (Adicional):</span>
+        <span>{{ compra?.moneda }} {{ compra?.fob | number:'1.2-2' }}</span>
+      </div>
+
+      <div class="total-row">
+        <span>IGV:</span>
+        <span>{{ compra?.moneda }} {{ compra?.igv | number:'1.2-2' }}</span>
+      </div>
+      <hr>
+      <div class="total-row main">
+        <span>TOTAL PAGAR:</span>
+        <span>{{ compra?.moneda }} {{ compra?.total | number:'1.2-2' }}</span>
+      </div>
+      <div class="total-row saldo">
+        <span>Saldo Pendiente:</span>
+        <span [class.red]="(compra?.saldoPendiente || 0) > 0">
+          {{ compra?.moneda }} {{ compra?.saldoPendiente | number:'1.2-2' }}
+        </span>
+      </div>
+    </div>
+
+    <div class="card cost-card" *ngIf="compra?.codImportacion">
+      <h3><mat-icon>flight_land</mat-icon> Costos Prorrateados (Landed)</h3>
+      
+      <div class="metric-grid">
+        <div class="metric">
+          <label>Peso</label>
+          <strong>{{ compra?.pesoNetoKg | number:'1.2-2' }} Kg</strong>
         </div>
+        <div class="metric">
+          <label>Volumen</label>
+          <strong>{{ compra?.cbm | number:'1.2-3' }} m³</strong>
+        </div>
+      </div>
+
+      <div class="cost-list">
+        <div class="cost-item" *ngIf="(compra?.proFlete || 0) > 0">
+          <span>+ Flete:</span>
+          <strong>{{ compra?.moneda }} {{ compra?.proFlete | number:'1.2-2' }}</strong>
+        </div>
+        <div class="cost-item" *ngIf="(compra?.proAlmacenaje || 0) > 0">
+          <span>+ Almacén:</span>
+          <strong>{{ compra?.moneda }} {{ compra?.proAlmacenaje | number:'1.2-2' }}</strong>
+        </div>
+        <div class="cost-item" *ngIf="(compra?.proTransporte || 0) > 0">
+          <span>+ Transporte Local:</span>
+          <strong>{{ compra?.moneda }} {{ compra?.proTransporte | number:'1.2-2' }}</strong>
+        </div>
+        <div class="cost-item" *ngIf="(compra?.proCargaDescarga || 0) > 0">
+          <span>+ Carga/Descarga:</span>
+          <strong>{{ compra?.moneda }} {{ compra?.proCargaDescarga | number:'1.2-2' }}</strong>
+        </div>
+
+        <div class="cost-item" *ngIf="(compra?.proDesconsolidacion || 0) > 0">
+          <span>+ Desconsolidación:</span>
+          <strong>{{ compra?.moneda }} {{ compra?.proDesconsolidacion | number:'1.2-2' }}</strong>
+        </div>
+
+        <div class="cost-item" *ngIf="(compra?.proGastosAduaneros || 0) > 0">
+          <span>+ Gastos Aduanas:</span>
+          <strong>{{ compra?.moneda }} {{ compra?.proGastosAduaneros | number:'1.2-2' }}</strong>
+        </div>
+        <div class="cost-item" *ngIf="(compra?.proSeguroResguardo || 0) > 0">
+          <span>+ Seguro/Resguardo:</span>
+          <strong>{{ compra?.moneda }} {{ compra?.proSeguroResguardo | number:'1.2-2' }}</strong>
+        </div>
+        <div class="cost-item" *ngIf="(compra?.proImpuestos || 0) > 0">
+          <span>+ Impuestos Aduana:</span>
+          <strong>{{ compra?.moneda }} {{ compra?.proImpuestos | number:'1.2-2' }}</strong>
+        </div>
+        <div class="cost-item" *ngIf="(compra?.proOtrosGastos || 0) > 0">
+          <span>+ Otros Gastos:</span>
+          <strong>{{ compra?.moneda }} {{ compra?.proOtrosGastos | number:'1.2-2' }}</strong>
+        </div>
+      </div>
+
+      <hr>
+      <div class="total-row landed">
+        <span>COSTO TOTAL (Almacén):</span>
+        <span>{{ compra?.moneda }} {{ compra?.costoTotalImportacion | number:'1.2-2' }}</span>
       </div>
     </div>
 
   </div>
+
+  <div class="card table-card" *ngIf="compra">
+    <h3>Detalle de Productos</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Producto</th>
+          <th class="text-right">Cantidad</th>
+          <th class="text-right">Precio Unit.</th>
+          <th class="text-right">Importe</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let det of compra?.detalles">
+          <td>{{ det.codigoProducto }}</td>
+          <td>{{ det.nombreProducto }}</td>
+          <td class="text-right">{{ det.cantidad }}</td>
+          <td class="text-right">{{ compra?.moneda }} {{ det.precioUnitario | number:'1.2-2' }}</td>
+          <td class="text-right fw-bold">{{ compra?.moneda }} {{ det.importe | number:'1.2-2' }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
 </div>
-
-<ng-template #loadingTemplate>
-  <div class="loading-container"><p>Cargando información...</p></div>
-</ng-template>

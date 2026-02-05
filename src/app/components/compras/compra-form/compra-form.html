@@ -32,7 +32,7 @@
         </div>
 
         <div class="grid-input" *ngIf="compra.tipoComprobante === 'FACTURA_COMERCIAL'" style="grid-column: span 3;">
-             <div style="display: flex; gap: 15px;">
+              <div style="display: flex; gap: 15px;">
                 <div style="flex: 2;">
                   <label class="section-title" style="color: #2563eb;">📂 ID Importación (Agrupador)</label>
                   <input type="text" class="form-control-smaf full-width" 
@@ -45,12 +45,13 @@
                   <input type="number" class="form-control-smaf full-width" 
                          [(ngModel)]="compra.pesoNetoKg" placeholder="0.00">
                 </div>
+                
                 <div style="flex: 1;">
-                   <label class="section-title">N° Bultos</label>
+                   <label class="section-title">Volumen (m³)</label>
                    <input type="number" class="form-control-smaf full-width" 
-                          [(ngModel)]="compra.bultos" placeholder="0">
+                          [(ngModel)]="compra.cbm" placeholder="0.00">
                  </div>
-             </div>
+              </div>
         </div>
 
         <div class="grid-input" *ngIf="compra.tipoComprobante !== 'FACTURA_COMERCIAL'">
@@ -162,8 +163,9 @@
           <tr>
             <th class="ps-4">Descripción</th>
             <th width="80">Cant.</th>
-            <th width="130" title="Valor de Venta (Sin IGV)">Precio Compra<br><small>(Base)</small></th>
-            <th width="130" title="Precio de Venta (Con IGV)">Costo Unit.<br><small>(Inc. IGV)</small></th>
+            
+            <th width="150" title="Precio que pagas al proveedor">Precio Compra</th>
+            
             <th width="180" *ngIf="compra.tipoCompra === 'BIEN'">Almacén</th>
             <th width="120">Subtotal</th>
             <th width="50"></th>
@@ -182,14 +184,7 @@
               <div class="input-group-sm">
                 <span class="currency-symbol">{{ getSimboloMoneda() }}</span>
                 <input type="number" class="form-control-smaf sm-input currency-input" 
-                       [(ngModel)]="item.precioUnitario" (ngModelChange)="actualizarPrecios(item, 'BASE')" placeholder="0.00">
-              </div>
-            </td>
-            <td>
-              <div class="input-group-sm">
-                <span class="currency-symbol">{{ getSimboloMoneda() }}</span>
-                <input type="number" class="form-control-smaf sm-input currency-input fw-bold" 
-                       [(ngModel)]="item.costoConIgv" (ngModelChange)="actualizarPrecios(item, 'TOTAL')" placeholder="0.00">
+                       [(ngModel)]="item.precioUnitario" (ngModelChange)="recalcularTotales()" placeholder="0.00">
               </div>
             </td>
             <td *ngIf="compra.tipoCompra === 'BIEN'">
@@ -207,22 +202,33 @@
         </tbody>
         <tfoot *ngIf="itemsAgregados.length > 0">
           <tr>
-            <td [attr.colspan]="compra.tipoCompra === 'BIEN' ? 5 : 4" class="text-end label-total">SUBTOTAL:</td>
+            <td [attr.colspan]="compra.tipoCompra === 'BIEN' ? 4 : 3" class="text-end label-total">SUBTOTAL:</td>
             <td class="amount-sub">{{ compra.subTotal | number:'1.2-2' }}</td>
             <td></td>
           </tr>
-          <tr>
-            <td [attr.colspan]="compra.tipoCompra === 'BIEN' ? 5 : 4" class="text-end label-total">IGV (18%):</td>
-            <td class="amount-sub">{{ compra.igv | number:'1.2-2' }}</td>
-            <td></td>
+          
+          <tr *ngIf="compra.tipoComprobante === 'FACTURA_COMERCIAL'">
+             <td [attr.colspan]="compra.tipoCompra === 'BIEN' ? 4 : 3" class="text-end label-total" style="color: #2563eb;">FOB ADICIONAL:</td>
+             <td>
+                <div class="input-group-sm" style="justify-content: flex-end;">
+                    <span class="currency-symbol">{{ getSimboloMoneda() }}</span>
+                    <input type="number" 
+                           class="form-control-smaf sm-input currency-input" 
+                           style="width: 80px; text-align: right; border-color: #2563eb;"
+                           [(ngModel)]="compra.fob" 
+                           (ngModelChange)="recalcularTotales()">
+                </div>
+             </td>
+             <td></td>
           </tr>
+
           <tr *ngIf="(compra.percepcion || 0) > 0">
-            <td [attr.colspan]="compra.tipoCompra === 'BIEN' ? 5 : 4" class="text-end label-total">PERCEPCIÓN:</td>
+            <td [attr.colspan]="compra.tipoCompra === 'BIEN' ? 4 : 3" class="text-end label-total">PERCEPCIÓN:</td>
             <td class="amount-sub">{{ compra.percepcion | number:'1.2-2' }}</td>
             <td></td>
           </tr>
           <tr class="total-row-final">
-            <td [attr.colspan]="compra.tipoCompra === 'BIEN' ? 5 : 4" class="text-end label-total-lg">TOTAL A PAGAR:</td>
+            <td [attr.colspan]="compra.tipoCompra === 'BIEN' ? 4 : 3" class="text-end label-total-lg">TOTAL A PAGAR:</td>
             <td class="amount-total-lg">{{ getSimboloMoneda() }} {{ compra.total | number:'1.2-2' }}</td>
             <td></td>
           </tr>

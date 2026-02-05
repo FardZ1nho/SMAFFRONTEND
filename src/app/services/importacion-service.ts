@@ -35,31 +35,29 @@ export class ImportacionService {
   }
 
   /**
-   * ✅ NUEVO: Buscar carpeta por CÓDIGO DE TEXTO (Ej: "2026-01")
-   * Backend: GET /importaciones/buscar/{codigo}
+   * Buscar carpeta por CÓDIGO DE TEXTO (Ej: "2026-01")
    */
   obtenerPorCodigo(codigo: string): Observable<ImportacionResponse> {
     return this.http.get<ImportacionResponse>(`${this.apiUrl}/buscar/${codigo}`);
   }
 
   /**
-   * Crear nueva importación (si usas un formulario de creación aparte)
+   * Crear nueva importación
    */
   guardar(request: ImportacionRequest): Observable<ImportacionResponse> {
     return this.http.post<ImportacionResponse>(this.apiUrl, request);
   }
 
   /**
-   * ✅ MÉTODO AGREGADO (Soluciona el error rojo en el Modal)
-   * Actualiza una importación existente por ID
+   * ✅ ACTUALIZAR CARPETA Y COSTOS
+   * Este método dispara el PRORRATEO en el Backend
    */
-  actualizar(id: number, request: ImportacionRequest | any): Observable<ImportacionResponse> {
+  actualizar(id: number, request: ImportacionRequest): Observable<ImportacionResponse> {
     return this.http.put<ImportacionResponse>(`${this.apiUrl}/${id}`, request);
   }
 
   /**
-   * ✅ NUEVO: Forzar recálculo de costos
-   * (Por si editaste una factura hija y quieres actualizar la carpeta padre manualmente)
+   * Forzar recálculo de costos manualmente
    */
   recalcularCostos(id: number): Observable<void> {
     return this.http.post<void>(`${this.apiUrl}/${id}/recalcular`, {});

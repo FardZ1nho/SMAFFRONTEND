@@ -10,9 +10,11 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatTabsModule } from '@angular/material/tabs'; // ✅ Para organizar mejor
 
 import { ImportacionService } from '../../../services/importacion-service';
 import { ImportacionResponse, EstadoImportacion, TipoTransporte } from '../../../models/importacion';
+import { MatProgressSpinner } from "@angular/material/progress-spinner";
 
 @Component({
   selector: 'app-importacion-editar-modal',
@@ -21,8 +23,9 @@ import { ImportacionResponse, EstadoImportacion, TipoTransporte } from '../../..
     CommonModule, FormsModule, MatDialogModule,
     MatFormFieldModule, MatInputModule, MatButtonModule,
     MatSelectModule, MatDatepickerModule, MatNativeDateModule,
-    MatIconModule, MatTooltipModule
-  ],
+    MatIconModule, MatTooltipModule, MatTabsModule,
+    MatProgressSpinner
+],
   templateUrl: './importacion-editar-modal.html',
   styleUrls: ['./importacion-editar-modal.css']
 })
@@ -40,32 +43,31 @@ export class ImportacionEditarModalComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    // Clonar para no mutar directamente
     this.form = { ...this.data };
 
-    if (this.form.fechaEstimadaLlegada) {
-       this.form.fechaEstimadaLlegada = new Date(this.form.fechaEstimadaLlegada);
-    }
+    // Convertir fechas string a Date objects para los pickers
+    const dateFields = ['fechaEstimadaLlegada', 'fechaLlegadaReal'];
+    dateFields.forEach(field => {
+      if (this.form[field]) this.form[field] = new Date(this.form[field]);
+    });
   }
 
-  // ✅ 1. FUNCIÓN PARA LIMPIAR EL CERO AL HACER CLIC
+  // ✅ Limpia el 0 visualmente al hacer foco
   limpiarCero(campo: string) {
-    if (this.form[campo] === 0) {
-      this.form[campo] = null;
-    }
+    if (this.form[campo] === 0) this.form[campo] = null;
   }
 
-  // ✅ 2. FUNCIÓN PARA RESTAURAR EL CERO SI LO DEJAN VACÍO
+  // ✅ Restaura el 0 si el usuario deja vacío
   verificarVacio(campo: string) {
-    if (this.form[campo] === null || this.form[campo] === '') {
-      this.form[campo] = 0;
-    }
+    if (this.form[campo] === null || this.form[campo] === '') this.form[campo] = 0;
   }
 
   guardar(): void {
     this.guardando = true;
     
     this.importacionService.actualizar(this.form.id, this.form).subscribe({
-      next: (resp) => {
+      next: () => {
         this.guardando = false;
         this.dialogRef.close(true);
       },

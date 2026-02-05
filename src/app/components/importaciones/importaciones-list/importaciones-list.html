@@ -2,92 +2,45 @@
 
   <div class="page-header animate-fade-in">
     <div class="header-content">
-      <div class="icon-box">
-        <mat-icon>folder_open</mat-icon>
-      </div>
+      <div class="icon-box"><mat-icon>folder_open</mat-icon></div>
       <div>
         <h1>Gestión de Importaciones</h1>
         <p class="subtitle">Seguimiento logístico, DUA y costeo agrupado por carpetas</p>
       </div>
     </div>
-
     <button mat-stroked-button class="btn-secondary" routerLink="/compras/nueva">
       <mat-icon>add</mat-icon> Nueva Factura Comercial
     </button>
   </div>
 
   <div class="filters-bar card animate-fade-in">
-    <div class="search-wrapper">
-      <mat-icon>search</mat-icon>
-      <input type="text" placeholder="Buscar por Importación, DUA, proveedor..." [(ngModel)]="filtroTexto"
-        (input)="filtrar()">
-      <button class="btn-clear" *ngIf="filtroTexto" (click)="limpiarBusqueda()">
-        <mat-icon>close</mat-icon>
-      </button>
-    </div>
-
-    <div class="actions-group">
-      <button mat-button class="btn-tool" [class.active-filter]="mostrarFiltros" (click)="toggleFiltros()">
-        <mat-icon>{{ mostrarFiltros ? 'filter_list_off' : 'filter_list' }}</mat-icon>
-        {{ mostrarFiltros ? 'Ocultar Filtros' : 'Filtros' }}
-      </button>
-    </div>
-  </div>
-
-  <div class="advanced-filters card animate-fade-in" *ngIf="mostrarFiltros" style="margin-bottom: 20px; padding: 20px;">
-    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-      <mat-form-field appearance="outline" style="flex: 1;">
-        <mat-label>Estado</mat-label>
-        <mat-select [(ngModel)]="filtroEstado" (selectionChange)="filtrar()">
-          <mat-option value="TODOS">Todos</mat-option>
-          <mat-option *ngFor="let e of estados" [value]="e">{{ getLabelEstado(e) }}</mat-option>
-        </mat-select>
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" style="flex: 1;">
-        <mat-label>Transporte</mat-label>
-        <mat-select [(ngModel)]="filtroTransporte" (selectionChange)="filtrar()">
-          <mat-option value="TODOS">Todos</mat-option>
-          <mat-option *ngFor="let t of transportes" [value]="t">{{ t }}</mat-option>
-        </mat-select>
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" style="flex: 1;">
-        <mat-label>Fecha Inicio (ETA)</mat-label>
-        <input matInput [matDatepicker]="picker1" [(ngModel)]="filtroFechaInicio" (dateChange)="filtrar()">
-        <mat-datepicker-toggle matIconSuffix [for]="picker1"></mat-datepicker-toggle>
-        <mat-datepicker #picker1></mat-datepicker>
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" style="flex: 1;">
-        <mat-label>Fecha Fin (ETA)</mat-label>
-        <input matInput [matDatepicker]="picker2" [(ngModel)]="filtroFechaFin" (dateChange)="filtrar()">
-        <mat-datepicker-toggle matIconSuffix [for]="picker2"></mat-datepicker-toggle>
-        <mat-datepicker #picker2></mat-datepicker>
-      </mat-form-field>
-
-      <button mat-button color="warn" (click)="limpiarFiltros()">Limpiar</button>
-    </div>
+     <div class="search-wrapper">
+       <mat-icon>search</mat-icon>
+       <input type="text" placeholder="Buscar..." [(ngModel)]="filtroTexto" (input)="filtrar()">
+     </div>
+     <div class="actions-group">
+        <button mat-button class="btn-tool" (click)="toggleFiltros()">
+          <mat-icon>filter_list</mat-icon> Filtros
+        </button>
+     </div>
   </div>
 
   <div class="table-card card animate-fade-in delay-1">
-
-    <div class="loading-overlay" *ngIf="loading">
-      <p>Cargando datos...</p>
-    </div>
+    
+    <div class="loading-overlay" *ngIf="loading"><p>Cargando datos...</p></div>
 
     <div class="table-responsive" *ngIf="!loading">
       <table class="soft-table">
         <thead>
           <tr>
             <th class="col-expander"></th>
-            <th class="col-id">CÓDIGO CARPETA</th>
+            <th class="col-id">CÓDIGO</th>
             <th class="col-estado">ESTADO</th>
             <th class="col-proveedor">PROVEEDORES</th>
-            <th class="col-eta">ETA (LLEGADA)</th>
-            <th class="col-items text-center">FACTURAS</th>
-            <th class="col-money text-right">TOTAL FOB</th>
-            <th class="col-money text-right">COSTO TOTAL</th>
+            <th class="col-eta">ETA</th>
+            <th class="col-items text-center">DOCS</th>
+            <th class="col-money text-right">FOB TOTAL</th>
+            <th class="col-money text-right">COSTO LANDED</th>
             <th class="text-center">ACCIÓN</th>
           </tr>
         </thead>
@@ -116,23 +69,20 @@
                 </div>
               </td>
               <td class="col-eta">
-                <span *ngIf="imp.fechaEstimadaLlegada">{{ imp.fechaEstimadaLlegada | date:'dd MMM yyyy' }}</span>
-                <span *ngIf="!imp.fechaEstimadaLlegada" class="placeholder-text">--</span>
+                {{ imp.fechaEstimadaLlegada ? (imp.fechaEstimadaLlegada | date:'dd MMM') : '--' }}
               </td>
               <td class="col-items text-center">
                 <span class="badge-count">{{ imp.facturasComerciales?.length || 0 }}</span>
               </td>
               <td class="col-money text-right">
-                <span class="currency">$</span>
-                {{ imp.sumaFobTotal | number:'1.2-2' }}
+                <span class="currency">$</span> {{ imp.sumaFobTotal | number:'1.2-2' }}
               </td>
               <td class="col-money total-highlight text-right">
-                <span class="currency">$</span>
-                {{ getTotalCostoEstimado(imp) | number:'1.2-2' }}
+                <span class="currency">$</span> {{ getTotalCostoEstimado(imp) | number:'1.2-2' }}
               </td>
               <td class="text-center" (click)="$event.stopPropagation()">
-                <button mat-icon-button color="primary" (click)="editarImportacion(imp)"
-                  matTooltip="Gestionar Carpeta y Costos">
+                <button mat-icon-button color="primary" (click)="editarImportacion(imp)" 
+                  matTooltip="Editar Costos y Datos">
                   <mat-icon>edit_note</mat-icon>
                 </button>
               </td>
@@ -148,21 +98,16 @@
                       <span class="label">Ordenado</span>
                     </div>
                     <div class="line" [class.active]="isStepComplete(imp.estado, 'EN_TRANSITO')"></div>
-
                     <div class="step" [class.completed]="isStepComplete(imp.estado, 'EN_TRANSITO')">
                       <div class="circle"><mat-icon>directions_boat</mat-icon></div>
                       <span class="label">En Tránsito</span>
-                      <small *ngIf="imp.estado === 'EN_TRANSITO'" class="etd-tag">ETA: {{imp.fechaEstimadaLlegada |
-                        date:'dd/MM'}}</small>
                     </div>
                     <div class="line" [class.active]="isStepComplete(imp.estado, 'EN_ADUANAS')"></div>
-
                     <div class="step" [class.completed]="isStepComplete(imp.estado, 'EN_ADUANAS')">
                       <div class="circle"><mat-icon>gavel</mat-icon></div>
                       <span class="label">Aduanas</span>
                     </div>
                     <div class="line" [class.active]="isStepComplete(imp.estado, 'EN_ALMACEN')"></div>
-
                     <div class="step" [class.completed]="isStepComplete(imp.estado, 'EN_ALMACEN')">
                       <div class="circle"><mat-icon>inventory_2</mat-icon></div>
                       <span class="label">En Almacén</span>
@@ -170,62 +115,61 @@
                   </div>
 
                   <div class="info-grid">
-
+                    
                     <div class="info-box logistics">
-                      <h4><mat-icon>local_shipping</mat-icon> Datos de Embarque</h4>
+                      <h4><mat-icon>local_shipping</mat-icon> Logística</h4>
                       <div class="data-pair">
-                        <span>Tracking / BL:</span>
-                        <strong>{{ imp.trackingNumber || '---' }}</strong>
+                        <span>Tracking:</span> <strong>{{ imp.trackingNumber || '---' }}</strong>
                       </div>
                       <div class="data-pair">
-                        <span>Naviera:</span>
-                        <strong>{{ imp.navieraAerolinea || '---' }}</strong>
+                        <span>Agente:</span> <strong>{{ imp.agenteAduanas || '---' }}</strong>
                       </div>
                       <div class="data-pair">
-                        <span>Origen:</span>
-                        <strong>{{ imp.paisOrigen }} ({{ imp.incoterm }})</strong>
+                        <span>DUA:</span> <strong class="text-primary">{{ imp.numeroDua || 'Pendiente' }}</strong>
                       </div>
                       <div class="data-pair">
-                        <span>DUA:</span>
-                        <strong class="text-primary">{{ imp.numeroDua || 'Pendiente' }}</strong>
+                        <span>Canal:</span> 
+                        <span class="canal-dot" 
+                              [class.rojo]="imp.canal === 'ROJO'"
+                              [class.verde]="imp.canal === 'VERDE'"
+                              [class.naranja]="imp.canal === 'NARANJA'">
+                          ● {{ imp.canal || 'N/A' }}
+                        </span>
                       </div>
                     </div>
 
                     <div class="info-box financial">
-                      <h4><mat-icon>monetization_on</mat-icon> Estructura de Costos</h4>
+                      <h4><mat-icon>monetization_on</mat-icon> Resumen Costos</h4>
                       <div class="cost-row">
-                        <span>Total FOB (Mercadería):</span>
+                        <span>Total FOB:</span>
                         <span>$ {{ imp.sumaFobTotal | number:'1.2-2' }}</span>
                       </div>
                       <div class="cost-row text-muted">
-                        <span>+ Flete & Seguro:</span>
-                        <span>$ {{ (imp.totalFleteInternacional + imp.totalSeguro) | number:'1.2-2' }}</span>
-                      </div>
-                      <div class="cost-row text-muted">
-                        <span>+ Gastos Aduana/Almacén:</span>
-                        <span>$ {{ (imp.totalGastosAduana + imp.totalGastosAlmacen + imp.otrosGastosGlobales) |
-                          number:'1.2-2' }}</span>
+                        <span>+ Gastos Logísticos:</span>
+                        <span>$ {{ getTotalGastos(imp) | number:'1.2-2' }}</span>
                       </div>
                       <div class="cost-divider"></div>
                       <div class="cost-row total">
-                        <span>COSTO TOTAL (LANDED):</span>
+                        <span>TOTAL LANDED:</span>
                         <span class="highlight">$ {{ getTotalCostoEstimado(imp) | number:'1.2-2' }}</span>
+                      </div>
+                      
+                      <div class="mt-3 text-center">
+                        <button mat-stroked-button color="accent" class="full-width-btn" (click)="verProrrateo(imp)">
+                          <mat-icon>pie_chart</mat-icon> Ver Prorrateo
+                        </button>
                       </div>
                     </div>
 
                     <div class="info-box invoices">
-                      <h4><mat-icon>receipt</mat-icon> Facturas Vinculadas ({{ imp.facturasComerciales?.length }})</h4>
+                      <h4><mat-icon>receipt</mat-icon> Facturas ({{ imp.facturasComerciales?.length }})</h4>
                       <div class="mini-table-container">
                         <table class="mini-table">
                           <tbody>
                             <tr *ngFor="let f of imp.facturasComerciales">
                               <td><span class="serie-badge">{{ f.serie }}-{{ f.numero }}</span></td>
                               <td class="supplier-name">{{ f.nombreProveedor }}</td>
-                              <td class="text-right">{{ f.moneda }} {{ f.total | number:'1.2-2' }}</td>
-                              <td class="text-center">
-                                <a [routerLink]="['/compras/detalle', f.id]"
-                                  class="link-icon"><mat-icon>visibility</mat-icon></a>
-                              </td>
+                              <td class="text-right text-muted">{{ f.moneda }} {{ f.total | number:'1.2-2' }}</td>
                             </tr>
                           </tbody>
                         </table>
@@ -233,7 +177,6 @@
                     </div>
 
                   </div>
-
                 </div>
               </td>
             </tr>
@@ -241,11 +184,6 @@
 
         </tbody>
       </table>
-
-      <div *ngIf="importacionesFiltradas.length === 0" class="empty-state">
-        <mat-icon>travel_explore</mat-icon>
-        <p>No se encontraron importaciones.</p>
-      </div>
     </div>
   </div>
 </div>

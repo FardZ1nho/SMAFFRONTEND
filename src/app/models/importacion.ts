@@ -18,8 +18,8 @@ export enum TipoTransporte {
   TERRESTRE = 'TERRESTRE'
 }
 
-// ✅ NUEVA INTERFAZ: Para leer el resumen ligero que envía el Backend
-// Esto evita cargar todos los detalles de productos de cada factura
+// Resumen ligero de facturas dentro de la importación
+// ✅ ACTUALIZA ESTA INTERFAZ
 export interface FacturaResumen {
     id: number;
     serie: string;
@@ -28,8 +28,37 @@ export interface FacturaResumen {
     total: number;
     moneda: string;
     pesoNetoKg: number;
-}
+    cbm: number;
 
+    // --- DETALLE FULL ---
+    proFlete?: number;
+    proAlmacenaje?: number;
+    proTransporte?: number;
+    proPersonalDescarga?: number;
+    proMontacarga?: number;
+
+    proDesconsolidacion?: number;
+
+    proVistosBuenos?: number;
+    proTransmision?: number;
+    proComisionAgencia?: number;
+    proVobo?: number;
+    proGastosOperativos?: number;
+    proResguardo?: number;
+
+    proAdv?: number;
+    proIgv?: number;
+    proIpm?: number;
+    proPercepcion?: number;
+
+    proOtros1?: number;
+    proOtros2?: number;
+    proOtros3?: number;
+    proOtros4?: number;
+
+    costoTotalImportacion: number;
+}
+// ... resto igual
 // ==========================================
 // 📥 RESPONSE (CONSULTA)
 // ==========================================
@@ -38,95 +67,107 @@ export interface ImportacionResponse {
   codigoAgrupador: string; 
   estado: EstadoImportacion;
 
-  // ✅ CORREGIDO: Usamos FacturaResumen[] en lugar de CompraResponse[]
-  // Esto hace match con el DTO "CompraResumenDTO" de Java
   facturasComerciales?: FacturaResumen[];
 
-  // --- LOGÍSTICA Y SEGUIMIENTO ---
+  // --- LOGÍSTICA ---
   numeroDua?: string;
   trackingNumber?: string;
-  
-  // ✅ CAMPOS NUEVOS (Que agregamos al Backend hace un momento)
-  canal?: string;          // VERDE, ROJO, NARANJA
+  canal?: string;          
   agenteAduanas?: string;
 
-  // Fechas Críticas
-  fechaCutOffDocumental?: string;
-  fechaCutOffFisico?: string;
-  fechaSalidaEstimada?: string; // ETD
-  fechaEstimadaLlegada?: string; // ETA
-  fechaLlegadaReal?: string;     // ATA
-  fechaLevanteAutorizado?: string;
-  fechaNacionalizacion?: string;
+  fechaEstimadaLlegada?: string; 
+  fechaLlegadaReal?: string;     
 
-  // Transporte
-  paisOrigen?: string;
-  puertoEmbarque?: string;
-  puertoLlegada?: string;
-  incoterm?: Incoterm;
   tipoTransporte?: TipoTransporte;
-  navieraAerolinea?: string;
-  numeroViaje?: string;      
-  numeroContenedor?: string;
-  diasLibres?: number;
-  fechaLimiteDevolucion?: string;
 
-  // --- COSTOS GLOBALES ---
-  totalFleteInternacional: number;
-  totalSeguro: number;
-  totalGastosAduana: number;    
-  totalGastosAlmacen: number;    
-  totalTransporteLocal: number;  
-  otrosGastosGlobales: number;
-
-  // --- TOTALIZADORES ---
+  // --- TOTALES ---
   sumaFobTotal: number;  
   pesoTotalKg: number;   
+  cbmTotal: number; // ✅ Nuevo Total Volumen
 
-  fechaCreacion: string;
+  // ==========================================
+  // 💰 COSTOS GLOBALES (DESGLOSADOS)
+  // ==========================================
+  
+  // Grupo Volumen
+  costoFlete: number;
+  costoAlmacenajeCft: number;
+  costoTransporteSjl: number;
+  costoPersonalDescarga: number;
+  costoMontacarga: number;
+
+  // Grupo Peso
+  costoDesconsolidacion: number;
+
+  // Grupo Valor (FOB)
+  costoVistosBuenos: number;
+  costoTransmision: number;
+  costoComisionAgencia: number;
+  costoVobo: number;
+  costoGastosOperativos: number;
+  costoResguardo: number;
+
+  // Impuestos
+  costoIgv: number;
+  costoIpm: number;
+  costoPercepcion: number;
+  costoAdv: number;
+
+  // Otros
+  costoOtros1: number;
+  costoOtros2: number;
+  costoOtros3: number;
+  costoOtros4: number;
 }
 
 // ==========================================
 // 📤 REQUEST (GUARDAR / EDITAR)
 // ==========================================
 export interface ImportacionRequest {
-  codigoAgrupador: string; 
-  estado: EstadoImportacion; // O string si prefieres simpleza
+  codigoAgrupador?: string; 
+  estado?: EstadoImportacion | string; 
+  tipoTransporte?: TipoTransporte | string;
 
   // --- LOGÍSTICA ---
   numeroDua?: string;
   trackingNumber?: string;
-  
-  // ✅ CAMPOS NUEVOS EN EL FORMULARIO
   canal?: string;
   agenteAduanas?: string;
   
-  fechaCutOffDocumental?: string;
-  fechaCutOffFisico?: string;
-  fechaSalidaEstimada?: string;
-  fechaEstimadaLlegada?: string; // El datepicker de Angular devuelve Date o string
+  fechaEstimadaLlegada?: string; 
   fechaLlegadaReal?: string;
 
-  fechaLevanteAutorizado?: string;
-  fechaNacionalizacion?: string;
-  
-  diasLibres?: number;
-  fechaLimiteDevolucion?: string;
-  
-  paisOrigen?: string;
-  puertoEmbarque?: string;
-  puertoLlegada?: string;
-  incoterm?: Incoterm;
-  tipoTransporte?: TipoTransporte;
-  navieraAerolinea?: string;
-  numeroViaje?: string;
-  numeroContenedor?: string;
+  // ==========================================
+  // 💰 COSTOS GLOBALES (INPUTS)
+  // ==========================================
 
-  // --- COSTOS GLOBALES ---
-  totalFleteInternacional: number;
-  totalSeguro: number;
-  totalGastosAduana: number;
-  totalGastosAlmacen: number;
-  totalTransporteLocal: number;
-  otrosGastosGlobales: number;
+  // Grupo Volumen
+  costoFlete?: number;
+  costoAlmacenajeCft?: number;
+  costoTransporteSjl?: number;
+  costoPersonalDescarga?: number;
+  costoMontacarga?: number;
+
+  // Grupo Peso
+  costoDesconsolidacion?: number;
+
+  // Grupo Valor
+  costoVistosBuenos?: number;
+  costoTransmision?: number;
+  costoComisionAgencia?: number;
+  costoVobo?: number;
+  costoGastosOperativos?: number;
+  costoResguardo?: number;
+
+  // Impuestos
+  costoIgv?: number;
+  costoIpm?: number;
+  costoPercepcion?: number;
+  costoAdv?: number;
+
+  // Otros
+  costoOtros1?: number;
+  costoOtros2?: number;
+  costoOtros3?: number;
+  costoOtros4?: number;
 }

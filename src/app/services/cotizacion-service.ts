@@ -2,13 +2,14 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { CotizacionRequest, CotizacionResponse } from '../models/cotizacion';
+import { environment } from '../../environments/environment.prod';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CotizacionService {
 
-  private apiUrl = 'http://localhost:8080/cotizaciones'; // Ajusta tu puerto si es necesario
+  private apiUrl = `${environment.base}/cotizaciones`; // Ajusta tu puerto si es necesario
 
   constructor(private http: HttpClient) { }
 

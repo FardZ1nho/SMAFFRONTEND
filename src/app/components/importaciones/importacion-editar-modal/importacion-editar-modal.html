@@ -1,163 +1,256 @@
 <div class="modal-container">
 
   <div class="modal-header">
-    <div class="header-title">
+    <div class="header-content">
       <div class="icon-bg">
         <mat-icon>inventory_2</mat-icon>
       </div>
       <div>
         <h2>Gestionar Importación</h2>
-        <span class="code-badge" *ngIf="data.codigoAgrupador">{{ data.codigoAgrupador }}</span>
+        <div class="subtitle">
+          <span class="code-badge">{{ data.codigoAgrupador }}</span>
+          <span class="status-dot" [ngClass]="form.estado">{{ form.estado | titlecase }}</span>
+        </div>
       </div>
     </div>
-    <button class="btn-close" (click)="cerrar()" title="Cerrar">
+    <button class="btn-close" (click)="cerrar()">
       <mat-icon>close</mat-icon>
     </button>
   </div>
 
-  <div class="modal-body">
-    
-    <div class="section-card">
-      <div class="section-title"><mat-icon>settings</mat-icon> Estado y Seguimiento</div>
+  <div class="modal-body-tabs">
+    <mat-tab-group animationDuration="0ms" mat-stretch-tabs="false" mat-align-tabs="start">
       
-      <div class="grid-3">
-        <mat-form-field appearance="outline">
-          <mat-label>Estado Actual</mat-label>
-          <mat-select [(ngModel)]="form.estado">
-            <mat-option *ngFor="let est of estados" [value]="est">{{ est | titlecase }}</mat-option>
-          </mat-select>
-        </mat-form-field>
+      <mat-tab label="Logística y Aduanas">
+        <div class="tab-content">
+          
+          <div class="section-card">
+            <div class="section-title"><mat-icon>flight_takeoff</mat-icon> Datos de Transporte</div>
+            <div class="grid-3">
+              <mat-form-field appearance="outline">
+                <mat-label>Estado Actual</mat-label>
+                <mat-select [(ngModel)]="form.estado">
+                  <mat-option *ngFor="let e of estados" [value]="e">
+                    {{ e | titlecase }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Medio de Transporte</mat-label>
-          <mat-select [(ngModel)]="form.tipoTransporte">
-            <mat-option *ngFor="let t of transportes" [value]="t">
-              {{ t === 'MARITIMO' ? '🚢 Marítimo' : (t === 'AEREO' ? '✈️ Aéreo' : '🚛 Terrestre') }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Vía de Transporte</mat-label>
+                <mat-select [(ngModel)]="form.tipoTransporte">
+                  <mat-option value="MARITIMO">🚢 Marítimo</mat-option>
+                  <mat-option value="AEREO">✈️ Aéreo</mat-option>
+                  <mat-option value="TERRESTRE">🚛 Terrestre</mat-option>
+                </mat-select>
+              </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Fecha Estimada (ETA)</mat-label>
-          <input matInput [matDatepicker]="pickerEta" [(ngModel)]="form.fechaEstimadaLlegada">
-          <mat-datepicker-toggle matIconSuffix [for]="pickerEta"></mat-datepicker-toggle>
-          <mat-datepicker #pickerEta></mat-datepicker>
-        </mat-form-field>
-      </div>
-    </div>
+              <mat-form-field appearance="outline">
+                <mat-label>Tracking / BL</mat-label>
+                <input matInput [(ngModel)]="form.trackingNumber" placeholder="Nro Guía">
+              </mat-form-field>
+            </div>
 
-    <div class="section-card">
-      <div class="section-title"><mat-icon>description</mat-icon> Documentación Aduanera</div>
-      
-      <div class="grid-3">
-        <mat-form-field appearance="outline">
-          <mat-label>N° DUA / DAM</mat-label>
-          <input matInput [(ngModel)]="form.numeroDua" placeholder="Ej: 118-2026...">
-        </mat-form-field>
+            <div class="grid-2">
+              <mat-form-field appearance="outline">
+                <mat-label>Fecha Estimada (ETA)</mat-label>
+                <input matInput [matDatepicker]="pickerEta" [(ngModel)]="form.fechaEstimadaLlegada">
+                <mat-datepicker-toggle matIconSuffix [for]="pickerEta"></mat-datepicker-toggle>
+                <mat-datepicker #pickerEta></mat-datepicker>
+              </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Tracking / BL</mat-label>
-          <input matInput [(ngModel)]="form.trackingNumber" placeholder="Código de rastreo">
-        </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Llegada Real</mat-label>
+                <input matInput [matDatepicker]="pickerReal" [(ngModel)]="form.fechaLlegadaReal">
+                <mat-datepicker-toggle matIconSuffix [for]="pickerReal"></mat-datepicker-toggle>
+                <mat-datepicker #pickerReal></mat-datepicker>
+              </mat-form-field>
+            </div>
+          </div>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Canal de Control</mat-label>
-          <mat-select [(ngModel)]="form.canal">
-             <mat-option value="VERDE">🟢 Verde</mat-option>
-             <mat-option value="NARANJA">🟠 Naranja</mat-option>
-             <mat-option value="ROJO">🔴 Rojo</mat-option>
-          </mat-select>
-        </mat-form-field>
-      </div>
-      
-      <div class="grid-1">
-        <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Agente de Aduanas</mat-label>
-            <input matInput [(ngModel)]="form.agenteAduanas" placeholder="Nombre del Agente">
-        </mat-form-field>
-      </div>
-    </div>
+          <div class="section-card">
+            <div class="section-title"><mat-icon>gavel</mat-icon> Datos de Aduanas</div>
+            <div class="grid-3">
+              <mat-form-field appearance="outline">
+                <mat-label>N° DUA / DAM</mat-label>
+                <input matInput [(ngModel)]="form.numeroDua" placeholder="Ej: 118-2026-123456">
+              </mat-form-field>
 
-    <div class="section-card cost-section">
-      <div class="section-title">
-        <mat-icon>attach_money</mat-icon> Costos Globales (Prorrateo Automático)
-      </div>
-      <p class="hint-text">
-        Ingrese los montos totales de las facturas de servicios. El sistema distribuirá estos costos entre las facturas comerciales según su peso.
-      </p>
-      
-      <div class="grid-2">
-        <mat-form-field appearance="outline" class="dense">
-          <mat-label>Flete Internacional (Total)</mat-label>
-          <span matPrefix>$ &nbsp;</span>
-          <input matInput type="number" 
-                 [(ngModel)]="form.totalFleteInternacional" 
-                 (focus)="limpiarCero('totalFleteInternacional')"
-                 (blur)="verificarVacio('totalFleteInternacional')"
-                 class="money-input">
-        </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Canal</mat-label>
+                <mat-select [(ngModel)]="form.canal">
+                  <mat-option value="VERDE">🟢 Verde</mat-option>
+                  <mat-option value="NARANJA">🟠 Naranja</mat-option>
+                  <mat-option value="ROJO">🔴 Rojo</mat-option>
+                </mat-select>
+              </mat-form-field>
 
-        <mat-form-field appearance="outline" class="dense">
-          <mat-label>Seguro Global</mat-label>
-          <span matPrefix>$ &nbsp;</span>
-          <input matInput type="number" 
-                 [(ngModel)]="form.totalSeguro" 
-                 (focus)="limpiarCero('totalSeguro')"
-                 (blur)="verificarVacio('totalSeguro')"
-                 class="money-input">
-        </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Agente de Aduanas</mat-label>
+                <input matInput [(ngModel)]="form.agenteAduanas" placeholder="Nombre Agente">
+              </mat-form-field>
+            </div>
+          </div>
 
-        <mat-form-field appearance="outline" class="dense">
-          <mat-label>Gastos Aduanas (Agente, V°B°)</mat-label>
-          <span matPrefix>$ &nbsp;</span>
-          <input matInput type="number" 
-                 [(ngModel)]="form.totalGastosAduana" 
-                 (focus)="limpiarCero('totalGastosAduana')"
-                 (blur)="verificarVacio('totalGastosAduana')"
-                 class="money-input">
-        </mat-form-field>
+        </div>
+      </mat-tab>
 
-        <mat-form-field appearance="outline" class="dense">
-          <mat-label>Gastos Almacén (Terminal)</mat-label>
-          <span matPrefix>$ &nbsp;</span>
-          <input matInput type="number" 
-                 [(ngModel)]="form.totalGastosAlmacen" 
-                 (focus)="limpiarCero('totalGastosAlmacen')"
-                 (blur)="verificarVacio('totalGastosAlmacen')"
-                 class="money-input">
-        </mat-form-field>
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <div class="tab-label-custom">
+            <mat-icon>monetization_on</mat-icon>
+            Costos & Prorrateo
+          </div>
+        </ng-template>
+        
+        <div class="tab-content">
+          <div class="info-banner">
+            <mat-icon>info</mat-icon>
+            <p>Ingrese los montos globales. El sistema calculará automáticamente cuánto le corresponde a cada factura.</p>
+          </div>
 
-        <mat-form-field appearance="outline" class="dense">
-          <mat-label>Transporte Local / Resguardo</mat-label>
-          <span matPrefix>$ &nbsp;</span>
-          <input matInput type="number" 
-                 [(ngModel)]="form.totalTransporteLocal" 
-                 (focus)="limpiarCero('totalTransporteLocal')"
-                 (blur)="verificarVacio('totalTransporteLocal')"
-                 class="money-input">
-        </mat-form-field>
+          <div class="cost-grid-layout">
+            
+            <div class="cost-column">
+              <h4 class="group-title text-blue">📦 Por Volumen (CBM)</h4>
+              <mat-form-field appearance="outline" class="dense-field">
+                <mat-label>Flete Internacional</mat-label>
+                <span matPrefix>$&nbsp;</span>
+                <input matInput type="number" class="money-input" [(ngModel)]="form.costoFlete">
+              </mat-form-field>
+              
+              <mat-form-field appearance="outline" class="dense-field">
+                <mat-label>Almacenaje (Terminal)</mat-label>
+                <span matPrefix>$&nbsp;</span>
+                <input matInput type="number" class="money-input" [(ngModel)]="form.costoAlmacenajeCft">
+              </mat-form-field>
 
-        <mat-form-field appearance="outline" class="dense">
-          <mat-label>Otros Gastos</mat-label>
-          <span matPrefix>$ &nbsp;</span>
-          <input matInput type="number" 
-                 [(ngModel)]="form.otrosGastosGlobales" 
-                 (focus)="limpiarCero('otrosGastosGlobales')"
-                 (blur)="verificarVacio('otrosGastosGlobales')"
-                 class="money-input">
-        </mat-form-field>
-      </div>
-    </div>
+              <mat-form-field appearance="outline" class="dense-field">
+                <mat-label>Transporte Local</mat-label>
+                <span matPrefix>$&nbsp;</span>
+                <input matInput type="number" class="money-input" [(ngModel)]="form.costoTransporteSjl">
+              </mat-form-field>
 
+              <div class="sub-group">
+                <mat-form-field appearance="outline" class="dense-field">
+                  <mat-label>Personal Descarga</mat-label>
+                  <span matPrefix>$&nbsp;</span>
+                  <input matInput type="number" class="money-input" [(ngModel)]="form.costoPersonalDescarga">
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="dense-field">
+                  <mat-label>Montacarga</mat-label>
+                  <span matPrefix>$&nbsp;</span>
+                  <input matInput type="number" class="money-input" [(ngModel)]="form.costoMontacarga">
+                </mat-form-field>
+              </div>
+
+              <h4 class="group-title text-orange mt-3">⚖️ Por Peso (Kg)</h4>
+              <mat-form-field appearance="outline" class="dense-field">
+                <mat-label>Desconsolidación</mat-label>
+                <span matPrefix>$&nbsp;</span>
+                <input matInput type="number" class="money-input" [(ngModel)]="form.costoDesconsolidacion">
+              </mat-form-field>
+            </div>
+
+            <div class="cost-column">
+              <h4 class="group-title text-green">💰 Por Valor (FOB)</h4>
+              
+              <div class="sub-group">
+                <mat-form-field appearance="outline" class="dense-field">
+                  <mat-label>Vistos Buenos</mat-label>
+                  <span matPrefix>$&nbsp;</span>
+                  <input matInput type="number" class="money-input" [(ngModel)]="form.costoVistosBuenos">
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="dense-field">
+                  <mat-label>VºBº (Extra)</mat-label>
+                  <span matPrefix>$&nbsp;</span>
+                  <input matInput type="number" class="money-input" [(ngModel)]="form.costoVobo">
+                </mat-form-field>
+              </div>
+
+              <mat-form-field appearance="outline" class="dense-field">
+                <mat-label>Comisión Agente</mat-label>
+                <span matPrefix>$&nbsp;</span>
+                <input matInput type="number" class="money-input" [(ngModel)]="form.costoComisionAgencia">
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="dense-field">
+                <mat-label>Gastos Operativos</mat-label>
+                <span matPrefix>$&nbsp;</span>
+                <input matInput type="number" class="money-input" [(ngModel)]="form.costoGastosOperativos">
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="dense-field">
+                <mat-label>Seguro / Resguardo</mat-label>
+                <span matPrefix>$&nbsp;</span>
+                <input matInput type="number" class="money-input" [(ngModel)]="form.costoResguardo">
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="dense-field">
+                <mat-label>Transmisión</mat-label>
+                <span matPrefix>$&nbsp;</span>
+                <input matInput type="number" class="money-input" [(ngModel)]="form.costoTransmision">
+              </mat-form-field>
+            </div>
+
+            <div class="cost-column">
+              <h4 class="group-title text-purple">🏛️ Impuestos (Aduanas)</h4>
+              
+              <mat-form-field appearance="outline" class="dense-field">
+                <mat-label>Ad Valorem</mat-label>
+                <span matPrefix>$&nbsp;</span>
+                <input matInput type="number" class="money-input" [(ngModel)]="form.costoAdv">
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="dense-field">
+                <mat-label>IGV (Importación)</mat-label>
+                <span matPrefix>$&nbsp;</span>
+                <input matInput type="number" class="money-input" [(ngModel)]="form.costoIgv">
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="dense-field">
+                <mat-label>IPM</mat-label>
+                <span matPrefix>$&nbsp;</span>
+                <input matInput type="number" class="money-input" [(ngModel)]="form.costoIpm">
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="dense-field">
+                <mat-label>Percepción</mat-label>
+                <span matPrefix>$&nbsp;</span>
+                <input matInput type="number" class="money-input" [(ngModel)]="form.costoPercepcion">
+              </mat-form-field>
+
+              <h4 class="group-title text-gray mt-3">📋 Otros Gastos</h4>
+              <div class="sub-group">
+                <mat-form-field appearance="outline" class="dense-field">
+                  <mat-label>Otros 1</mat-label>
+                  <input matInput type="number" class="money-input" [(ngModel)]="form.costoOtros1">
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="dense-field">
+                  <mat-label>Otros 2</mat-label>
+                  <input matInput type="number" class="money-input" [(ngModel)]="form.costoOtros2">
+                </mat-form-field>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </mat-tab>
+
+    </mat-tab-group>
   </div>
 
   <div class="modal-footer">
-    <button class="btn-cancel" (click)="cerrar()" [disabled]="guardando">Cancelar</button>
-    <button class="btn-save" (click)="guardar()" [disabled]="guardando">
-      <mat-icon *ngIf="!guardando">save</mat-icon> 
-      <mat-icon *ngIf="guardando">sync</mat-icon> 
-      {{ guardando ? 'Calculando...' : 'Guardar Cambios' }}
-    </button>
+    <div class="auto-calc-msg" *ngIf="guardando">
+      <mat-spinner diameter="20"></mat-spinner>
+      <span>Calculando Prorrateo...</span>
+    </div>
+    <div class="actions">
+      <button class="btn-cancel" (click)="cerrar()" [disabled]="guardando">Cancelar</button>
+      <button class="btn-save" (click)="guardar()" [disabled]="guardando">
+        <mat-icon>save</mat-icon> Guardar y Calcular
+      </button>
+    </div>
   </div>
 
 </div>

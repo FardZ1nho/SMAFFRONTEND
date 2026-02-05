@@ -9,7 +9,7 @@ import { environment } from '../../environments/environment';
 })
 export class CompraService {
 
-  // Asegúrate de que apunte a tu backend (ej: http://localhost:8080/compras)
+  // Asegúrate de que apunte a tu backend
   private apiUrl = `${environment.base}/compras`;
 
   constructor(private http: HttpClient) { }
@@ -22,8 +22,7 @@ export class CompraService {
   }
 
   /**
-   * ✅ NUEVO: Registra un pago posterior (Amortizar deuda)
-   * Backend espera @RequestParam, por lo que usamos HttpParams
+   * Registra un pago posterior (Amortizar deuda)
    */
   registrarAmortizacion(compraId: number, monto: number, metodo: MetodoPago, cuentaId?: number, referencia?: string): Observable<CompraResponse> {
     let params = new HttpParams()
@@ -67,7 +66,7 @@ export class CompraService {
   }
 
   /**
-   * ✅ NUEVO: Listar facturas vinculadas a un Código de Importación (Texto)
+   * ✅ Listar facturas vinculadas a un Código de Importación (Texto)
    * Útil para ver qué facturas dicen "2026-01" antes de crear la carpeta
    */
   listarPorImportacion(codImportacion: string): Observable<CompraResponse[]> {
@@ -75,7 +74,8 @@ export class CompraService {
   }
 
   /**
-   * Eliminar/Anular compra (si aplica lógica en backend)
+   * ✅ Eliminar/Anular compra
+   * IMPORTANTE: Al llamar a esto, el Backend recalculará los costos de la importación
    */
   anular(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);

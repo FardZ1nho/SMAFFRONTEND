@@ -5,12 +5,27 @@
 
 <mat-dialog-content [formGroup]="productoForm">
 
+    <div class="type-selector-container">
+        <div class="type-option" [class.active]="tipoSeleccionado === 'PRODUCTO'" (click)="cambiarTipo('PRODUCTO')">
+            <mat-icon>inventory_2</mat-icon> Producto
+            <div class="check-mark" *ngIf="tipoSeleccionado === 'PRODUCTO'"><mat-icon>check</mat-icon></div>
+        </div>
+        <div class="type-option" [class.active]="tipoSeleccionado === 'SERVICIO'" (click)="cambiarTipo('SERVICIO')">
+            <mat-icon>design_services</mat-icon> Servicio
+            <div class="check-mark" *ngIf="tipoSeleccionado === 'SERVICIO'"><mat-icon>check</mat-icon></div>
+        </div>
+        <div class="type-option" [class.active]="tipoSeleccionado === 'KIT'" (click)="cambiarTipo('KIT')">
+            <mat-icon>layers</mat-icon> Set / Kit
+            <div class="check-mark" *ngIf="tipoSeleccionado === 'KIT'"><mat-icon>check</mat-icon></div>
+        </div>
+    </div>
+
     <div class="form-row full-width">
         <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Nombre del {{ tipoSeleccionado | titlecase }}</mat-label>
-            <input matInput formControlName="nombre" placeholder="Ej: Taladro Percutor 500W">
+            <mat-label>Nombre del {{ tipoSeleccionado }}</mat-label>
+            <input matInput formControlName="nombre" placeholder="Ej: Taladro Percutor / Kit de Herramientas">
             <mat-icon matSuffix>edit</mat-icon>
-            <mat-error *ngIf="nombre?.hasError('required')">El nombre es obligatorio</mat-error>
+            <mat-error *ngIf="nombre?.hasError('required')">Requerido</mat-error>
             <mat-error *ngIf="nombre?.hasError('minlength')">Mínimo 3 caracteres</mat-error>
         </mat-form-field>
         
@@ -27,16 +42,16 @@
 
     <div class="form-row two-col">
         <mat-form-field appearance="outline">
-            <mat-label>Código SKU (Interno)</mat-label>
-            <input matInput formControlName="codigo" placeholder="Ej: PROD-001">
+            <mat-label>Código SKU {{ tipoSeleccionado === 'KIT' ? '(Set)' : '' }}</mat-label>
+            <input matInput formControlName="codigo" 
+                   [placeholder]="tipoSeleccionado === 'KIT' ? 'Ej: KIT-001' : 'Ej: PROD-123'">
             <mat-icon matSuffix>qr_code</mat-icon>
         </mat-form-field>
 
-        <mat-form-field appearance="outline">
-            <mat-label>Cód. Internacional / Fabricante</mat-label>
-            <input matInput formControlName="codigoInternacional" placeholder="Ej: INT-999888">
+        <mat-form-field appearance="outline" *ngIf="tipoSeleccionado !== 'SERVICIO'">
+            <mat-label>Cód. Internacional</mat-label>
+            <input matInput formControlName="codigoInternacional" placeholder="Ej: INT-9988">
             <mat-icon matSuffix>public</mat-icon>
-            <mat-hint>Opcional: Solo informativo</mat-hint>
         </mat-form-field>
     </div>
 
@@ -51,9 +66,57 @@
         </mat-form-field>
     </div>
 
+    <div *ngIf="tipoSeleccionado === 'KIT'" class="kit-section">
+        <h3 class="section-title"><mat-icon>widgets</mat-icon> COMPOSICIÓN DEL SET</h3>
+        <p class="section-desc">Busca y agrega los productos existentes que conforman este Set.</p>
+
+        <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Buscar componente para agregar...</mat-label>
+            <input type="text" matInput [formControl]="buscadorComponentesControl" [matAutocomplete]="auto">
+            <mat-icon matSuffix>search</mat-icon>
+            <mat-autocomplete #auto="matAutocomplete" (optionSelected)="seleccionarComponente($event.option.value)">
+                <mat-option *ngFor="let prod of productosSugeridos" [value]="prod">
+                    <span class="auto-name">{{ prod.nombre }}</span>
+                    <span class="auto-sku" *ngIf="prod.codigo"> | {{ prod.codigo }}</span>
+                    <span class="auto-stock" [class.no-stock]="prod.stockActual <= 0"> (Stock: {{ prod.stockActual }})</span>
+                </mat-option>
+            </mat-autocomplete>
+        </mat-form-field>
+
+        <div class="componentes-list" *ngIf="componentesSeleccionados.length > 0">
+            <div class="comp-header">
+                <span>Producto</span>
+                <span class="text-center">Cant.</span>
+                <span></span>
+            </div>
+            <div class="comp-row" *ngFor="let comp of componentesSeleccionados; let i = index">
+                <div class="comp-info">
+                    <div class="comp-name">{{ comp.nombre }}</div>
+                    <div class="comp-code">{{ comp.codigo }}</div>
+                </div>
+                <div class="comp-qty">
+                    <input type="number" [(ngModel)]="comp.cantidad" [ngModelOptions]="{standalone: true}" (change)="calcularCostoSugerido()" min="1">
+                </div>
+                <button mat-icon-button color="warn" (click)="eliminarComponente(i)">
+                    <mat-icon>delete</mat-icon>
+                </button>
+            </div>
+            
+            <div class="comp-footer">
+                <span class="label">Costo Sumado de Componentes:</span>
+                <span class="value">{{ getSimboloMoneda() }} {{ costoSugeridoKit | number:'1.2-2' }}</span>
+            </div>
+        </div>
+
+        <div class="empty-state" *ngIf="componentesSeleccionados.length === 0">
+            <mat-icon>layers_clear</mat-icon>
+            <span>Aún no has agregado componentes al set.</span>
+        </div>
+    </div>
+
     <div class="form-row full-width">
         <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Descripción (Opcional)</mat-label>
+            <mat-label>Descripción</mat-label>
             <textarea matInput formControlName="descripcion" rows="2"></textarea>
         </mat-form-field>
     </div>
@@ -71,29 +134,22 @@
         </mat-form-field>
     </div>
 
-    <div class="form-row three-col" *ngIf="tipoSeleccionado === 'PRODUCTO'">
-        <mat-form-field appearance="outline">
+    <div class="form-row three-col">
+        <mat-form-field appearance="outline" *ngIf="tipoSeleccionado === 'PRODUCTO'">
             <mat-label>Precio Compra (China)</mat-label>
             <span matPrefix>{{ getSimboloMoneda() }}&nbsp;</span>
             <input matInput type="number" formControlName="precioChina">
         </mat-form-field>
 
         <mat-form-field appearance="outline">
-            <mat-label>Costo Unit. (Landed)</mat-label>
+            <mat-label>{{ tipoSeleccionado === 'KIT' ? 'Costo Set (Manual)' : 'Costo Unit. (Landed)' }}</mat-label>
             <span matPrefix>{{ getSimboloMoneda() }}&nbsp;</span>
             <input matInput type="number" formControlName="costoTotal">
+            <mat-hint *ngIf="tipoSeleccionado === 'KIT'">Sugerido: {{ costoSugeridoKit | number:'1.2-2' }}</mat-hint>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
             <mat-label>Precio Venta</mat-label>
-            <span matPrefix>{{ getSimboloMoneda() }}&nbsp;</span>
-            <input matInput type="number" formControlName="precioVenta">
-        </mat-form-field>
-    </div>
-
-    <div class="form-row full-width" *ngIf="tipoSeleccionado === 'SERVICIO'">
-        <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Precio del Servicio</mat-label>
             <span matPrefix>{{ getSimboloMoneda() }}&nbsp;</span>
             <input matInput type="number" formControlName="precioVenta">
         </mat-form-field>
@@ -107,7 +163,7 @@
             <input matInput formControlName="unidadMedida" placeholder="Ej: Unidad, Kg, Mt">
         </mat-form-field>
 
-        <mat-form-field appearance="outline" *ngIf="tipoSeleccionado === 'PRODUCTO'">
+        <mat-form-field appearance="outline" *ngIf="tipoSeleccionado !== 'SERVICIO'">
             <mat-label>Alerta Stock Mínimo</mat-label>
             <input matInput type="number" formControlName="stockMinimo">
             <mat-icon matSuffix color="warn">warning</mat-icon>

@@ -1,10 +1,9 @@
-// src/app/models/producto.ts
-
 export interface Producto {
   id: number;
   nombre: string;
   codigo: string;
-  tipo: 'PRODUCTO' | 'SERVICIO'; 
+  // ✅ CAMBIO: Agregado 'KIT'
+  tipo: 'PRODUCTO' | 'SERVICIO' | 'KIT'; 
   descripcion?: string;
   
   idCategoria: number;
@@ -12,11 +11,8 @@ export interface Producto {
   
   stockActual: number;
   stockMinimo: number;
-  
-  // ✅ CAMBIO 1: Agregado para ver lo que viene en barco
   stockPorLlegar?: number; 
 
-  // Precios
   precioChina?: number;
   costoTotal?: number;
   precioVenta?: number;
@@ -26,26 +22,41 @@ export interface Producto {
   activo: boolean;
   fechaCreacion?: string;
   estadoStock?: string;
-  
   margenGanancia?: number;
   porcentajeMargen?: number;
+
+  // ✅ NUEVO: Lista de componentes (solo lectura para ver detalles)
+  componentes?: ComponenteProducto[];
+}
+
+// ✅ INTERFAZ AUXILIAR
+export interface ComponenteProducto {
+  idProducto: number;
+  nombre?: string; // Para mostrar en la tabla
+  codigo?: string; // Para mostrar en la tabla
+  cantidad: number;
+  costoUnitario?: number; // Para calcular costo sugerido
 }
 
 export interface ProductoRequest {
-  // ✅ CAMBIO 2: Agregado el tipo obligatorio
-  tipo: 'PRODUCTO' | 'SERVICIO'; 
+  // ✅ CAMBIO: Agregado 'KIT'
+  tipo: 'PRODUCTO' | 'SERVICIO' | 'KIT'; 
   
   nombre: string;
   codigo?: string;
   descripcion?: string;
   idCategoria: number;
   stockMinimo: number;
-  codigoInternacional?: string; // ✅ NUEVO CAMPO (Opcional)
+  codigoInternacional?: string;
+  
   precioChina?: number;
   costoTotal?: number;
   precioVenta?: number;
   moneda?: string;
   unidadMedida?: string;
+
+  // ✅ NUEVO: Lista para enviar al backend al crear/editar
+  componentes?: { idProducto: number, cantidad: number }[];
 }
 
 export interface IngresoStockRequest {

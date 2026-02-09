@@ -1,0 +1,222 @@
+<div class="page-container" *ngIf="importacion; else loadingTpl">
+  
+  <header class="page-header">
+    <div class="header-left">
+      <button mat-icon-button (click)="volver()">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div>
+        <h1 class="page-title">
+          Costos Finales de Importación
+          <span class="status-badge">{{ importacion.estado }}</span>
+        </h1>
+        <div class="meta-data">
+          <span><strong>CÓDIGO:</strong> {{ importacion.codigoAgrupador }}</span>
+          <span *ngIf="importacion.numeroDua"><strong>DUA:</strong> {{ importacion.numeroDua }}</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="header-right">
+      <div class="kpi-box main-kpi">
+        <label>Total Landed</label>
+        <div class="value">$ {{ calcularTotalLandedGlobal() | number:'1.2-2' }}</div>
+      </div>
+      <button mat-stroked-button (click)="imprimir()">
+        <mat-icon>print</mat-icon> Imprimir
+      </button>
+    </div>
+  </header>
+
+  <mat-card class="mb-4 shadow-sm">
+    <div class="card-header-custom">
+      <mat-icon>table_view</mat-icon> 
+      <h3>Sábana de Costos (Resumen por Factura)</h3>
+    </div>
+    
+    <div class="table-responsive">
+      <table class="detail-table">
+        <thead>
+          <tr>
+            <th class="sticky-col name-col">Factura</th>
+            <th class="text-right val-col">FOB</th>
+            
+            <th class="text-right group-vol">Flete</th>
+            <th class="text-right group-vol">Almacén</th>
+            <th class="text-right group-vol">Transp.</th>
+            <th class="text-right group-vol">Descarga</th>
+            <th class="text-right group-vol">Montacarga</th>
+            
+            <th class="text-right group-weight">Desconsol.</th>
+            
+            <th class="text-right group-value">Vistos B.</th>
+            <th class="text-right group-value">Transm.</th>
+            <th class="text-right group-value">Agente</th>
+            <th class="text-right group-value">VºBº Extra</th>
+            <th class="text-right group-value">Gastos Op.</th>
+            <th class="text-right group-value">Resguardo</th>
+            
+            <th class="text-right group-tax">Ad Val.</th>
+            <th class="text-right group-tax">IGV</th>
+            <th class="text-right group-tax">IPM</th>
+            <th class="text-right group-tax">Percep.</th>
+
+            <th class="text-right group-other">Otros 1</th>
+            <th class="text-right group-other">Otros 2</th>
+            
+            <th class="sticky-end total-col text-right">TOTAL LANDED</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let f of importacion.facturasComerciales">
+            <td class="sticky-col name-col">
+              <strong>{{ f.serie }}-{{ f.numero }}</strong>
+              <br><small>{{ f.nombreProveedor | slice:0:12 }}...</small>
+            </td>
+            <td class="text-right font-bold">$ {{ f.total | number:'1.2-2' }}</td>
+
+            <td class="text-right">{{ f.proFlete | number:'1.2-2' }}</td>
+            <td class="text-right">{{ f.proAlmacenaje | number:'1.2-2' }}</td>
+            <td class="text-right">{{ f.proTransporte | number:'1.2-2' }}</td>
+            <td class="text-right">{{ f.proPersonalDescarga | number:'1.2-2' }}</td>
+            <td class="text-right">{{ f.proMontacarga | number:'1.2-2' }}</td>
+
+            <td class="text-right">{{ f.proDesconsolidacion | number:'1.2-2' }}</td>
+
+            <td class="text-right">{{ f.proVistosBuenos | number:'1.2-2' }}</td>
+            <td class="text-right">{{ f.proTransmision | number:'1.2-2' }}</td>
+            <td class="text-right">{{ f.proComisionAgencia | number:'1.2-2' }}</td>
+            <td class="text-right">{{ f.proVobo | number:'1.2-2' }}</td>
+            <td class="text-right">{{ f.proGastosOperativos | number:'1.2-2' }}</td>
+            <td class="text-right">{{ f.proResguardo | number:'1.2-2' }}</td>
+
+            <td class="text-right font-bold text-blue-800">{{ f.proAdv | number:'1.2-2' }}</td>
+            <td class="text-right">{{ f.proIgv | number:'1.2-2' }}</td>
+            <td class="text-right">{{ f.proIpm | number:'1.2-2' }}</td>
+            <td class="text-right">{{ f.proPercepcion | number:'1.2-2' }}</td>
+
+            <td class="text-right">{{ f.proOtros1 | number:'1.2-2' }}</td>
+            <td class="text-right">{{ f.proOtros2 | number:'1.2-2' }}</td>
+
+            <td class="sticky-end total-col text-right font-bold">
+              $ {{ f.costoTotalImportacion | number:'1.2-2' }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </mat-card>
+
+
+  <div class="section-divider">
+    <h2 class="section-title">Desglose Detallado por Producto</h2>
+    <p class="section-subtitle">Costo unitario real calculado según participación FOB.</p>
+  </div>
+
+  <div class="invoices-list">
+    <div class="invoice-card" *ngFor="let fact of importacion.facturasComerciales">
+      
+      <div class="invoice-header">
+        <div class="inv-title">
+          <mat-icon class="inv-icon">receipt</mat-icon>
+          <div>
+            <div class="inv-number">{{ fact.serie }}-{{ fact.numero }}</div>
+            <div class="inv-provider">{{ fact.nombreProveedor }}</div>
+          </div>
+        </div>
+        <div class="inv-stats">
+          <div class="stat-pill highlight">
+            <span class="label">Total Factura:</span> 
+            <strong>$ {{ fact.costoTotalImportacion | number:'1.2-2' }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-responsive mt-0">
+        <table class="items-table">
+          <thead>
+            <tr>
+              <th class="col-prod">Producto</th>
+              <th class="text-center">Cant.</th>
+              <th class="text-right">Unit. FOB</th>
+              <th class="text-center">% Part.</th>
+              
+              <th class="col-vol text-right">Flete U.</th>
+              <th class="col-vol text-right">Almacén U.</th>
+              <th class="col-vol text-right">Transp. U.</th>
+              <th class="col-vol text-right">Desc. U.</th>
+              <th class="col-vol text-right">Monta. U.</th>
+
+              <th class="col-weight text-right">Descon. U.</th>
+
+              <th class="col-val text-right">Vistos U.</th>
+              <th class="col-val text-right">Transm. U.</th>
+              <th class="col-val text-right">Agente U.</th>
+              <th class="col-val text-right">VºBº U.</th>
+              <th class="col-val text-right">Gastos U.</th>
+              <th class="col-val text-right">Resg. U.</th>
+
+              <th class="col-tax text-right">AdVal U.</th>
+              <th class="col-tax text-right">IGV U.</th>
+              <th class="col-tax text-right">IPM U.</th>
+              <th class="col-tax text-right">Percep U.</th>
+
+              <th class="col-other text-right">Otros 1 U.</th>
+              <th class="col-other text-right">Otros 2 U.</th>
+              
+              <th class="col-final text-right">Unit. Landed</th>
+              <th class="col-final text-right">Total Landed</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of fact.items">
+              <td class="col-prod text-left"><strong>{{ item.nombreProducto }}</strong></td>
+              <td class="text-center">{{ item.cantidad }}</td>
+              <td class="text-right text-gray-600">$ {{ item.precioUnitarioFob | number:'1.2-2' }}</td>
+              <td class="text-center text-xs text-gray-400">
+                <span class="pct-badge">{{ item.factorParticipacion | percent:'1.1-1' }}</span>
+              </td>
+
+              <td class="text-right col-vol text-xs">{{ ((item.itemFlete||0)/item.cantidad) | number:'1.2-2' }}</td>
+              <td class="text-right col-vol text-xs">{{ ((item.itemAlmacenaje||0)/item.cantidad) | number:'1.2-2' }}</td>
+              <td class="text-right col-vol text-xs">{{ ((item.itemTransporte||0)/item.cantidad) | number:'1.2-2' }}</td>
+              <td class="text-right col-vol text-xs">{{ ((item.itemDescarga||0)/item.cantidad) | number:'1.2-2' }}</td>
+              <td class="text-right col-vol text-xs">{{ ((item.itemMontacarga||0)/item.cantidad) | number:'1.2-2' }}</td>
+
+              <td class="text-right col-weight text-xs">{{ ((item.itemDesconsolidacion||0)/item.cantidad) | number:'1.2-2' }}</td>
+
+              <td class="text-right col-val text-xs">{{ ((item.itemVistosBuenos||0)/item.cantidad) | number:'1.2-2' }}</td>
+              <td class="text-right col-val text-xs">{{ ((item.itemTransmision||0)/item.cantidad) | number:'1.2-2' }}</td>
+              <td class="text-right col-val text-xs">{{ ((item.itemAgente||0)/item.cantidad) | number:'1.2-2' }}</td>
+              <td class="text-right col-val text-xs">{{ ((item.itemVobo||0)/item.cantidad) | number:'1.2-2' }}</td>
+              <td class="text-right col-val text-xs">{{ ((item.itemGastosOp||0)/item.cantidad) | number:'1.2-2' }}</td>
+              <td class="text-right col-val text-xs">{{ ((item.itemResguardo||0)/item.cantidad) | number:'1.2-2' }}</td>
+
+              <td class="text-right col-tax text-xs font-bold">{{ ((item.itemAdv||0)/item.cantidad) | number:'1.2-2' }}</td>
+              <td class="text-right col-tax text-xs">{{ ((item.itemIgv||0)/item.cantidad) | number:'1.2-2' }}</td>
+              <td class="text-right col-tax text-xs">{{ ((item.itemIpm||0)/item.cantidad) | number:'1.2-2' }}</td>
+              <td class="text-right col-tax text-xs">{{ ((item.itemPercepcion||0)/item.cantidad) | number:'1.2-2' }}</td>
+
+              <td class="text-right col-other text-xs">{{ ((item.itemOtros1||0)/item.cantidad) | number:'1.2-2' }}</td>
+              <td class="text-right col-other text-xs">{{ ((item.itemOtros2||0)/item.cantidad) | number:'1.2-2' }}</td>
+
+              <td class="text-right col-final font-bold text-green-700">
+                $ {{ item.costoUnitarioLanded | number:'1.2-2' }}
+              </td>
+              <td class="text-right col-final font-bold text-green-700">
+                $ {{ item.costoTotalLanded | number:'1.2-2' }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<ng-template #loadingTpl>
+  <div class="loading-container">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>Cargando información completa...</p>
+  </div>
+</ng-template>

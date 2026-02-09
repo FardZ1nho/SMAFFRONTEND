@@ -43,7 +43,7 @@
 
           <th class="group-other" *ngIf="hasValue('costoOtros1')">Otros 1</th>
           <th class="group-other" *ngIf="hasValue('costoOtros2')">Otros 2</th>
-
+          
           <th class="sticky-end total-col">TOTAL</th>
         </tr>
       </thead>
@@ -51,9 +51,20 @@
         <tr *ngFor="let f of data.facturasComerciales">
           
           <td class="sticky-col name-col">
-            <div class="serie">{{f.serie}}-{{f.numero}}</div>
-            <small>{{f.nombreProveedor | slice:0:15}}</small>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div class="serie">{{f.serie}}-{{f.numero}}</div>
+                    <small style="color: #64748b; font-size: 0.75rem;">{{f.nombreProveedor | slice:0:15}}...</small>
+                </div>
+                
+                <button mat-icon-button color="primary" 
+                        (click)="verDetalleItems(f)" 
+                        matTooltip="Ver desglose por herramienta">
+                    <mat-icon style="font-size: 18px;">visibility</mat-icon>
+                </button>
+            </div>
           </td>
+
           <td class="sticky-col-2 val-col text-right">$ {{ f.total | number:'1.2-2' }}</td>
 
           <td class="text-right">{{ f.proFlete | number:'1.2-2' }}</td>

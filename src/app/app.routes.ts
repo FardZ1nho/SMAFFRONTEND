@@ -90,6 +90,11 @@ export const routes: Routes = [
   },
 { path: 'cotizaciones', component: CotizacionListComponent },
 { path: 'cotizaciones/nuevo', component: CotizacionFormComponent },
+
+{ 
+  path: 'importaciones/prorrateo/:id', 
+  loadComponent: () => import('./components/importaciones/importacion-prorrateo/importacion-prorrateo').then(m => m.ImportacionProrrateoComponent)
+},
   {
     path: 'caja-chica',
     loadComponent: () => import('./components/caja-chica/caja-chica').then(m => m.CajaChicaComponent),

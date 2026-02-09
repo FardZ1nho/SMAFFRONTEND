@@ -14,20 +14,22 @@
   </div>
 
   <div class="filters-bar card animate-fade-in">
-     <div class="search-wrapper">
-       <mat-icon>search</mat-icon>
-       <input type="text" placeholder="Buscar..." [(ngModel)]="filtroTexto" (input)="filtrar()">
-     </div>
-     <div class="actions-group">
-        <button mat-button class="btn-tool" (click)="toggleFiltros()">
-          <mat-icon>filter_list</mat-icon> Filtros
-        </button>
-     </div>
+    <div class="search-wrapper">
+      <mat-icon>search</mat-icon>
+      <input type="text" placeholder="Buscar..." [(ngModel)]="filtroTexto" (input)="filtrar()">
+    </div>
+    <div class="actions-group">
+      <button mat-button class="btn-tool" (click)="toggleFiltros()">
+        <mat-icon>filter_list</mat-icon> Filtros
+      </button>
+    </div>
   </div>
 
   <div class="table-card card animate-fade-in delay-1">
-    
-    <div class="loading-overlay" *ngIf="loading"><p>Cargando datos...</p></div>
+
+    <div class="loading-overlay" *ngIf="loading">
+      <p>Cargando datos...</p>
+    </div>
 
     <div class="table-responsive" *ngIf="!loading">
       <table class="soft-table">
@@ -81,7 +83,7 @@
                 <span class="currency">$</span> {{ getTotalCostoEstimado(imp) | number:'1.2-2' }}
               </td>
               <td class="text-center" (click)="$event.stopPropagation()">
-                <button mat-icon-button color="primary" (click)="editarImportacion(imp)" 
+                <button mat-icon-button color="primary" (click)="editarImportacion(imp)"
                   matTooltip="Editar Costos y Datos">
                   <mat-icon>edit_note</mat-icon>
                 </button>
@@ -115,7 +117,7 @@
                   </div>
 
                   <div class="info-grid">
-                    
+
                     <div class="info-box logistics">
                       <h4><mat-icon>local_shipping</mat-icon> Logística</h4>
                       <div class="data-pair">
@@ -128,11 +130,9 @@
                         <span>DUA:</span> <strong class="text-primary">{{ imp.numeroDua || 'Pendiente' }}</strong>
                       </div>
                       <div class="data-pair">
-                        <span>Canal:</span> 
-                        <span class="canal-dot" 
-                              [class.rojo]="imp.canal === 'ROJO'"
-                              [class.verde]="imp.canal === 'VERDE'"
-                              [class.naranja]="imp.canal === 'NARANJA'">
+                        <span>Canal:</span>
+                        <span class="canal-dot" [class.rojo]="imp.canal === 'ROJO'"
+                          [class.verde]="imp.canal === 'VERDE'" [class.naranja]="imp.canal === 'NARANJA'">
                           ● {{ imp.canal || 'N/A' }}
                         </span>
                       </div>
@@ -153,10 +153,11 @@
                         <span>TOTAL LANDED:</span>
                         <span class="highlight">$ {{ getTotalCostoEstimado(imp) | number:'1.2-2' }}</span>
                       </div>
-                      
+
                       <div class="mt-3 text-center">
-                        <button mat-stroked-button color="accent" class="full-width-btn" (click)="verProrrateo(imp)">
-                          <mat-icon>pie_chart</mat-icon> Ver Prorrateo
+                        <button mat-stroked-button color="primary" class="full-width-btn"
+                          [routerLink]="['/importaciones/prorrateo', imp.id]">
+                          <mat-icon>analytics</mat-icon> Ver Sábana Detallada
                         </button>
                       </div>
                     </div>

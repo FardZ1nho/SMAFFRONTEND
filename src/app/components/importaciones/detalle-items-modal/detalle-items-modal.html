@@ -1,0 +1,64 @@
+<h2 mat-dialog-title style="display: flex; align-items: center; gap: 10px;">
+  <mat-icon>handyman</mat-icon> 
+  Desglose de Costos: {{data.serie}}-{{data.numero}}
+</h2>
+
+<div mat-dialog-content>
+    <div class="alert-info">
+        <div style="display: flex; justify-content: space-between;">
+            <span>Proveedor: <strong>{{data.nombreProveedor}}</strong></span>
+            <span>Items: <strong>{{data.items?.length || 0}}</strong></span>
+        </div>
+        <hr style="border: 0; border-top: 1px solid #bfdbfe; margin: 8px 0;">
+        <div style="display: flex; justify-content: space-between;">
+            <span>Total Factura (FOB): <strong>$ {{data.total | number:'1.2-2'}}</strong></span>
+            <span>Costo Landed Total: <strong>$ {{data.costoTotalImportacion | number:'1.2-2'}}</strong></span>
+        </div>
+    </div>
+
+    <div style="overflow-x: auto;">
+        <table class="custom-table">
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th class="text-center">Cant.</th>
+                    <th class="text-right">Unit. FOB</th>
+                    <th class="text-right">Total FOB</th>
+                    <th class="text-center">% Part.</th>
+                    <th class="text-right highlight-col" title="Costo Unitario Puesto en Almacén">Unit. Landed 📦</th>
+                    <th class="text-right highlight-col">Total Landed</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let item of data.items">
+                    <td>{{item.nombreProducto}}</td>
+                    <td class="text-center">{{item.cantidad}}</td>
+                    <td class="text-right fob-col">$ {{item.precioUnitarioFob | number:'1.2-2'}}</td>
+                    <td class="text-right fob-col">$ {{item.importeFob | number:'1.2-2'}}</td>
+                    
+                    <td class="text-center">
+                        <span style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 11px;">
+                             {{ (item.importeFob / data.total) | percent:'1.1-1' }}
+                        </span>
+                    </td>
+
+                    <td class="text-right highlight-col">
+                        $ {{item.costoUnitarioLanded | number:'1.2-2'}}
+                    </td>
+                    <td class="text-right highlight-col">
+                        $ {{item.costoTotalLanded | number:'1.2-2'}}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <div *ngIf="!data.items || data.items.length === 0" style="text-align: center; padding: 30px; color: #94a3b8;">
+        <mat-icon style="font-size: 40px; width: 40px; height: 40px;">sentiment_dissatisfied</mat-icon>
+        <p>No hay ítems registrados en esta factura.</p>
+    </div>
+</div>
+
+<div mat-dialog-actions align="end">
+    <button mat-stroked-button (click)="cerrar()">Cerrar</button>
+</div>

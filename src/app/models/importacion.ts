@@ -1,4 +1,146 @@
-// --- ENUMS ---
+// ✅ 1. ENUMS
+export enum MetodoPago {
+  EFECTIVO = 'EFECTIVO',
+  TRANSFERENCIA = 'TRANSFERENCIA',
+  DEPOSITO = 'DEPOSITO',
+  CHEQUE = 'CHEQUE',
+  YAPE = 'YAPE',
+  PLIN = 'PLIN',
+  TARJETA = 'TARJETA',
+  OTROS = 'OTROS'
+}
+
+export enum TipoPago {
+  CONTADO = 'CONTADO',
+  CREDITO = 'CREDITO'
+}
+
+// ✅ 2. DTO REQUEST DETALLE
+export interface CompraDetalleRequest {
+  productoId: number;
+  cantidad: number;
+  precioUnitario: number;
+  almacenId?: number;
+}
+
+// ✅ 3. DTO REQUEST PAGO
+export interface PagoCompraRequest {
+  monto: number;
+  moneda: string;
+  metodoPago: MetodoPago;
+  referencia?: string;
+  cuentaOrigenId?: number;
+}
+
+// ✅ 4. DTO PRINCIPAL REQUEST (GUARDAR)
+export interface CompraRequest {
+  proveedorId: number;
+  tipoCompra: 'BIEN' | 'SERVICIO';
+  tipoComprobante: 'FACTURA_COMERCIAL' | 'FACTURA_ELECTRONICA' | 'BOLETA' | 'RECIBO' | 'GUIA_REMISION' | 'NOTA_VENTA' | 'RECIBO_HONORARIOS' | 'RECIBO_SIMPLE' | 'OTROS';
+  tipoPago: TipoPago;
+  
+  serie: string;
+  numero: string;
+  
+  fechaEmision: string | Date; 
+  fechaVencimiento?: string | Date;
+  
+  moneda: 'PEN' | 'USD';
+  tipoCambio: number;
+  observaciones?: string;
+  
+  // Totales
+  subTotal: number;
+  fob?: number; 
+  igv: number;
+  total: number;
+  
+  // Impuestos Locales
+  percepcion?: number;
+  detraccionPorcentaje?: number;
+  detraccionMonto?: number;
+  retencion?: number;
+  
+  // Importación
+  codImportacion?: string;
+  pesoNetoKg?: number;
+  cbm?: number; 
+  
+  // Listas
+  detalles: CompraDetalleRequest[];
+  pagos?: PagoCompraRequest[];
+}
+
+// --- RESPUESTAS (RESPONSE) ---
+
+export interface CompraDetalle {
+  id: number;
+  productoId: number;
+  nombreProducto: string;
+  codigoProducto: string; 
+  cantidad: number;
+  precioUnitario: number;
+  importe: number;
+  nombreAlmacen?: string;
+}
+
+export interface PagoCompra {
+  id: number;
+  monto: number;
+  moneda: string;
+  metodoPago: string;
+  fechaPago: string; 
+  referencia: string;
+  nombreCuentaOrigen?: string;
+}
+
+export interface CompraResponse {
+  id: number;
+  tipoCompra: string;
+  tipoComprobante: string;
+  tipoPago: string;
+  estado: string;
+  
+  serie: string;
+  numero: string;
+  
+  fechaEmision: string;
+  fechaVencimiento: string;
+  fechaRegistro: string;
+  
+  nombreProveedor: string;
+  rucProveedor: string;
+  
+  moneda: string;
+  tipoCambio: number;
+  
+  subTotal: number;
+  fob?: number; 
+  igv: number;
+  total: number;
+  
+  saldoPendiente: number;
+  montoPagado: number; 
+  
+  observaciones?: string;
+  
+  percepcion?: number;
+  detraccionPorcentaje?: number;
+  detraccionMonto?: number;
+  retencion?: number;
+  
+  // Importación
+  codImportacion?: string;
+  pesoNetoKg?: number;
+  cbm?: number; 
+  importacionId?: number;
+  
+  costoTotalImportacion?: number; 
+
+  detalles?: CompraDetalle[];
+  pagos?: PagoCompra[];
+}
+
 export enum EstadoImportacion {
   ORDENADO = 'ORDENADO',
   EN_TRANSITO = 'EN_TRANSITO',
@@ -8,18 +150,58 @@ export enum EstadoImportacion {
   LIQUIDADA = 'LIQUIDADA'
 }
 
-export enum Incoterm {
-  EXW = 'EXW', FOB = 'FOB', CIF = 'CIF', CFR = 'CFR', DDP = 'DDP', DAT = 'DAT', DAP = 'DAP'
-}
-
 export enum TipoTransporte {
   MARITIMO = 'MARITIMO', 
   AEREO = 'AEREO', 
   TERRESTRE = 'TERRESTRE'
 }
 
-// Resumen ligero de facturas dentro de la importación
-// ✅ ACTUALIZA ESTA INTERFAZ
+// =========================================================
+// 🚀 AQUÍ ESTÁ EL CAMBIO IMPORTANTE PARA EL ÍTEM DETALLADO
+// =========================================================
+export interface DetalleItemImportacion {
+    nombreProducto: string;
+    cantidad: number;
+    precioUnitarioFob: number; 
+    importeFob: number;        
+    
+    factorParticipacion?: number; 
+    
+    // --- GRUPO VOLUMEN (Desglosado) ---
+    itemFlete?: number;
+    itemAlmacenaje?: number;
+    itemTransporte?: number;
+    itemDescarga?: number;
+    itemMontacarga?: number;
+
+    // --- GRUPO PESO ---
+    itemDesconsolidacion?: number;
+
+    // --- GRUPO VALOR / ADUANA (Desglosado) ---
+    itemVistosBuenos?: number;
+    itemTransmision?: number;
+    itemAgente?: number;
+    itemVobo?: number;
+    itemGastosOp?: number;
+    itemResguardo?: number;
+
+    // --- IMPUESTOS ---
+    itemAdv?: number; 
+    itemIgv?: number;
+    itemIpm?: number;
+    itemPercepcion?: number;
+
+    // --- OTROS ---
+    itemOtros1?: number;
+    itemOtros2?: number;
+
+    costoUnitarioLanded: number; 
+    costoTotalLanded: number;
+}
+
+// =========================================================
+// 📄 FACTURA RESUMEN (SÁBANA GENERAL)
+// =========================================================
 export interface FacturaResumen {
     id: number;
     serie: string;
@@ -30,76 +212,62 @@ export interface FacturaResumen {
     pesoNetoKg: number;
     cbm: number;
 
-    // --- DETALLE FULL ---
+    // Prorrateo Nivel 1 (Factura)
     proFlete?: number;
     proAlmacenaje?: number;
     proTransporte?: number;
     proPersonalDescarga?: number;
     proMontacarga?: number;
-
+    
     proDesconsolidacion?: number;
-
+    
     proVistosBuenos?: number;
     proTransmision?: number;
     proComisionAgencia?: number;
     proVobo?: number;
     proGastosOperativos?: number;
     proResguardo?: number;
-
-    proAdv?: number;
+    
+    proAdv?: number; 
     proIgv?: number;
     proIpm?: number;
     proPercepcion?: number;
-
+    
     proOtros1?: number;
     proOtros2?: number;
     proOtros3?: number;
     proOtros4?: number;
 
     costoTotalImportacion: number;
+
+    // Lista de items con el desglose detallado
+    items?: DetalleItemImportacion[];
 }
-// ... resto igual
-// ==========================================
-// 📥 RESPONSE (CONSULTA)
-// ==========================================
+
 export interface ImportacionResponse {
   id: number;
   codigoAgrupador: string; 
   estado: EstadoImportacion;
-
   facturasComerciales?: FacturaResumen[];
 
-  // --- LOGÍSTICA ---
+  tipoTransporte?: TipoTransporte;
+  fechaEstimadaLlegada?: string; 
+  fechaLlegadaReal?: string;
   numeroDua?: string;
   trackingNumber?: string;
-  canal?: string;          
   agenteAduanas?: string;
+  canal?: string;
 
-  fechaEstimadaLlegada?: string; 
-  fechaLlegadaReal?: string;     
-
-  tipoTransporte?: TipoTransporte;
-
-  // --- TOTALES ---
   sumaFobTotal: number;  
   pesoTotalKg: number;   
-  cbmTotal: number; // ✅ Nuevo Total Volumen
+  cbmTotal: number; 
 
-  // ==========================================
-  // 💰 COSTOS GLOBALES (DESGLOSADOS)
-  // ==========================================
-  
-  // Grupo Volumen
   costoFlete: number;
   costoAlmacenajeCft: number;
   costoTransporteSjl: number;
   costoPersonalDescarga: number;
   costoMontacarga: number;
-
-  // Grupo Peso
   costoDesconsolidacion: number;
-
-  // Grupo Valor (FOB)
   costoVistosBuenos: number;
   costoTransmision: number;
   costoComisionAgencia: number;
@@ -107,65 +275,46 @@ export interface ImportacionResponse {
   costoGastosOperativos: number;
   costoResguardo: number;
 
-  // Impuestos
+  costoAdv: number; 
   costoIgv: number;
   costoIpm: number;
   costoPercepcion: number;
-  costoAdv: number;
 
-  // Otros
   costoOtros1: number;
   costoOtros2: number;
   costoOtros3: number;
   costoOtros4: number;
 }
 
-// ==========================================
-// 📤 REQUEST (GUARDAR / EDITAR)
-// ==========================================
 export interface ImportacionRequest {
-  codigoAgrupador?: string; 
   estado?: EstadoImportacion | string; 
   tipoTransporte?: TipoTransporte | string;
-
-  // --- LOGÍSTICA ---
+  fechaEstimadaLlegada?: Date;
+  fechaLlegadaReal?: Date;
   numeroDua?: string;
   trackingNumber?: string;
-  canal?: string;
   agenteAduanas?: string;
-  
-  fechaEstimadaLlegada?: string; 
-  fechaLlegadaReal?: string;
+  canal?: string;
 
-  // ==========================================
-  // 💰 COSTOS GLOBALES (INPUTS)
-  // ==========================================
-
-  // Grupo Volumen
   costoFlete?: number;
   costoAlmacenajeCft?: number;
   costoTransporteSjl?: number;
   costoPersonalDescarga?: number;
   costoMontacarga?: number;
-
-  // Grupo Peso
   costoDesconsolidacion?: number;
-
-  // Grupo Valor
   costoVistosBuenos?: number;
   costoTransmision?: number;
   costoComisionAgencia?: number;
   costoVobo?: number;
   costoGastosOperativos?: number;
   costoResguardo?: number;
-
-  // Impuestos
+  
   costoIgv?: number;
   costoIpm?: number;
   costoPercepcion?: number;
-  costoAdv?: number;
+  
+  adValoremPorFactura?: { [key: number]: number };
 
-  // Otros
   costoOtros1?: number;
   costoOtros2?: number;
   costoOtros3?: number;

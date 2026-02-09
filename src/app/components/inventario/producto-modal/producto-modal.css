@@ -312,3 +312,95 @@
   border-radius: 6px;
   font-weight: 700;
 }
+
+/* ===================================
+   ✅ ESTILOS PARA KITS (NUEVO)
+   =================================== */
+.kit-section {
+    background-color: #f0f9ff; /* Azul muy suave */
+    border: 1px solid #bae6fd;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 24px;
+}
+
+.section-desc {
+    margin: -10px 0 15px 0;
+    font-size: 13px;
+    color: #64748b;
+}
+
+/* Autocomplete items */
+.auto-name { font-weight: 600; color: #1e293b; }
+.auto-sku { font-size: 12px; color: #64748b; }
+.auto-stock { font-size: 12px; color: #16a34a; }
+.auto-stock.no-stock { color: #dc2626; }
+
+/* Lista de Componentes */
+.componentes-list {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-top: 8px;
+}
+
+.comp-header {
+    display: grid;
+    grid-template-columns: 1fr 80px 50px;
+    padding: 8px 16px;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 12px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+}
+
+.comp-row {
+    display: grid;
+    grid-template-columns: 1fr 80px 50px;
+    align-items: center;
+    padding: 8px 16px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.comp-row:last-child { border-bottom: none; }
+
+.comp-info { display: flex; flex-direction: column; }
+.comp-name { font-size: 14px; font-weight: 500; color: #1e293b; }
+.comp-code { font-size: 11px; color: #94a3b8; }
+
+.comp-qty input {
+    width: 60px;
+    padding: 6px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    text-align: center;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.comp-footer {
+    padding: 10px 16px;
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.comp-footer .label { font-size: 12px; color: #64748b; font-weight: 600; }
+.comp-footer .value { font-size: 14px; color: #059669; font-weight: 700; }
+
+.empty-state {
+    text-align: center;
+    padding: 20px;
+    color: #94a3b8;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.text-center { text-align: center; }

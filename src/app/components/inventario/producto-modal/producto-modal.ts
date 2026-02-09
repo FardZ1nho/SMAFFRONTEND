@@ -1,6 +1,6 @@
 import { Component, OnInit, Inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormControl, FormsModule } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -8,12 +8,15 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+// ✅ 1. IMPORTAR SNACKBAR
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { debounceTime, distinctUntilChanged, switchMap, map } from 'rxjs/operators';
 import { of } from 'rxjs';
 
 import { ProductoService } from '../../../services/producto-service';
 import { CategoriaService } from '../../../services/categoria-service';
-import { ProductoRequest } from '../../../models/producto';
+import { ProductoRequest, ComponenteProducto } from '../../../models/producto';
 import { Categoria } from '../../../models/categoria';
 
 @Component({
@@ -22,8 +25,11 @@ import { Categoria } from '../../../models/categoria';
   imports: [
     CommonModule, ReactiveFormsModule, MatDialogModule, MatFormFieldModule,
     MatInputModule, MatSelectModule, MatButtonModule,
-    MatIconModule, MatProgressSpinnerModule
-  ],
+    MatIconModule, MatProgressSpinnerModule, MatAutocompleteModule,
+    MatSnackBarModule // ✅ 2. AGREGAR EL MÓDULO AQUÍ
+    ,
+    FormsModule
+],
   templateUrl: './producto-modal.html',
   styleUrls: ['./producto-modal.css']
 })
@@ -34,13 +40,18 @@ export class ProductoModalComponent implements OnInit {
   isSaving = false;
   esEdicion = false;
   productoId: number | null = null;
-   
-  // ✅ Control de tipo
-  tipoSeleccionado: 'PRODUCTO' | 'SERVICIO' = 'PRODUCTO';
+    
+  tipoSeleccionado: 'PRODUCTO' | 'SERVICIO' | 'KIT' = 'PRODUCTO';
   tipoFijo: boolean = false; 
 
   coincidencias: any[] = [];
   buscandoCoincidencias = false;
+
+  componentesSeleccionados: ComponenteProducto[] = [];
+  buscadorComponentesControl = new FormControl('');
+  productosSugeridos: any[] = [];
+  buscandoComponente = false;
+  costoSugeridoKit: number = 0;
 
   monedas = [
     { codigo: 'USD', nombre: 'Dólar ($)', simbolo: '$' },
@@ -54,7 +65,8 @@ export class ProductoModalComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) public data: any,
     private productoService: ProductoService,
     private categoriaService: CategoriaService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private snackBar: MatSnackBar // ✅ 3. INYECTAR EL SERVICIO
   ) { }
 
   ngOnInit(): void {
@@ -82,6 +94,7 @@ export class ProductoModalComponent implements OnInit {
     }
 
     this.detectarDuplicados();
+    this.configurarBuscadorComponentes(); 
   }
 
   inicializarFormulario(): void {
@@ -89,16 +102,77 @@ export class ProductoModalComponent implements OnInit {
       tipo: [this.tipoSeleccionado], 
       nombre: ['', [Validators.required, Validators.minLength(3)]],
       codigo: [''],
-      codigoInternacional: [''], // ✅ NUEVO CAMPO
+      codigoInternacional: [''],
       idCategoria: [null, Validators.required],
       descripcion: [''],
       stockMinimo: [5], 
       moneda: ['USD', Validators.required],
       precioChina: [null],
-      costoTotal: [null],
+      costoTotal: [null], 
       precioVenta: [null, [Validators.required, Validators.min(0)]],
       unidadMedida: ['Unidad']
     });
+  }
+
+  configurarBuscadorComponentes(): void {
+    this.buscadorComponentesControl.valueChanges.pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+      switchMap(valor => {
+        if (!valor || typeof valor !== 'string' || valor.length < 2) return of([]);
+        this.buscandoComponente = true;
+        return this.productoService.buscarProductosPorNombre(valor).pipe(
+           map(res => res.filter((p: any) => p.tipo === 'PRODUCTO' && p.id !== this.productoId))
+        );
+      })
+    ).subscribe({
+      next: (res) => {
+        this.productosSugeridos = res;
+        this.buscandoComponente = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.productosSugeridos = [];
+        this.buscandoComponente = false;
+      }
+    });
+  }
+
+  seleccionarComponente(producto: any): void {
+    const existe = this.componentesSeleccionados.find(c => c.idProducto === producto.id);
+    
+    if (existe) {
+      existe.cantidad++; 
+    } else {
+      this.componentesSeleccionados.push({
+        idProducto: producto.id,
+        nombre: producto.nombre,
+        codigo: producto.codigo,
+        cantidad: 1,
+        costoUnitario: producto.costoTotal || 0 
+      });
+    }
+
+    this.buscadorComponentesControl.setValue(''); 
+    this.calcularCostoSugerido();
+  }
+
+  eliminarComponente(index: number): void {
+    this.componentesSeleccionados.splice(index, 1);
+    this.calcularCostoSugerido();
+  }
+
+  calcularCostoSugerido(): void {
+    if (this.tipoSeleccionado !== 'KIT') return;
+    
+    const total = this.componentesSeleccionados.reduce((acc, item) => {
+      return acc + ((item.costoUnitario || 0) * item.cantidad);
+    }, 0);
+    
+    this.costoSugeridoKit = total;
+    if (!this.productoForm.get('costoTotal')?.value) {
+      this.productoForm.patchValue({ costoTotal: total });
+    }
   }
 
   detectarDuplicados(): void {
@@ -115,7 +189,6 @@ export class ProductoModalComponent implements OnInit {
     ).subscribe({
       next: (resultados) => {
         const filtrados = resultados.filter((p: any) => p.tipo === this.tipoSeleccionado);
-        
         if (this.esEdicion && this.productoId) {
           this.coincidencias = filtrados.filter((p: any) => p.id !== this.productoId);
         } else {
@@ -151,7 +224,7 @@ export class ProductoModalComponent implements OnInit {
       tipo: tipo,
       nombre: producto.nombre,
       codigo: producto.codigo,
-      codigoInternacional: producto.codigoInternacional, // ✅ CARGAR NUEVO CAMPO
+      codigoInternacional: producto.codigoInternacional,
       idCategoria: categoriaId,
       descripcion: producto.descripcion,
       stockMinimo: producto.stockMinimo,
@@ -162,39 +235,54 @@ export class ProductoModalComponent implements OnInit {
       unidadMedida: producto.unidadMedida || 'Unidad'
     });
     
+    if (tipo === 'KIT' && producto.componentes) {
+      this.componentesSeleccionados = producto.componentes.map((c: any) => ({
+        idProducto: c.idProducto,
+        nombre: c.nombre, 
+        cantidad: c.cantidad,
+        codigo: c.codigo || '',
+        costoUnitario: 0 
+      }));
+    }
+
     this.cambiarTipo(tipo, false); 
   }
 
-  cambiarTipo(tipo: 'PRODUCTO' | 'SERVICIO', actualizarValores: boolean = true) {
+  cambiarTipo(tipo: 'PRODUCTO' | 'SERVICIO' | 'KIT', actualizarValores: boolean = true) {
     this.tipoSeleccionado = tipo;
     this.productoForm.patchValue({ tipo: tipo });
 
+    this.productoForm.get('stockMinimo')?.clearValidators();
+    this.productoForm.get('precioChina')?.clearValidators();
+    this.productoForm.get('costoTotal')?.clearValidators();
+
     if (tipo === 'SERVICIO') {
-      const catServicio = this.categorias.find(c => c.nombre.toUpperCase().includes('SERVIC'));
-      const idCategoriaDefault = catServicio ? catServicio.id : (this.categorias[0]?.id || null);
-
-      if (actualizarValores) {
-        this.productoForm.patchValue({
-          stockMinimo: 0,
-          precioChina: 0,
-          costoTotal: 0,
-          idCategoria: idCategoriaDefault, 
-          unidadMedida: 'Global', 
-          codigo: '',
-          codigoInternacional: '' // ✅ LIMPIAR SI ES SERVICIO (OPCIONAL)
-        });
-      }
-      this.productoForm.get('stockMinimo')?.clearValidators();
-      this.productoForm.get('stockMinimo')?.updateValueAndValidity();
-
+        const catServicio = this.categorias.find(c => c.nombre.toUpperCase().includes('SERVIC'));
+        const idCategoriaDefault = catServicio ? catServicio.id : (this.categorias[0]?.id || null);
+        
+        if (actualizarValores) {
+            this.productoForm.patchValue({
+                stockMinimo: 0, precioChina: 0, costoTotal: 0,
+                idCategoria: idCategoriaDefault, unidadMedida: 'Global',
+                codigo: '', codigoInternacional: ''
+            });
+        }
+    } else if (tipo === 'KIT') {
+        this.productoForm.get('stockMinimo')?.setValidators([Validators.required, Validators.min(0)]);
+        if (actualizarValores) {
+            this.productoForm.patchValue({ 
+                unidadMedida: 'Set/Kit', 
+                idCategoria: null,
+                precioChina: 0 
+            });
+        }
     } else {
-      this.productoForm.get('stockMinimo')?.setValidators([Validators.required, Validators.min(0)]);
-      this.productoForm.get('stockMinimo')?.updateValueAndValidity();
-      
-      if (actualizarValores) {
-         this.productoForm.patchValue({ unidadMedida: 'Unidad', idCategoria: null });
-      }
+        this.productoForm.get('stockMinimo')?.setValidators([Validators.required, Validators.min(0)]);
+        if (actualizarValores) {
+           this.productoForm.patchValue({ unidadMedida: 'Unidad', idCategoria: null });
+        }
     }
+    this.productoForm.get('stockMinimo')?.updateValueAndValidity();
   }
 
   guardarProducto(): void {
@@ -203,15 +291,24 @@ export class ProductoModalComponent implements OnInit {
       return;
     }
 
+    if (this.tipoSeleccionado === 'KIT' && this.componentesSeleccionados.length === 0) {
+        // ✅ USAR SNACKBAR TAMBIÉN PARA ERRORES
+        this.snackBar.open('Un SET/KIT debe tener al menos un componente.', 'Cerrar', { duration: 3000 });
+        return;
+    }
+
     this.isSaving = true;
     const val = this.productoForm.value;
     
-    // ✅ ASEGURARSE QUE LA INTERFAZ ProductoRequest TENGA codigoInternacional
+    const componentesBackend = this.tipoSeleccionado === 'KIT' 
+        ? this.componentesSeleccionados.map(c => ({ idProducto: c.idProducto, cantidad: c.cantidad }))
+        : [];
+
     const request: ProductoRequest = {
       tipo: this.tipoSeleccionado, 
       nombre: val.nombre,
       codigo: val.codigo,
-      codigoInternacional: val.codigoInternacional, // ✅ ENVIAR NUEVO CAMPO
+      codigoInternacional: val.codigoInternacional,
       idCategoria: val.idCategoria, 
       descripcion: val.descripcion,
       stockMinimo: val.stockMinimo,
@@ -219,7 +316,8 @@ export class ProductoModalComponent implements OnInit {
       precioChina: val.precioChina,
       costoTotal: val.costoTotal,
       precioVenta: val.precioVenta,
-      unidadMedida: val.unidadMedida
+      unidadMedida: val.unidadMedida,
+      componentes: componentesBackend
     };
 
     const operacion = (this.esEdicion && this.productoId)
@@ -232,8 +330,18 @@ export class ProductoModalComponent implements OnInit {
     });
   }
 
+  // ✅ 4. MOSTRAR MENSAJE AQUÍ
   finalizarGuardado(mensaje: string) {
     this.isSaving = false;
+    
+    // Abrir mensaje de confirmación
+    this.snackBar.open(mensaje, 'Aceptar', {
+      duration: 3000,
+      horizontalPosition: 'center',
+      verticalPosition: 'bottom',
+      panelClass: ['success-snackbar'] // Puedes agregar estilos css si quieres
+    });
+
     this.dialogRef.close(true);
   }
 
@@ -245,7 +353,11 @@ export class ProductoModalComponent implements OnInit {
 
   manejarError(e: any) {
     this.isSaving = false;
-    alert('Error: ' + (e.error?.message || 'Error desconocido'));
+    // Mostrar error también en SnackBar en vez de alert()
+    this.snackBar.open('Error: ' + (e.error?.message || 'Error desconocido'), 'Cerrar', {
+        duration: 5000,
+        panelClass: ['error-snackbar']
+    });
   }
 
   cancelar() { this.dialogRef.close(); }

@@ -106,9 +106,17 @@ export class InventarioComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.productoService.listarProductosActivos().subscribe({
       next: (data) => {
+        // ✅ CORRECCIÓN AQUÍ:
         this.productos = data.filter(p => {
           const tipoItem = p.tipo || 'PRODUCTO';
-          return tipoItem === this.vistaActual;
+          
+          if (this.vistaActual === 'SERVICIO') {
+            // Si es vista Servicios, solo mostramos SERVICIO
+            return tipoItem === 'SERVICIO';
+          } else {
+            // Si es vista Productos, mostramos PRODUCTO y KIT
+            return tipoItem === 'PRODUCTO' || tipoItem === 'KIT';
+          }
         });
         
         const categoriasUnicas = this.productos

@@ -42,7 +42,7 @@ export interface CompraRequest {
   serie: string;
   numero: string;
   
-  fechaEmision: string | Date; // Flexible para evitar errores de formato
+  fechaEmision: string | Date; 
   fechaVencimiento?: string | Date;
   
   moneda: 'PEN' | 'USD';
@@ -64,7 +64,7 @@ export interface CompraRequest {
   // Importación
   codImportacion?: string;
   pesoNetoKg?: number;
-  cbm?: number; // ✅ VOLUMEN (Antes bultos)
+  cbm?: number; 
   
   // Listas
   detalles: CompraDetalleRequest[];
@@ -82,6 +82,10 @@ export interface CompraDetalle {
   precioUnitario: number;
   importe: number;
   nombreAlmacen?: string;
+  
+  // Opcional: Si quisieras ver el costo landed en el detalle de la compra también
+  costoUnitarioLanded?: number;
+  costoTotalLanded?: number;
 }
 
 export interface PagoCompra {
@@ -120,7 +124,7 @@ export interface CompraResponse {
   total: number;
   
   saldoPendiente: number;
-  montoPagado: number; // A veces el backend puede no mandarlo si no se calculó
+  montoPagado: number; 
   
   observaciones?: string;
   
@@ -132,19 +136,45 @@ export interface CompraResponse {
   // Importación
   codImportacion?: string;
   pesoNetoKg?: number;
-  cbm?: number; // ✅ Actualizado
+  cbm?: number; 
   importacionId?: number;
   
   // ==========================================
-  // 📊 RESULTADOS DEL PRORRATEO (Backend)
+  // 📊 RESULTADOS DEL PRORRATEO (DETALLADO)
   // ==========================================
+  
+  // Grupo Volumen
   proFlete?: number;
   proAlmacenaje?: number;
   proTransporte?: number;
-  proCargaDescarga?: number;
+  proPersonalDescarga?: number; // Nuevo
+  proMontacarga?: number;       // Nuevo
 
+  // Grupo Peso
   proDesconsolidacion?: number;
 
+  // Grupo Valor / Aduanas
+  proVistosBuenos?: number;     // Nuevo
+  proTransmision?: number;      // Nuevo
+  proComisionAgencia?: number;  // Nuevo
+  proVobo?: number;             // Nuevo
+  proGastosOperativos?: number; // Nuevo
+  proResguardo?: number;        // Nuevo
+
+  // Grupo Impuestos
+  proAdv?: number;              // Nuevo (Ad Valorem)
+  proIgv?: number;              // Nuevo (Desglosado)
+  proIpm?: number;              // Nuevo (Desglosado)
+  proPercepcion?: number;       // Nuevo (Desglosado)
+
+  // Grupo Otros
+  proOtros1?: number;           // Nuevo
+  proOtros2?: number;           // Nuevo
+  proOtros3?: number;           // Nuevo
+  proOtros4?: number;           // Nuevo
+
+  // Campos Agrupados (Se mantienen por si el backend envía ambos)
+  proCargaDescarga?: number;
   proGastosAduaneros?: number;
   proSeguroResguardo?: number;
   proImpuestos?: number;

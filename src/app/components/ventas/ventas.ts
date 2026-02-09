@@ -69,13 +69,13 @@ export class VentasComponent implements OnInit {
   nombreCliente: string = '';
   tipoCliente: TipoCliente = TipoCliente.COMUN;
   fechaVenta: Date = new Date();
-  
+   
   // VARIABLES DE PAGO
   tipoPago: TipoPago = TipoPago.CONTADO;
-  
+   
   // LISTA DE PAGOS Y OBJETO TEMPORAL
   listaPagos: PagoRequest[] = [];
-  
+   
   pagoActual: PagoRequest = {
     metodoPago: MetodoPago.EFECTIVO,
     monto: 0,
@@ -86,7 +86,7 @@ export class VentasComponent implements OnInit {
 
   // Crédito
   numeroCuotas: number = 1;
-  montoCuota: number = 0;     
+  montoCuota: number = 0;      
   saldoPendiente: number = 0; 
   totalPagadoAcumulado: number = 0;
 
@@ -105,7 +105,7 @@ export class VentasComponent implements OnInit {
   // --- Configuración de Moneda VENTA ---
   moneda: string = 'PEN';
   tipoCambio: number = 3.80;
-  
+   
   // --- Totales ---
   subtotal: number = 0;
   igv: number = 0;
@@ -119,7 +119,7 @@ export class VentasComponent implements OnInit {
     { value: MetodoPago.YAPE, label: 'Yape' },
     { value: MetodoPago.PLIN, label: 'Plin' }
   ];
-  
+   
   public eTipoPago = TipoPago;
 
   // --- Edición ---
@@ -255,7 +255,7 @@ export class VentasComponent implements OnInit {
     this.nombreCliente = cliente.nombreCompleto;
     this.mostrarListaClientes = false;
   }
-  
+   
   limpiarCliente(): void { this.clienteSeleccionado = null; this.busquedaCliente = ''; this.nombreCliente = ''; }
   buscarClientes(): void { 
     if (!this.busquedaCliente.trim()) { this.clientesFiltrados = []; this.mostrarListaClientes = false; return; }
@@ -298,12 +298,21 @@ export class VentasComponent implements OnInit {
 
   // --- GESTIÓN PRODUCTOS ---
   agregarProducto(producto: Producto): void {
-      if (producto.stockActual <= 0) { this.mostrarNotificacion('Stock Agotado', 'error'); return; }
+      // ✅ CORRECCIÓN CLAVE: Validar stock solo si NO es servicio
+      const esServicio = producto.tipo === 'SERVICIO';
+
+      if (!esServicio && producto.stockActual <= 0) { 
+          this.mostrarNotificacion('Stock Agotado', 'error'); 
+          return; 
+      }
       
       const existe = this.productosEnVenta.find(p => p.producto.id === producto.id);
+      
       if (existe) {
-        if (existe.cantidad >= producto.stockActual) {
-           this.mostrarNotificacion('Stock máximo alcanzado', 'warning'); return;
+        // ✅ CORRECCIÓN: Si es servicio, no limitar cantidad por stock
+        if (!esServicio && existe.cantidad >= producto.stockActual) {
+            this.mostrarNotificacion('Stock máximo alcanzado', 'warning'); 
+            return;
         }
         existe.cantidad++;
         this.calcularSubtotalProducto(existe);
@@ -327,13 +336,20 @@ export class VentasComponent implements OnInit {
     if (item.descuento > 0) subtotal -= (subtotal * (item.descuento / 100));
     item.subtotal = Number(subtotal.toFixed(2));
   }
-  
+   
   onCantidadChange(item: ProductoEnVenta) { 
-      if(item.cantidad > item.producto.stockActual) item.cantidad = item.producto.stockActual;
+      // ✅ CORRECCIÓN: Si es servicio, no limitar cantidad
+      const esServicio = item.producto.tipo === 'SERVICIO';
+
+      if(!esServicio && item.cantidad > item.producto.stockActual) {
+          item.cantidad = item.producto.stockActual;
+      }
       this.calcularSubtotalProducto(item); this.calcularTotales(); 
   }
+
   onPrecioChange(item: ProductoEnVenta) { this.calcularSubtotalProducto(item); this.calcularTotales(); }
   onDescuentoChange(item: ProductoEnVenta) { this.calcularSubtotalProducto(item); this.calcularTotales(); }
+  
   buscarProductos() { 
     if (!this.terminoBusqueda.trim()) { this.productosFiltrados = this.productos; return; }
     const termino = this.terminoBusqueda.toLowerCase();
@@ -350,18 +366,15 @@ export class VentasComponent implements OnInit {
     return [MetodoPago.YAPE, MetodoPago.PLIN, MetodoPago.TRANSFERENCIA, MetodoPago.TARJETA].includes(metodo);
   }
 
-  // ✅ NUEVO: Seleccionar texto al hacer click (solución al 0)
   seleccionarTexto(event: any) {
     event.target.select();
   }
 
-  // ✅ NUEVO: Calcular monto restante
   getMontoRestante(): number {
     const restante = this.total - this.totalPagadoAcumulado;
     return restante > 0 ? Number(restante.toFixed(2)) : 0;
   }
 
-  // ✅ NUEVO: Llenar el monto automáticamente con el botón TODO
   fijarMontoCompleto() {
     this.pagoActual.monto = this.getMontoRestante();
   }
@@ -378,7 +391,7 @@ export class VentasComponent implements OnInit {
 
     this.listaPagos.push({ ...this.pagoActual });
 
-    // Reiniciar para siguiente pago, pero mantenemos la moneda actual
+    // Reiniciar para siguiente pago
     this.pagoActual.monto = 0;
     this.pagoActual.referencia = '';
     this.calcularTotales();
@@ -413,7 +426,7 @@ export class VentasComponent implements OnInit {
     this.total = Number(this.productosEnVenta.reduce((sum, p) => sum + p.subtotal, 0).toFixed(2));
     this.subtotal = Number((this.total / 1.18).toFixed(2));
     this.igv = Number((this.total - this.subtotal).toFixed(2));
-    
+     
     this.totalPagadoAcumulado = this.calcularTotalPagadoAcumulado();
 
     if (this.tipoPago === TipoPago.CREDITO) {
@@ -466,36 +479,25 @@ export class VentasComponent implements OnInit {
   }
 
   completarVenta(): void {
-    // 1. Validaciones básicas
     if (this.productosEnVenta.length === 0 || !this.clienteSeleccionado) {
       this.mostrarNotificacion('Seleccione un cliente y productos para continuar', 'warning');
       return;
     }
-    
-    // =========================================================================
-    // 🔥 CORRECCIÓN AUTOMÁTICA: Si la lista está vacía pero hay un monto puesto
-    // =========================================================================
+     
     if (this.listaPagos.length === 0 && this.pagoActual.monto > 0) {
-        // Validamos si es un pago digital que requiere cuenta
         if (this.esPagoDigital(this.pagoActual.metodoPago) && !this.pagoActual.cuentaBancariaId) {
             this.mostrarNotificacion('Seleccione la cuenta de destino para el pago', 'warning');
             return;
         }
-        // Agregamos el pago automáticamente
         this.agregarPagoALista();
-        console.log("Pago agregado automáticamente al completar venta para evitar error de caja.");
     }
-    // =========================================================================
 
-    // 2. Ahora sí validamos si la lista sigue vacía
     if (this.listaPagos.length === 0) {
          this.mostrarNotificacion('Debe agregar al menos un pago para procesar la venta', 'warning');
          return;
     }
 
-    // 3. Validar montos (si es al contado debe estar completo)
     if (this.tipoPago === TipoPago.CONTADO) {
-        // Permitimos un pequeño margen de error por decimales (0.10)
         if (this.totalPagadoAcumulado < (this.total - 0.10)) {
             const falta = (this.total - this.totalPagadoAcumulado).toFixed(2);
             this.mostrarNotificacion(`Pago incompleto. Faltan ${falta} ${this.moneda}`, 'error');
@@ -505,7 +507,6 @@ export class VentasComponent implements OnInit {
 
     if (!confirm('¿Estás seguro de emitir esta venta?')) return;
 
-    // 4. Guardar
     this.isSaving = true;
     const request = this.prepararRequest();
 
@@ -513,7 +514,7 @@ export class VentasComponent implements OnInit {
         next: () => {
             this.mostrarNotificacion('✅ Venta registrada exitosamente', 'success');
             this.isSaving = false;
-            this.router.navigate(['/ventas/lista']); // Ajusta si tu ruta es diferente
+            this.router.navigate(['/ventas/lista']); 
         },
         error: (err: any) => {
             this.isSaving = false;

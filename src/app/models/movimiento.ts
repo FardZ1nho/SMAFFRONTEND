@@ -1,5 +1,3 @@
-// src/app/models/movimiento.model.ts
-
 export interface Movimiento {
   id: number;
   codigo: string;
@@ -20,7 +18,7 @@ export interface Movimiento {
   tipoMovimientoLabel: string;
   cantidad: number;
   motivo?: string;
-  usuarioResponsable?: string;
+  usuarioResponsable?: string; // ✅ Campo para mostrar en el historial
   
   // Fechas
   fechaMovimiento: string;
@@ -34,21 +32,20 @@ export enum TipoMovimiento {
   AJUSTE = 'AJUSTE'
 }
 
-export interface MovimientoRequest {
-  productoId: number;
-  almacenOrigenId?: number;
-  almacenDestinoId?: number;
-  tipoMovimiento: TipoMovimiento;
-  cantidad: number;
-  motivo?: string;
-  usuarioResponsable?: string;
-  fechaMovimiento?: string;
-}
-
+// ✅ DTO para Traslados (Ya lo tenías)
 export interface TrasladoRequest {
   productoId: number;
   almacenOrigenId: number;
   almacenDestinoId: number;
   cantidad: number;
   motivo?: string;
+}
+
+// ✅ NUEVO: DTO para Ajustes (Coincide con AjusteRequestDTO del Backend)
+export interface AjusteRequest {
+  productoId: number;
+  almacenId: number;
+  cantidad: number;        // Puede ser positivo o negativo
+  motivo: string;
+  usuarioResponsable: string;
 }

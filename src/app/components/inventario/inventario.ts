@@ -20,7 +20,6 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatOptionModule } from '@angular/material/core';
 
 import { ProductoService } from '../../services/producto-service';
-// ✅ 1. IMPORTANTE: Importamos el servicio de almacenes para consultar el stock real
 import { ProductoAlmacenService } from '../../services/producto-almacen-service';
 import { Producto } from '../../models/producto';
 import { ProductoModalComponent } from './producto-modal/producto-modal';
@@ -42,7 +41,8 @@ import { StockModalComponent } from './stock-modal/stock-modal';
 })
 export class InventarioComponent implements OnInit, OnDestroy {
   
-  vistaActual: 'PRODUCTO' | 'SERVICIO' = 'PRODUCTO';
+  // ✅ 1. ACTUALIZAR TIPO DE VISTA
+  vistaActual: 'PRODUCTO' | 'SERVICIO' | 'SUMINISTRO' = 'PRODUCTO';
   routerSubscription: Subscription | undefined;
 
   productos: Producto[] = [];
@@ -62,7 +62,6 @@ export class InventarioComponent implements OnInit, OnDestroy {
 
   constructor(
     private productoService: ProductoService,
-    // ✅ 2. INYECCIÓN: Inyectamos el servicio aquí
     private productoAlmacenService: ProductoAlmacenService,
     private cdr: ChangeDetectorRef,
     private dialog: MatDialog,
@@ -90,13 +89,19 @@ export class InventarioComponent implements OnInit, OnDestroy {
   }
 
   configurarVista(): void {
+    // ✅ 2. LÓGICA DE URL PARA SUMINISTROS
     if (this.router.url.includes('servicios')) {
       this.vistaActual = 'SERVICIO';
       this.displayedColumns = ['codigo', 'nombre', 'categoria', 'precio', 'acciones'];
+    } else if (this.router.url.includes('suministros')) {
+      this.vistaActual = 'SUMINISTRO';
+      this.displayedColumns = ['codigo', 'nombre', 'categoria', 'stock', 'precio', 'acciones'];
     } else {
       this.vistaActual = 'PRODUCTO';
       this.displayedColumns = ['codigo', 'nombre', 'categoria', 'stock', 'precio', 'acciones'];
     }
+    
+    // Resetear filtros al cambiar de vista
     this.filtroCategoria = 'TODAS';
     this.filtroEstadoStock = 'TODOS';
     this.terminoBusqueda = '';
@@ -106,15 +111,16 @@ export class InventarioComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.productoService.listarProductosActivos().subscribe({
       next: (data) => {
-        // ✅ CORRECCIÓN AQUÍ:
+        // ✅ 3. FILTRADO CORRECTO INCLUYENDO SUMINISTROS Y KITS
         this.productos = data.filter(p => {
           const tipoItem = p.tipo || 'PRODUCTO';
           
           if (this.vistaActual === 'SERVICIO') {
-            // Si es vista Servicios, solo mostramos SERVICIO
             return tipoItem === 'SERVICIO';
+          } else if (this.vistaActual === 'SUMINISTRO') {
+            return tipoItem === 'SUMINISTRO';
           } else {
-            // Si es vista Productos, mostramos PRODUCTO y KIT
+            // PRODUCTOS (Incluye KITS)
             return tipoItem === 'PRODUCTO' || tipoItem === 'KIT';
           }
         });
@@ -151,7 +157,8 @@ export class InventarioComponent implements OnInit, OnDestroy {
       resultado = resultado.filter(p => p.nombreCategoria === this.filtroCategoria);
     }
 
-    if (this.vistaActual === 'PRODUCTO' && this.filtroEstadoStock !== 'TODOS') {
+    // Filtrar por estado de stock (Solo para Productos y Suministros)
+    if (this.vistaActual !== 'SERVICIO' && this.filtroEstadoStock !== 'TODOS') {
       resultado = resultado.filter(p => {
         const stock = p.stockActual || 0;
         const min = p.stockMinimo || 0;
@@ -195,37 +202,27 @@ export class InventarioComponent implements OnInit, OnDestroy {
   abrirModalNuevo(): void {
     const dialogRef = this.dialog.open(ProductoModalComponent, {
       width: '1000px', maxWidth: '95vw', disableClose: false, panelClass: 'producto-modal',
+      // Se pasa el tipo fijo (SUMINISTRO, SERVICIO o PRODUCTO)
       data: { modo: 'crear', tipoFijo: this.vistaActual } 
     });
     dialogRef.afterClosed().subscribe(result => { if (result) this.cargarDatos(); });
   }
 
-  // ✅ 3. CORRECCIÓN DEFINITIVA: Actualización automática del stock
   abrirModalStock(producto: Producto): void {
     const dialogRef = this.dialog.open(StockModalComponent, {
       width: '450px', disableClose: false, data: { producto: producto }
     });
     
     dialogRef.afterClosed().subscribe(result => { 
-      // Si el modal se cerró exitosamente (result es true o un objeto)
       if (result) {
-         // AQUÍ ESTÁ LA SOLUCIÓN:
-         // No confiamos en el producto local ni en la carga general.
-         // Consultamos EXPLICITAMENTE el desglose de almacenes para este producto y sumamos.
          this.productoAlmacenService.listarUbicacionesPorProducto(producto.id).subscribe({
-            next: (ubicaciones) => {
-               // Sumamos lo que hay en TODOS los almacenes
+           next: (ubicaciones) => {
                const stockRealCalculado = ubicaciones.reduce((acc, item) => acc + item.stock, 0);
-               
                console.log('Stock actualizado desde almacenes:', stockRealCalculado);
-
-               // Actualizamos la fila de la tabla inmediatamente con el dato real
                producto.stockActual = stockRealCalculado;
-               
-               // Forzamos a Angular a pintar el cambio
                this.cdr.detectChanges();
-            },
-            error: (err) => console.error("Error al refrescar stock real", err)
+           },
+           error: (err) => console.error("Error al refrescar stock real", err)
          });
       }
     });

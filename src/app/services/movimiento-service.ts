@@ -1,11 +1,8 @@
-// src/app/services/movimiento.service.ts
-
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError, timeout, catchError } from 'rxjs';
-import { Movimiento, TipoMovimiento, TrasladoRequest } from '../models/movimiento';
+import { Movimiento, TipoMovimiento, TrasladoRequest, AjusteRequest } from '../models/movimiento';
 import { environment } from '../../environments/environment';
-
 
 @Injectable({
   providedIn: 'root'
@@ -20,17 +17,15 @@ export class MovimientoService {
    * Registrar traslado entre almacenes
    */
   registrarTraslado(request: TrasladoRequest): Observable<Movimiento> {
-    console.log('📤 Enviando traslado a:', `${this.baseUrl}/traslado`);
-    console.log('📦 Request:', request);
-    
+    console.log('📤 Enviando traslado...', request);
     return this.http.post<Movimiento>(`${this.baseUrl}/traslado`, request).pipe(
-      timeout(30000), // 30 segundos timeout
+      timeout(30000),
       catchError(this.handleError)
     );
   }
 
   /**
-   * Registrar entrada de mercancía
+   * Registrar entrada de mercancía (Compras)
    */
   registrarEntrada(productoId: number, almacenDestinoId: number, cantidad: number, motivo?: string): Observable<Movimiento> {
     const body = { productoId, almacenDestinoId, cantidad, motivo };
@@ -41,7 +36,7 @@ export class MovimientoService {
   }
 
   /**
-   * Registrar salida de mercancía
+   * Registrar salida de mercancía (Ventas/Mermas simples)
    */
   registrarSalida(productoId: number, almacenOrigenId: number, cantidad: number, motivo?: string): Observable<Movimiento> {
     const body = { productoId, almacenOrigenId, cantidad, motivo };
@@ -52,11 +47,12 @@ export class MovimientoService {
   }
 
   /**
-   * Registrar ajuste de inventario
+   * ✅ ACTUALIZADO: Registrar ajuste de inventario (Manual / Auditoría)
+   * Recibe el objeto AjusteRequest con el usuario responsable
    */
-  registrarAjuste(productoId: number, almacenId: number, cantidad: number, motivo?: string): Observable<Movimiento> {
-    const body = { productoId, almacenId, cantidad, motivo };
-    return this.http.post<Movimiento>(`${this.baseUrl}/ajuste`, body).pipe(
+  registrarAjuste(request: AjusteRequest): Observable<Movimiento> {
+    console.log('🔧 Enviando ajuste...', request);
+    return this.http.post<Movimiento>(`${this.baseUrl}/ajuste`, request).pipe(
       timeout(30000),
       catchError(this.handleError)
     );
@@ -66,8 +62,6 @@ export class MovimientoService {
    * Listar todos los movimientos
    */
   listarTodos(): Observable<Movimiento[]> {
-    console.log('📥 Obteniendo movimientos desde:', this.baseUrl);
-    
     return this.http.get<Movimiento[]>(this.baseUrl).pipe(
       timeout(30000),
       catchError(this.handleError)
@@ -123,10 +117,8 @@ export class MovimientoService {
     let errorMessage = 'Error desconocido';
     
     if (error.error instanceof ErrorEvent) {
-      // Error del cliente
       errorMessage = `Error del cliente: ${error.error.message}`;
     } else {
-      // Error del servidor
       if (error.status === 0) {
         errorMessage = 'No se puede conectar con el servidor';
       } else if (error.status === 401) {

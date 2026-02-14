@@ -104,6 +104,7 @@ export const routes: Routes = [
   // ✅ MODIFICA LA SECCIÓN DE INVENTARIO ASÍ:
   { path: 'inventario/productos', component: InventarioComponent },
   { path: 'inventario/servicios', component: InventarioComponent },
+  { path: 'inventario/suministros', component: InventarioComponent },
   {
     path: 'clientes',
     loadComponent: () => import('./components/cliente/cliente').then(m => m.ClientesComponent),

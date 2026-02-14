@@ -1,7 +1,7 @@
 <div class="modal-header">
   <div class="header-text">
     <h2>{{ titulo }}</h2>
-    <p>Complete la información del proveedor {{ proveedor.pais === 'CHINA' ? 'Internacional' : 'Nacional' }}</p>
+    <p>Complete la información del proveedor {{ proveedor.pais === 'PERÚ' ? 'Nacional' : 'Internacional' }}</p>
   </div>
   <button class="btn-close-x" (click)="cancelar()" title="Cerrar">
     <mat-icon>close</mat-icon>
@@ -24,20 +24,24 @@
             <select class="form-control-smaf no-border" name="pais" [(ngModel)]="proveedor.pais">
               <option value="PERÚ">🇵🇪 PERÚ</option>
               <option value="CHINA">🇨🇳 CHINA</option>
+              <option value="USA">🇺🇸 USA</option>
+              <option value="OTRO">🌐 OTRO</option>
             </select>
           </div>
         </div>
 
         <div class="form-group col-8">
           <label class="section-title">
-            {{ proveedor.pais === 'PERÚ' ? 'RUC (11 Dígitos)' : 'USCC (18 Caracteres)' }} <span style="color:red">*</span>
+            {{ proveedor.pais === 'PERÚ' ? 'RUC (11 Dígitos)' : 'Código Fiscal / ID Internacional' }} 
+            <span style="color:red">*</span>
           </label>
           <div class="input-box">
             <mat-icon class="input-icon">badge</mat-icon>
             <input type="text" class="form-control-smaf no-border" 
                    name="ruc" [(ngModel)]="proveedor.ruc" 
-                   [placeholder]="proveedor.pais === 'PERÚ' ? 'Ej: 20601234567' : 'Ej: 913101...'"
-                   [maxlength]="proveedor.pais === 'PERÚ' ? 11 : 18" required>
+                   [placeholder]="proveedor.pais === 'PERÚ' ? 'Ej: 20601234567' : 'Ej: USCC-9131... o TAX-ID'"
+                   [maxlength]="proveedor.pais === 'PERÚ' ? 11 : 20" 
+                   required>
           </div>
         </div>
       </div>

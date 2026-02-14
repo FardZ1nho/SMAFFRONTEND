@@ -8,13 +8,12 @@ import {
   EventEmitter, 
   ChangeDetectorRef, 
   ChangeDetectionStrategy,
-  Optional, // 👈 Importante para que no falle si no es modal
-  Inject    // 👈 Importante para recibir datos del modal
+  Optional, 
+  Inject    
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
-// 👇 IMPORTACIONES NECESARIAS PARA EL MODAL
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 
 import { Proveedor } from '../../../models/proveedor';
@@ -45,14 +44,11 @@ export class ProveedorFormComponent implements OnInit, OnChanges {
   constructor(
     private proveedorService: ProveedorService,
     private cd: ChangeDetectorRef,
-    // 👇 1. INYECTAR EL CONTROLADOR DEL DIÁLOGO (Opcional por si se usa sin modal)
     @Optional() public dialogRef: MatDialogRef<ProveedorFormComponent>,
-    // 👇 2. RECIBIR DATOS SI SE ABRE COMO MODAL
     @Optional() @Inject(MAT_DIALOG_DATA) public data: any
   ) {}
 
   ngOnInit(): void {
-    // 👇 Si viene data del modal, la usamos
     if (this.data && this.data.idProveedor !== undefined) {
       this.idProveedor = this.data.idProveedor;
     }
@@ -104,21 +100,28 @@ export class ProveedorFormComponent implements OnInit, OnChanges {
   guardar(): void {
     if (this.isLoading) return;
 
-    // Validaciones
+    // --- VALIDACIONES ---
+
+    // 1. Campos obligatorios básicos
     if (!this.proveedor.nombre || !this.proveedor.ruc) {
       alert('⚠️ Por favor complete la Razón Social y la Identificación.');
       return;
     }
 
+    // 2. Validación de nombre (evitar solo números)
     if (/^\d+$/.test(this.proveedor.nombre.trim())) {
       alert('⚠️ La Razón Social no puede ser solo números.');
       return;
     }
 
-    if (this.proveedor.pais === 'PERÚ' && !/^\d{11}$/.test(this.proveedor.ruc)) {
-      alert('🇵🇪 El RUC peruano debe tener 11 dígitos.');
-      return;
-    }
+    // 3. Validación ESTRICTA solo para PERÚ (RUC 11 dígitos)
+    if (this.proveedor.pais === 'PERÚ') {
+      if (!/^\d{11}$/.test(this.proveedor.ruc)) {
+        alert('🇵🇪 El RUC peruano debe tener exactamente 11 dígitos numéricos.');
+        return;
+      }
+    } 
+    // ✅ Para CHINA/OTROS no hay validación estricta de regex (acepta letras y números)
 
     this.isLoading = true;
     this.cd.markForCheck();
@@ -134,14 +137,7 @@ export class ProveedorFormComponent implements OnInit, OnChanges {
     this.proveedorService.crear(this.proveedor).subscribe({
       next: () => {
         alert('✅ Proveedor registrado correctamente');
-        
-        // 👇 3. LÓGICA DE CIERRE HÍBRIDA
-        if (this.dialogRef) {
-          this.dialogRef.close(true); // Cierra el modal si existe
-        } else {
-          this.onCerrar.emit(true); // Emite evento si es componente hijo
-        }
-
+        this.cerrar(true);
         this.isLoading = false;
       },
       error: (e) => {
@@ -156,14 +152,7 @@ export class ProveedorFormComponent implements OnInit, OnChanges {
     this.proveedorService.actualizar(this.idProveedor!, this.proveedor).subscribe({
       next: () => {
         alert('✅ Proveedor actualizado correctamente');
-        
-        // 👇 3. LÓGICA DE CIERRE HÍBRIDA
-        if (this.dialogRef) {
-          this.dialogRef.close(true);
-        } else {
-          this.onCerrar.emit(true);
-        }
-
+        this.cerrar(true);
         this.isLoading = false;
       },
       error: (e) => {
@@ -175,11 +164,15 @@ export class ProveedorFormComponent implements OnInit, OnChanges {
   }
 
   cancelar(): void {
-    // 👇 3. LÓGICA DE CIERRE HÍBRIDA
+    this.cerrar(false);
+  }
+
+  // Método helper para cerrar ya sea modal o componente hijo
+  private cerrar(exito: boolean): void {
     if (this.dialogRef) {
-      this.dialogRef.close(false); // Cierra modal sin guardar
+      this.dialogRef.close(exito);
     } else {
-      this.onCerrar.emit(false); // Emite evento
+      this.onCerrar.emit(exito);
     }
   }
 

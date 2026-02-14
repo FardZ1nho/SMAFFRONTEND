@@ -10,10 +10,16 @@
         <p class="subtitle">Gestión de traslados internos y ajustes de inventario</p>
       </div>
     </div>
-    <button class="btn-primary-top" routerLink="/movimientos/traslado">
-      <mat-icon>sync_alt</mat-icon>
-      Nuevo Traslado
-    </button>
+    
+    <div class="header-actions">
+        <button class="btn-primary-top" routerLink="/movimientos/traslado">
+          <mat-icon>sync_alt</mat-icon> Nuevo Traslado
+        </button>
+
+        <button class="btn-secondary-top" (click)="abrirModalAjuste()">
+          <mat-icon>build</mat-icon> Nuevo Ajuste
+        </button>
+    </div>
   </div>
 
   <div class="stats-grid">
@@ -89,7 +95,7 @@
             <th>Origen / Destino</th>
             <th>Cant.</th>
             <th>Motivo</th>
-            <th>Fecha</th>
+            <th>Responsable</th> <th>Fecha</th>
           </tr>
         </thead>
         <tbody>
@@ -115,6 +121,15 @@
             </td>
             <td><span class="qty-bold">{{ mov.cantidad }}</span></td>
             <td><span class="reason-text">{{ mov.motivo || '—' }}</span></td>
+            
+            <td>
+                <span class="user-badge" *ngIf="mov.usuarioResponsable">
+                    <mat-icon style="font-size: 14px; width: 14px; height: 14px;">person</mat-icon> 
+                    {{ mov.usuarioResponsable }}
+                </span>
+                <span *ngIf="!mov.usuarioResponsable" class="text-muted">-</span>
+            </td>
+
             <td><span class="date-text">{{ mov.fechaMovimiento | date:'dd/MM/yyyy HH:mm' }}</span></td>
           </tr>
         </tbody>

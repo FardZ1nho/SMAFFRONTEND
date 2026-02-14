@@ -4,13 +4,19 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { MovimientoService } from '../../../services/movimiento-service'; 
 import { Movimiento, TipoMovimiento } from '../../../models/movimiento';
-import { MatIcon } from '@angular/material/icon';
-import { MatSpinner } from '@angular/material/progress-spinner';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog'; // ✅ Importar Dialog
+
+import { AjusteModalComponent } from '../ajuste-modal/ajuste-modal'; 
 
 @Component({
   selector: 'app-movimientos-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, MatIcon, MatSpinner],
+  imports: [
+    CommonModule, FormsModule, RouterModule, 
+    MatIconModule, MatProgressSpinnerModule, MatDialogModule // ✅ Agregar MatDialogModule
+  ],
   templateUrl: './movimientos-list.html',
   styleUrls: ['./movimientos-list.css']
 })
@@ -30,7 +36,8 @@ export class MovimientosListComponent implements OnInit {
 
   constructor(
     private movimientoService: MovimientoService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private dialog: MatDialog // ✅ Inyectar Dialog
   ) { }
 
   ngOnInit(): void {
@@ -41,30 +48,37 @@ export class MovimientosListComponent implements OnInit {
     this.cargando = true;
     this.error = '';
     
-    console.log('Cargando movimientos...');
-    
     this.movimientoService.listarTodos().subscribe({
       next: (data) => {
-        console.log('✅ Movimientos recibidos:', data);
-        // Opcional: Si quieres que la tabla NUNCA muestre entradas/salidas aunque vengan del backend:
-        // this.movimientos = data.filter(m => m.tipoMovimiento !== TipoMovimiento.ENTRADA && m.tipoMovimiento !== TipoMovimiento.SALIDA);
         this.movimientos = data || [];
-        
         this.aplicarFiltros();
         this.actualizarEstadisticas();
-        
         this.cargando = false;
         this.cdr.detectChanges(); 
       },
       error: (err) => {
         console.error('❌ Error:', err);
         this.error = `Error al cargar movimientos: ${err.message}`;
-        
         this.cargando = false;
         this.movimientos = [];
         this.movimientosFiltrados = [];
-        this.actualizarEstadisticas();
         this.cdr.detectChanges();
+      }
+    });
+  }
+
+  // ✅ MÉTODO PARA ABRIR MODAL DE AJUSTE
+  abrirModalAjuste(): void {
+    const dialogRef = this.dialog.open(AjusteModalComponent, {
+      width: '600px',
+      disableClose: true,
+      panelClass: 'custom-dialog-container' // Opcional para CSS global
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        // Si se guardó correctamente, recargamos la lista
+        this.cargarMovimientos();
       }
     });
   }
@@ -72,7 +86,6 @@ export class MovimientosListComponent implements OnInit {
   aplicarFiltros(): void {
     let resultado = [...this.movimientos];
 
-    // Filtro por texto
     if (this.filtroTexto) {
       const textoLower = this.filtroTexto.toLowerCase();
       resultado = resultado.filter(m => 
@@ -83,7 +96,6 @@ export class MovimientosListComponent implements OnInit {
       );
     }
 
-    // Filtro por tipo
     if (this.filtroTipo !== 'TODOS') {
       resultado = resultado.filter(m => m.tipoMovimiento === this.filtroTipo);
     }
@@ -101,33 +113,26 @@ export class MovimientosListComponent implements OnInit {
     this.aplicarFiltros();
   }
 
-  obtenerIconoTipo(tipo: TipoMovimiento): string {
-    const iconos: Record<string, string> = {
-      'TRASLADO': '🔄',
-      'AJUSTE': '⚙️'
-    };
-    return iconos[tipo] || '📦';
-  }
-
   obtenerClaseTipo(tipo: TipoMovimiento): string {
     const clases: Record<string, string> = {
       'TRASLADO': 'tipo-traslado',
-      'AJUSTE': 'tipo-ajuste'
+      'AJUSTE': 'tipo-ajuste',
+      'ENTRADA': 'tipo-entrada',
+      'SALIDA': 'tipo-salida'
     };
     return clases[tipo] || '';
   }
 
   // Estadísticas
-  private _totalMovimientos: number = 0;
-  private _totalTraslados: number = 0;
-  private _totalAjustes: number = 0;
+  _totalMovimientos = 0;
+  _totalTraslados = 0;
+  _totalAjustes = 0;
 
   get totalMovimientos(): number { return this._totalMovimientos; }
   get totalTraslados(): number { return this._totalTraslados; }
   get totalAjustes(): number { return this._totalAjustes; }
 
   private actualizarEstadisticas(): void {
-    // Calculamos totales basados en la data cargada (o filtrada si prefieres)
     this._totalMovimientos = this.movimientos.length;
     this._totalTraslados = this.movimientos.filter(m => m.tipoMovimiento === TipoMovimiento.TRASLADO).length;
     this._totalAjustes = this.movimientos.filter(m => m.tipoMovimiento === TipoMovimiento.AJUSTE).length;

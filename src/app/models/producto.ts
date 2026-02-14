@@ -3,7 +3,7 @@ export interface Producto {
   nombre: string;
   codigo: string;
   // ✅ CAMBIO: Agregado 'KIT'
-  tipo: 'PRODUCTO' | 'SERVICIO' | 'KIT'; 
+  tipo: 'PRODUCTO' | 'SERVICIO' | 'KIT' | 'SUMINISTRO'; 
   descripcion?: string;
   
   idCategoria: number;

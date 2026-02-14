@@ -1,0 +1,53 @@
+.modal-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 16px 24px; border-bottom: 1px solid #f1f5f9;
+    background-color: #ffffff;
+}
+.header-title { display: flex; align-items: center; gap: 10px; color: #1e293b; }
+.header-title h2 { margin: 0; font-size: 18px; font-weight: 600; }
+.header-icon { color: #6366f1; }
+
+.modal-content {
+    padding: 24px; display: flex; flex-direction: column; gap: 16px;
+    min-width: 500px;
+}
+
+.full-width { width: 100%; }
+.row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+/* Autocomplete Options */
+.option-content { display: flex; justify-content: space-between; width: 100%; }
+.prod-code { color: #64748b; font-size: 12px; }
+
+/* Card Producto */
+.selected-product-card {
+    background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;
+    padding: 16px; display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 8px;
+}
+.card-left { display: flex; align-items: center; gap: 12px; }
+.icon-box {
+    width: 40px; height: 40px; background: #e0e7ff; color: #4338ca;
+    border-radius: 8px; display: flex; align-items: center; justify-content: center;
+}
+.prod-name { font-weight: 600; color: #1e293b; font-size: 14px; }
+.prod-sku { color: #64748b; font-size: 12px; margin-top: 2px; }
+
+.card-right { display: flex; align-items: center; gap: 16px; }
+.stock-display { text-align: right; }
+.stock-display .label { display: block; font-size: 10px; text-transform: uppercase; color: #64748b; font-weight: 700; }
+.stock-display .value { font-size: 18px; font-weight: 800; color: #0f172a; }
+
+/* Colors */
+.text-red { color: #dc2626; font-weight: 500; }
+.text-green { color: #16a34a; font-weight: 500; }
+
+.modal-actions {
+    padding: 16px 24px; border-top: 1px solid #f1f5f9;
+    display: flex; justify-content: flex-end; gap: 12px;
+    background-color: #f8fafc;
+}
+
+/* Animación */
+.animate-in { animation: fadeIn 0.3s ease-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }

@@ -1,0 +1,103 @@
+<div class="modal-header">
+    <div class="header-title">
+        <mat-icon class="header-icon">build</mat-icon>
+        <h2>Ajuste de Inventario</h2>
+    </div>
+    <button mat-icon-button (click)="cancelar()"><mat-icon>close</mat-icon></button>
+</div>
+
+<div class="modal-content">
+    
+    <form [formGroup]="ajusteForm">
+        <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Seleccionar Almacén</mat-label>
+            <mat-select formControlName="almacenId">
+                <mat-option *ngFor="let alm of almacenes" [value]="alm.id">
+                    {{ alm.nombre }}
+                </mat-option>
+            </mat-select>
+            <mat-icon matSuffix>store</mat-icon>
+        </mat-form-field>
+    </form>
+
+    <div class="search-section" *ngIf="!productoSeleccionado">
+        <mat-form-field appearance="outline" class="full-width search-field">
+            <mat-label>Buscar Producto...</mat-label>
+            <mat-icon matPrefix>search</mat-icon>
+            <input type="text" matInput [formControl]="buscadorControl" [matAutocomplete]="auto" placeholder="Nombre o Código SKU">
+            <mat-autocomplete #auto="matAutocomplete" (optionSelected)="seleccionarProducto($event.option.value)">
+                <mat-option *ngFor="let p of productosSugeridos" [value]="p" class="product-option">
+                    <div class="option-content">
+                        <span class="prod-name">{{ p.nombre }}</span>
+                        <span class="prod-code">{{ p.codigo }}</span>
+                    </div>
+                </mat-option>
+            </mat-autocomplete>
+        </mat-form-field>
+    </div>
+
+    <div class="selected-product-card animate-in" *ngIf="productoSeleccionado">
+        <div class="card-left">
+            <div class="icon-box">
+                <mat-icon>inventory_2</mat-icon>
+            </div>
+            <div class="prod-info">
+                <div class="prod-name">{{ productoSeleccionado.nombre }}</div>
+                <div class="prod-sku">SKU: {{ productoSeleccionado.codigo || '---' }}</div>
+            </div>
+        </div>
+        
+        <div class="card-right">
+            <div class="stock-display">
+                <span class="label">Stock Actual</span>
+                <span class="value">{{ stockActualEnAlmacen !== null ? stockActualEnAlmacen : '?' }}</span>
+            </div>
+            <button mat-icon-button color="warn" (click)="limpiarSeleccion()" matTooltip="Cambiar producto">
+                <mat-icon>close</mat-icon>
+            </button>
+        </div>
+    </div>
+
+    <form [formGroup]="ajusteForm" class="ajuste-form" *ngIf="productoSeleccionado">
+        
+        <div class="row-2">
+            <mat-form-field appearance="outline">
+                <mat-label>Tipo de Ajuste</mat-label>
+                <mat-select formControlName="tipoAccion">
+                    <mat-option value="SALIDA">
+                        <span class="text-red">🔻 Salida / Merma</span>
+                    </mat-option>
+                    <mat-option value="INGRESO">
+                        <span class="text-green">🔺 Ingreso / Sobrante</span>
+                    </mat-option>
+                </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+                <mat-label>Cantidad</mat-label>
+                <input matInput type="number" formControlName="cantidad" min="1" placeholder="0">
+                <span matSuffix>und.</span>
+            </mat-form-field>
+        </div>
+
+        <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Motivo (Obligatorio para Auditoría)</mat-label>
+            <textarea matInput formControlName="motivo" rows="2" placeholder="Ej: Error de conteo, producto dañado, bonificación..."></textarea>
+            <mat-icon matSuffix>edit_note</mat-icon>
+            <mat-error *ngIf="ajusteForm.get('motivo')?.hasError('required')">El motivo es requerido.</mat-error>
+            <mat-error *ngIf="ajusteForm.get('motivo')?.hasError('minlength')">Detalla un poco más el motivo.</mat-error>
+        </mat-form-field>
+
+    </form>
+</div>
+
+<div class="modal-actions">
+    <button mat-button (click)="cancelar()" [disabled]="isSaving">Cancelar</button>
+    <button mat-raised-button color="primary" 
+            [disabled]="ajusteForm.invalid || !productoSeleccionado || isSaving" 
+            (click)="guardar()">
+        <mat-spinner *ngIf="isSaving" diameter="20"></mat-spinner>
+        <span *ngIf="!isSaving">Confirmar Ajuste</span>
+        <span *ngIf="isSaving" style="margin-left: 8px;">Procesando...</span>
+    </button>
+</div>

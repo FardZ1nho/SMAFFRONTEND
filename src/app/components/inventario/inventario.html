@@ -2,10 +2,16 @@
   
   <div class="page-header">
     <div class="header-content">
-      <mat-icon class="header-icon">{{ vistaActual === 'PRODUCTO' ? 'inventory_2' : 'engineering' }}</mat-icon>
+      <mat-icon class="header-icon">
+        {{ vistaActual === 'PRODUCTO' ? 'inventory_2' : (vistaActual === 'SUMINISTRO' ? 'category' : 'engineering') }}
+      </mat-icon>
       <div>
-        <h1>{{ vistaActual === 'PRODUCTO' ? 'Inventario de Productos' : 'Gestión de Servicios' }}</h1>
-        <p class="subtitle">{{ vistaActual === 'PRODUCTO' ? 'Gestión de existencias físicas' : 'Catálogo de servicios ofrecidos' }}</p>
+        <h1>
+            {{ vistaActual === 'PRODUCTO' ? 'Inventario de Productos' : (vistaActual === 'SUMINISTRO' ? 'Gestión de Suministros' : 'Gestión de Servicios') }}
+        </h1>
+        <p class="subtitle">
+            {{ vistaActual === 'PRODUCTO' ? 'Gestión de existencias físicas' : (vistaActual === 'SUMINISTRO' ? 'Materiales y consumibles internos' : 'Catálogo de servicios ofrecidos') }}
+        </p>
       </div>
     </div>
     
@@ -51,7 +57,7 @@
         </mat-select>
       </mat-form-field>
 
-      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="filter-field" *ngIf="vistaActual === 'PRODUCTO'">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="filter-field" *ngIf="vistaActual !== 'SERVICIO'">
         <mat-label>Estado Stock</mat-label>
         <mat-select [(ngModel)]="filtroEstadoStock" (selectionChange)="aplicarFiltros()">
           <mat-option value="TODOS">Todos</mat-option>
@@ -101,11 +107,18 @@
           <th mat-header-cell *matHeaderCellDef>DESCRIPCIÓN</th>
           <td mat-cell *matCellDef="let producto">
             <div class="product-cell">
-              <div class="product-avatar-simple">
-                <mat-icon>{{ vistaActual === 'SERVICIO' ? 'engineering' : 'inventory_2' }}</mat-icon>
+              
+              <div class="product-avatar-simple" [class.is-kit]="producto.tipo === 'KIT'">
+                <mat-icon>
+                  {{ producto.tipo === 'KIT' ? 'layers' : (vistaActual === 'SERVICIO' ? 'engineering' : (vistaActual === 'SUMINISTRO' ? 'category' : 'inventory_2')) }}
+                </mat-icon>
               </div>
+
               <div class="product-info">
-                <span class="name">{{ producto.nombre }}</span>
+                <span class="name">
+                  {{ producto.nombre }}
+                  <span *ngIf="producto.tipo === 'KIT'" style="font-size: 10px; background: #e0f2fe; color: #0284c7; padding: 1px 5px; border-radius: 4px; margin-left: 5px; border: 1px solid #bae6fd;">SET</span>
+                </span>
                 <span class="desc" *ngIf="producto.descripcion">{{ producto.descripcion | slice:0:30 }}...</span>
               </div>
             </div>
@@ -119,7 +132,7 @@
           </td>
         </ng-container>
 
-       <ng-container matColumnDef="stock">
+        <ng-container matColumnDef="stock">
           <th mat-header-cell *matHeaderCellDef class="text-center">STOCK</th>
           <td mat-cell *matCellDef="let producto" class="text-center">
             <div class="stock-pill" [ngClass]="getStockClass(producto)">
@@ -155,7 +168,7 @@
                 <mat-icon>edit</mat-icon><span>Editar</span>
               </button>
 
-              <button mat-menu-item (click)="abrirModalStock(producto)" *ngIf="vistaActual === 'PRODUCTO'">
+              <button mat-menu-item (click)="abrirModalStock(producto)" *ngIf="vistaActual !== 'SERVICIO'">
                 <mat-icon style="color: #16a34a;">add_circle</mat-icon><span>Ingresar Stock</span>
               </button>
               
@@ -175,7 +188,7 @@
 
     <div *ngIf="!isLoading && productosFiltrados.data.length === 0" class="state-container">
       <mat-icon class="empty-icon">filter_alt_off</mat-icon>
-      <p>No se encontraron {{ vistaActual === 'PRODUCTO' ? 'productos' : 'servicios' }} registrados.</p>
+      <p>No se encontraron registros para la vista actual.</p>
     </div>
   </div>
 </div>

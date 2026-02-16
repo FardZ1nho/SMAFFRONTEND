@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
@@ -46,13 +46,17 @@ export class ClienteModalComponent implements OnInit {
   ];
 
   departamentos = [
-    'Lima', 'Arequipa', 'Cusco', 'La Libertad', 'Piura', 
-    'Junín', 'Lambayeque', 'Callao', 'Ica', 'Ancash'
+    'Amazonas', 'Áncash', 'Apurímac', 'Arequipa', 'Ayacucho',
+    'Cajamarca', 'Callao', 'Cusco', 'Huancavelica', 'Huánuco',
+    'Ica', 'Junín', 'La Libertad', 'Lambayeque', 'Lima',
+    'Loreto', 'Madre de Dios', 'Moquegua', 'Pasco', 'Piura',
+    'Puno', 'San Martín', 'Tacna', 'Tumbes', 'Ucayali'
   ];
 
   constructor(
     private fb: FormBuilder,
     private clienteService: ClienteService,
+    private cdr: ChangeDetectorRef, // ✅ CRUCIAL: Para evitar errores de consola
     public dialogRef: MatDialogRef<ClienteModalComponent>,
     @Inject(MAT_DIALOG_DATA) public data: any
   ) {}
@@ -65,33 +69,24 @@ export class ClienteModalComponent implements OnInit {
       this.cargarDatosCliente(this.data.cliente);
     }
 
+    // Configuración inicial
     this.configurarValidacionesDinamicas();
   }
 
   inicializarFormulario(): void {
     this.clienteForm = this.fb.group({
       tipoCliente: ['PERSONA', Validators.required],
-      
-      // Datos básicos
       nombreCompleto: ['', Validators.required],
       razonSocial: [''],
       nombreContacto: [''],
-      
-      // Documento
       tipoDocumento: ['DNI'],
       numeroDocumento: [''],
-      
-      // Contacto
       telefono: [''],
       email: ['', [Validators.email]],
-      
-      // Dirección
       direccion: [''],
       distrito: [''],
       provincia: [''],
       departamento: [''],
-      
-      // Notas
       notas: ['']
     });
   }
@@ -105,52 +100,64 @@ export class ClienteModalComponent implements OnInit {
       this.actualizarValidacionesPorDocumento(tipoDoc);
     });
 
-    // Trigger inicial
+    // Ejecutar validación inicial
     this.actualizarValidacionesPorTipo(this.clienteForm.get('tipoCliente')?.value);
   }
 
   actualizarValidacionesPorTipo(tipo: string): void {
-    const nombreCompletoControl = this.clienteForm.get('nombreCompleto');
-    const razonSocialControl = this.clienteForm.get('razonSocial');
-    const tipoDocumentoControl = this.clienteForm.get('tipoDocumento');
+    const nombreCompleto = this.clienteForm.get('nombreCompleto');
+    const razonSocial = this.clienteForm.get('razonSocial');
+    const tipoDocumento = this.clienteForm.get('tipoDocumento');
+    const numeroDocumento = this.clienteForm.get('numeroDocumento');
+
+    // Reseteamos validaciones primero para evitar conflictos
+    nombreCompleto?.clearValidators();
+    razonSocial?.clearValidators();
 
     if (tipo === 'PERSONA') {
-      nombreCompletoControl?.setValidators([Validators.required]);
-      razonSocialControl?.clearValidators();
-      tipoDocumentoControl?.setValue('DNI');
-      tipoDocumentoControl?.setValidators([Validators.required]);
-    } else if (tipo === 'EMPRESA') {
-      nombreCompletoControl?.clearValidators();
-      razonSocialControl?.setValidators([Validators.required]);
-      tipoDocumentoControl?.setValue('RUC');
-      tipoDocumentoControl?.setValidators([Validators.required]);
+      nombreCompleto?.setValidators([Validators.required]);
+      
+      // Si cambiamos a persona, volvemos a DNI si estaba en RUC
+      if (tipoDocumento?.value === 'RUC') {
+        tipoDocumento?.setValue('DNI', { emitEvent: false }); // No emitir para evitar loop
+        this.actualizarValidacionesPorDocumento('DNI'); // Llamada manual
+      }
+      
+    } else { // EMPRESA
+      razonSocial?.setValidators([Validators.required]);
+      
+      // Forzamos RUC
+      tipoDocumento?.setValue('RUC', { emitEvent: false });
+      this.actualizarValidacionesPorDocumento('RUC');
     }
 
-    nombreCompletoControl?.updateValueAndValidity({ emitEvent: false });
-    razonSocialControl?.updateValueAndValidity({ emitEvent: false });
-    tipoDocumentoControl?.updateValueAndValidity({ emitEvent: false });
+    nombreCompleto?.updateValueAndValidity();
+    razonSocial?.updateValueAndValidity();
+    
+    // ✅ ESTO SOLUCIONA LOS ERRORES ROJOS EN TU CONSOLA
+    this.cdr.detectChanges();
   }
 
-actualizarValidacionesPorDocumento(tipoDoc: string): void {
-    const numeroDocControl = this.clienteForm.get('numeroDocumento');
-    
+  actualizarValidacionesPorDocumento(tipoDoc: string): void {
+    const numeroDoc = this.clienteForm.get('numeroDocumento');
+    numeroDoc?.clearValidators();
+
     if (tipoDoc === 'DNI') {
-      numeroDocControl?.setValidators([
+      numeroDoc?.setValidators([
         Validators.required,
         Validators.pattern(/^\d{8}$/)
       ]);
     } else if (tipoDoc === 'RUC') {
-      numeroDocControl?.setValidators([
+      numeroDoc?.setValidators([
         Validators.required,
-        // ANTES: /^(10|20)\d{9}$/
-        // AHORA: Agregamos 15 y 17 a la lista de prefijos permitidos
+        // ✅ REGEX CORRECTO: Acepta 10, 15, 17 o 20 al inicio, seguido de 9 dígitos
         Validators.pattern(/^(10|15|17|20)\d{9}$/)
       ]);
     } else {
-      numeroDocControl?.setValidators([Validators.required]);
+      numeroDoc?.setValidators([Validators.required]);
     }
     
-    numeroDocControl?.updateValueAndValidity({ emitEvent: false });
+    numeroDoc?.updateValueAndValidity();
   }
 
   cargarDatosCliente(cliente: any): void {
@@ -169,6 +176,9 @@ actualizarValidacionesPorDocumento(tipoDoc: string): void {
       departamento: cliente.departamento,
       notas: cliente.notas
     });
+    
+    // Forzamos la actualización de la UI
+    this.cdr.detectChanges();
   }
 
   esPersona(): boolean {
@@ -179,21 +189,16 @@ actualizarValidacionesPorDocumento(tipoDoc: string): void {
     return this.clienteForm.get('tipoCliente')?.value === 'EMPRESA';
   }
 
-getErrorDocumento(): string {
+  getErrorDocumento(): string {
     const control = this.clienteForm.get('numeroDocumento');
     const tipoDoc = this.clienteForm.get('tipoDocumento')?.value;
 
-    if (control?.hasError('required')) {
-      return 'El número de documento es obligatorio';
-    }
+    if (control?.hasError('required')) return 'Documento obligatorio';
+    
     if (control?.hasError('pattern')) {
-      if (tipoDoc === 'DNI') {
-        return 'El DNI debe tener exactamente 8 dígitos';
-      }
-      if (tipoDoc === 'RUC') {
-        // Actualizamos el texto para reflejar los nuevos cambios
-        return 'El RUC debe tener 11 dígitos y comenzar con 10, 15, 17 o 20';
-      }
+      if (tipoDoc === 'DNI') return 'DNI inválido (8 dígitos)';
+      if (tipoDoc === 'RUC') return 'RUC inválido (11 dígitos, inicia con 10, 15, 17 o 20)';
+      return 'Formato inválido';
     }
     return '';
   }
@@ -201,22 +206,21 @@ getErrorDocumento(): string {
   guardar(): void {
     if (this.clienteForm.invalid) {
       this.clienteForm.markAllAsTouched();
-      this.errorMessage = 'Por favor, completa todos los campos obligatorios correctamente';
       return;
     }
 
     this.isLoading = true;
     this.errorMessage = '';
-
-    // 🔧 CORRECCIÓN: Limpiar campos vacíos/null antes de enviar
     const formValue = this.clienteForm.value;
+
+    // Preparar el objeto limpio (null en vez de string vacío)
     const clienteData: ClienteRequest = {
       tipoCliente: formValue.tipoCliente,
-      nombreCompleto: formValue.nombreCompleto || null,
-      razonSocial: formValue.razonSocial || null,
-      nombreContacto: formValue.nombreContacto || null,
-      tipoDocumento: formValue.tipoDocumento || null,
-      numeroDocumento: formValue.numeroDocumento || null,
+      nombreCompleto: this.esPersona() ? formValue.nombreCompleto : null,
+      razonSocial: this.esEmpresa() ? formValue.razonSocial : null,
+      nombreContacto: this.esEmpresa() ? formValue.nombreContacto : null,
+      tipoDocumento: formValue.tipoDocumento,
+      numeroDocumento: formValue.numeroDocumento,
       telefono: formValue.telefono || null,
       email: formValue.email || null,
       direccion: formValue.direccion || null,
@@ -226,32 +230,20 @@ getErrorDocumento(): string {
       notas: formValue.notas || null
     };
 
-    // Log para debugging
-    console.log('📤 Enviando cliente:', clienteData);
-
     const operacion = this.modoEdicion
       ? this.clienteService.actualizarCliente(this.data.cliente.id, clienteData)
       : this.clienteService.crearCliente(clienteData);
 
     operacion.subscribe({
       next: (response) => {
-        console.log('✅ Cliente guardado:', response);
         this.dialogRef.close(response);
       },
       error: (error) => {
-        console.error('❌ Error completo:', error);
-        console.error('❌ Error response:', error.error);
-        
-        // Mostrar mensaje de error más detallado
-        if (error.error && typeof error.error === 'string') {
-          this.errorMessage = error.error;
-        } else if (error.error?.message) {
-          this.errorMessage = error.error.message;
-        } else {
-          this.errorMessage = 'Error al guardar el cliente. Verifica los datos ingresados.';
-        }
-        
+        console.error('Error:', error);
+        // Intentar leer el mensaje del backend si existe
+        this.errorMessage = error.error?.mensaje || 'Error al guardar el cliente. Verifica el RUC (Backend).';
         this.isLoading = false;
+        this.cdr.detectChanges();
       }
     });
   }

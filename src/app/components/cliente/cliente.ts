@@ -11,6 +11,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatSelectModule } from '@angular/material/select';
 
 import { ClienteService } from '../../services/cliente-service';
 import { Cliente } from '../../models/cliente';
@@ -31,7 +32,8 @@ import { ClienteModalComponent } from './cliente-modal/cliente-modal';
     MatProgressSpinnerModule,
     MatDialogModule,
     MatSnackBarModule,
-    MatChipsModule
+    MatChipsModule,
+    MatSelectModule
   ],
   templateUrl: './cliente.html',
   styleUrls: ['./cliente.css']
@@ -43,6 +45,12 @@ export class ClientesComponent implements OnInit {
   isLoading: boolean = false;
   errorMessage: string = '';
   
+  // Variables para filtros
+  mostrarFiltros: boolean = false;
+  filtroTipo: string = '';
+  filtroDepartamento: string = '';
+  departamentosUnicos: string[] = [];
+
   displayedColumns: string[] = [
     'tipoCliente',
     'nombreCompleto',
@@ -72,19 +80,69 @@ export class ClientesComponent implements OnInit {
         console.log('✅ Clientes cargados:', data);
         this.clientes = data;
         this.clientesFiltrados.data = data;
+        
+        // Extraer departamentos para el filtro
+        this.extraerDepartamentos(data);
+        
         this.isLoading = false;
-        this.cdr.detectChanges(); // ⭐ FORZAR ACTUALIZACIÓN
+        this.cdr.detectChanges();
       },
       error: (error) => {
         console.error('❌ Error al cargar clientes:', error);
         this.errorMessage = 'Error al cargar los clientes';
         this.isLoading = false;
         this.mostrarMensaje('Error al cargar clientes', 'error');
-        this.cdr.detectChanges(); // ⭐ FORZAR ACTUALIZACIÓN
+        this.cdr.detectChanges();
       }
     });
   }
 
+  // ✅ CORRECCIÓN TS2322: Tipado estricto para extraer departamentos
+  extraerDepartamentos(data: Cliente[]): void {
+    const deptos = data
+      .map(c => c.departamento)
+      // Filtramos nulos, indefinidos y vacíos, y forzamos el tipo a string[]
+      .filter(d => d && d.trim() !== '') as string[]; 
+      
+    this.departamentosUnicos = [...new Set(deptos)].sort();
+  }
+
+  abrirFiltros(): void {
+    this.mostrarFiltros = !this.mostrarFiltros;
+  }
+
+  limpiarFiltrosAvanzados(): void {
+    this.filtroTipo = '';
+    this.filtroDepartamento = '';
+    this.buscarClientes();
+  }
+
+  buscarClientes(): void {
+    const termino = this.terminoBusqueda.toLowerCase().trim();
+
+    this.clientesFiltrados.data = this.clientes.filter(cliente => {
+      // 1. Filtro por Texto
+      const coincideTexto = !termino || 
+        cliente.nombreCompleto.toLowerCase().includes(termino) ||
+        (cliente.numeroDocumento && cliente.numeroDocumento.toLowerCase().includes(termino)) ||
+        (cliente.email && cliente.email.toLowerCase().includes(termino));
+
+      // 2. Filtro por Tipo
+      const coincideTipo = !this.filtroTipo || cliente.tipoCliente === this.filtroTipo;
+
+      // 3. Filtro por Departamento
+      const coincideDepto = !this.filtroDepartamento || cliente.departamento === this.filtroDepartamento;
+
+      return coincideTexto && coincideTipo && coincideDepto;
+    });
+  }
+
+  limpiarBusqueda(): void {
+    this.terminoBusqueda = '';
+    this.buscarClientes();
+  }
+
+  // ✅ CORRECCIÓN TS2339: Aquí está el método que faltaba
   abrirModalNuevoCliente(): void {
     const dialogRef = this.dialog.open(ClienteModalComponent, {
       width: '900px',
@@ -97,31 +155,11 @@ export class ClientesComponent implements OnInit {
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
         this.mostrarMensaje('✅ Cliente registrado exitosamente', 'success');
-        // ⭐ RECARGAR DESPUÉS DE CERRAR EL MODAL
         setTimeout(() => {
           this.cargarClientes();
         }, 300);
       }
     });
-  }
-
-  buscarClientes(): void {
-    if (!this.terminoBusqueda.trim()) {
-      this.clientesFiltrados.data = this.clientes;
-      return;
-    }
-
-    const termino = this.terminoBusqueda.toLowerCase();
-    this.clientesFiltrados.data = this.clientes.filter(cliente => 
-      cliente.nombreCompleto.toLowerCase().includes(termino) ||
-      (cliente.numeroDocumento && cliente.numeroDocumento.toLowerCase().includes(termino)) ||
-      (cliente.email && cliente.email.toLowerCase().includes(termino))
-    );
-  }
-
-  limpiarBusqueda(): void {
-    this.terminoBusqueda = '';
-    this.clientesFiltrados.data = this.clientes;
   }
 
   getTipoClienteClass(tipo: string): string {
@@ -146,7 +184,6 @@ export class ClientesComponent implements OnInit {
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
         this.mostrarMensaje('✅ Cliente actualizado exitosamente', 'success');
-        // ⭐ RECARGAR DESPUÉS DE CERRAR EL MODAL
         setTimeout(() => {
           this.cargarClientes();
         }, 300);
@@ -164,7 +201,7 @@ export class ClientesComponent implements OnInit {
     this.clienteService.eliminarCliente(cliente.id).subscribe({
       next: () => {
         this.mostrarMensaje('✅ Cliente eliminado exitosamente', 'success');
-        this.cargarClientes(); // ⭐ RECARGAR LISTA COMPLETA
+        this.cargarClientes();
       },
       error: (error) => {
         console.error('❌ Error al eliminar cliente:', error);
@@ -187,12 +224,7 @@ export class ClientesComponent implements OnInit {
     this.mostrarMensaje('Función en desarrollo', 'error');
   }
 
-  abrirFiltros(): void {
-    console.log('Abrir filtros');
-    this.mostrarMensaje('Función en desarrollo', 'error');
-  }
-
-  // ⭐⭐⭐ GETTERS CORRECTOS PARA EL REPORTE ⭐⭐⭐
+  // Getters para contadores
   get totalClientes(): number {
     return this.clientesFiltrados.data.length;
   }

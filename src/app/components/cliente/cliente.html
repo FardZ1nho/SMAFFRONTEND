@@ -39,9 +39,9 @@
     </div>
 
     <div class="secondary-actions">
-      <button mat-stroked-button class="btn-secondary" (click)="abrirFiltros()">
+      <button mat-stroked-button class="btn-secondary" [class.btn-active]="mostrarFiltros" (click)="abrirFiltros()">
         <mat-icon>filter_list</mat-icon>
-        Filtros
+        Filtros {{ (filtroTipo || filtroDepartamento) ? '(Activos)' : '' }}
       </button>
 
       <button mat-stroked-button class="btn-secondary" (click)="exportarDatos()">
@@ -51,6 +51,34 @@
     </div>
   </div>
 
+  <div class="filters-panel" *ngIf="mostrarFiltros">
+    <div class="filters-grid">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>Tipo de Cliente</mat-label>
+        <mat-select [(ngModel)]="filtroTipo" (selectionChange)="buscarClientes()">
+          <mat-option value="">Todos</mat-option>
+          <mat-option value="PERSONA">Persona Natural</mat-option>
+          <mat-option value="EMPRESA">Empresa</mat-option>
+        </mat-select>
+        <mat-icon matPrefix>category</mat-icon>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>Departamento</mat-label>
+        <mat-select [(ngModel)]="filtroDepartamento" (selectionChange)="buscarClientes()">
+          <mat-option value="">Todos</mat-option>
+          <mat-option *ngFor="let dep of departamentosUnicos" [value]="dep">
+            {{ dep }}
+          </mat-option>
+        </mat-select>
+        <mat-icon matPrefix>location_on</mat-icon>
+      </mat-form-field>
+
+      <button mat-button color="warn" *ngIf="filtroTipo || filtroDepartamento" (click)="limpiarFiltrosAvanzados()">
+        <mat-icon>clear_all</mat-icon> Limpiar filtros
+      </button>
+    </div>
+  </div>
   <div class="table-card">
     <div *ngIf="isLoading" class="state-container">
       <mat-spinner diameter="40"></mat-spinner>
@@ -66,7 +94,7 @@
     <div *ngIf="!isLoading && !errorMessage && clientesFiltrados.data.length === 0" class="state-container empty">
       <mat-icon>group_off</mat-icon>
       <h3>No se encontraron resultados</h3>
-      <p>Intenta con otro término o registra un nuevo cliente</p>
+      <p>Intenta con otro término o ajusta los filtros</p>
     </div>
 
     <div class="table-responsive" *ngIf="!isLoading && !errorMessage && clientesFiltrados.data.length > 0">

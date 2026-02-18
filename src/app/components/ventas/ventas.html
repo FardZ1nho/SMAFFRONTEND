@@ -57,6 +57,14 @@
           <div class="col-config">
             <h3 class="section-title">Datos de Emisión</h3>
             <div class="config-grid-rows">
+              
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Fecha de Venta</mat-label>
+                <input matInput [matDatepicker]="picker" [(ngModel)]="fechaVenta">
+                <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                <mat-datepicker #picker></mat-datepicker>
+              </mat-form-field>
+
               <div class="config-row">
                 <mat-form-field appearance="outline" class="field-comprobante">
                   <mat-label>Comprobante</mat-label>

@@ -69,13 +69,13 @@ export class VentasComponent implements OnInit {
   nombreCliente: string = '';
   tipoCliente: TipoCliente = TipoCliente.COMUN;
   fechaVenta: Date = new Date();
-   
+    
   // VARIABLES DE PAGO
   tipoPago: TipoPago = TipoPago.CONTADO;
-   
+    
   // LISTA DE PAGOS Y OBJETO TEMPORAL
   listaPagos: PagoRequest[] = [];
-   
+    
   pagoActual: PagoRequest = {
     metodoPago: MetodoPago.EFECTIVO,
     monto: 0,
@@ -105,7 +105,7 @@ export class VentasComponent implements OnInit {
   // --- Configuración de Moneda VENTA ---
   moneda: string = 'PEN';
   tipoCambio: number = 3.80;
-   
+    
   // --- Totales ---
   subtotal: number = 0;
   igv: number = 0;
@@ -119,7 +119,7 @@ export class VentasComponent implements OnInit {
     { value: MetodoPago.YAPE, label: 'Yape' },
     { value: MetodoPago.PLIN, label: 'Plin' }
   ];
-   
+    
   public eTipoPago = TipoPago;
 
   // --- Edición ---
@@ -255,7 +255,7 @@ export class VentasComponent implements OnInit {
     this.nombreCliente = cliente.nombreCompleto;
     this.mostrarListaClientes = false;
   }
-   
+    
   limpiarCliente(): void { this.clienteSeleccionado = null; this.busquedaCliente = ''; this.nombreCliente = ''; }
   buscarClientes(): void { 
     if (!this.busquedaCliente.trim()) { this.clientesFiltrados = []; this.mostrarListaClientes = false; return; }
@@ -336,7 +336,7 @@ export class VentasComponent implements OnInit {
     if (item.descuento > 0) subtotal -= (subtotal * (item.descuento / 100));
     item.subtotal = Number(subtotal.toFixed(2));
   }
-   
+    
   onCantidadChange(item: ProductoEnVenta) { 
       // ✅ CORRECCIÓN: Si es servicio, no limitar cantidad
       const esServicio = item.producto.tipo === 'SERVICIO';
@@ -426,7 +426,7 @@ export class VentasComponent implements OnInit {
     this.total = Number(this.productosEnVenta.reduce((sum, p) => sum + p.subtotal, 0).toFixed(2));
     this.subtotal = Number((this.total / 1.18).toFixed(2));
     this.igv = Number((this.total - this.subtotal).toFixed(2));
-     
+      
     this.totalPagadoAcumulado = this.calcularTotalPagadoAcumulado();
 
     if (this.tipoPago === TipoPago.CREDITO) {
@@ -483,7 +483,7 @@ export class VentasComponent implements OnInit {
       this.mostrarNotificacion('Seleccione un cliente y productos para continuar', 'warning');
       return;
     }
-     
+      
     if (this.listaPagos.length === 0 && this.pagoActual.monto > 0) {
         if (this.esPagoDigital(this.pagoActual.metodoPago) && !this.pagoActual.cuentaBancariaId) {
             this.mostrarNotificacion('Seleccione la cuenta de destino para el pago', 'warning');

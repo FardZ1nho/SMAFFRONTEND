@@ -92,6 +92,11 @@
             <button class="btn-icon view" (click)="verDetalle(item.id)" title="Ver Detalle">
               <mat-icon>visibility</mat-icon>
             </button>
+            
+            <button class="btn-icon edit" (click)="editarCompra(item.id)" title="Editar" style="color: #f59e0b;">
+                <mat-icon>edit</mat-icon>
+            </button>
+
             <button class="btn-icon delete" (click)="anularCompra(item.id)" title="Anular">
               <mat-icon>delete</mat-icon>
             </button>

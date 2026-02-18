@@ -1,7 +1,7 @@
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 // MATERIAL
 import { MatIconModule } from '@angular/material/icon';
@@ -42,6 +42,9 @@ export class CompraFormComponent implements OnInit {
 
   public eTipoPago = TipoPago;
   public eMetodoPago = MetodoPago;
+  
+  public modoEdicion: boolean = false;
+  public idCompraEditar: number | null = null;
 
   comprobantesBien = [
     { valor: 'FACTURA_ELECTRONICA', texto: 'FACTURA ELECTRÓNICA' },
@@ -61,10 +64,8 @@ export class CompraFormComponent implements OnInit {
   ];
 
   listaComprobantes = this.comprobantesBien;
-
   tipoPago: TipoPago = TipoPago.CONTADO;
   
-  // Moneda por defecto: USD
   pagoActual: PagoCompraRequest = {
     metodoPago: MetodoPago.TRANSFERENCIA,
     monto: 0,
@@ -82,30 +83,22 @@ export class CompraFormComponent implements OnInit {
 
   compra: CompraRequest = {
     tipoCompra: 'BIEN',
-    
-    // Por defecto Factura Comercial (para importaciones)
     tipoComprobante: 'FACTURA_COMERCIAL' as any, 
-    
     tipoPago: TipoPago.CONTADO,
     serie: '',
     numero: '',
-    
-    // ✅ DATOS LOGÍSTICOS
     codImportacion: '', 
     pesoNetoKg: 0,
-    cbm: 0, // ✅ REEMPLAZO DE BULTOS POR CBM
-
-    fechaEmision: new Date().toISOString().split('T')[0] as any, // Inicializar como string YYYY-MM-DD
+    cbm: 0,
+    fechaEmision: new Date().toISOString().split('T')[0] as any,
     proveedorId: 0,
     moneda: 'USD', 
     tipoCambio: 3.75,
     observaciones: '',
-    
     subTotal: 0,
     fob: 0,
     igv: 0,
     total: 0,
-    
     percepcion: 0,
     detraccionPorcentaje: 0,
     detraccionMonto: 0,
@@ -129,27 +122,122 @@ export class CompraFormComponent implements OnInit {
     private almacenService: AlmacenService,
     private cuentaService: CuentaBancariaService,
     private router: Router,
+    private route: ActivatedRoute,
     private dialog: MatDialog,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef // ✅ CRUCIAL
   ) { }
 
   ngOnInit(): void {
+    // 1. Cargar catálogos primero
     this.cargarProveedores();
     this.cargarAlmacenes();
     this.cargarCuentas();
     this.pagoActual.moneda = this.compra.moneda;
+
+    // 2. Verificar si es edición
+    const id = this.route.snapshot.paramMap.get('id');
+    if (id) {
+      this.modoEdicion = true;
+      this.idCompraEditar = Number(id);
+      this.cargarDatosEdicion(this.idCompraEditar);
+    }
+  }
+
+  cargarDatosEdicion(id: number) {
+    this.compraService.obtenerPorId(id).subscribe({
+      next: (data) => {
+        // Mapeo completo
+        this.compra = {
+          ...this.compra,
+          tipoCompra: data.tipoCompra as any,
+          tipoComprobante: data.tipoComprobante as any,
+          tipoPago: data.tipoPago as any,
+          serie: data.serie,
+          numero: data.numero,
+          fechaEmision: data.fechaEmision.split('T')[0] as any,
+          proveedorId: 0, // Se intentará asignar abajo
+          moneda: data.moneda as 'PEN' | 'USD', 
+          tipoCambio: data.tipoCambio,
+          observaciones: data.observaciones || '',
+          subTotal: data.subTotal,
+          fob: data.fob,
+          igv: data.igv,
+          total: data.total,
+          percepcion: data.percepcion,
+          detraccionPorcentaje: data.detraccionPorcentaje || 0,
+          detraccionMonto: data.detraccionMonto || 0,
+          retencion: data.retencion,
+          codImportacion: data.codImportacion || '',
+          pesoNetoKg: data.pesoNetoKg || 0,
+          cbm: data.cbm || 0
+        };
+
+        // Lógica segura para asignar Proveedor
+        if ((data as any).proveedorId) {
+             this.compra.proveedorId = (data as any).proveedorId;
+        } else if (this.proveedores.length > 0) {
+            // Si ya cargaron los proveedores, buscamos por RUC
+            const provEncontrado = this.proveedores.find(p => p.ruc === data.rucProveedor);
+            if(provEncontrado) this.compra.proveedorId = provEncontrado.id!;
+        } else {
+            // Si no han cargado, guardamos el RUC temporalmente (opcional) o confiamos en que cargarProveedores lo resolverá si lo implementamos bidireccional,
+            // pero lo más seguro es confiar en que el backend envíe proveedorId.
+            // Si no, forzamos un re-intento simple:
+             setTimeout(() => {
+                 const p = this.proveedores.find(prov => prov.ruc === data.rucProveedor);
+                 if(p) {
+                    this.compra.proveedorId = p.id!;
+                    this.cdr.detectChanges();
+                 }
+             }, 500);
+        }
+
+        this.tipoPago = this.compra.tipoPago;
+
+        if (data.detalles) {
+          this.itemsAgregados = data.detalles.map(d => ({
+            productoId: d.productoId,
+            nombre: d.nombreProducto,
+            codigo: d.codigoProducto,
+            cantidad: d.cantidad,
+            precioUnitario: d.precioUnitario,
+            almacenId: this.almacenes.find(a => a.nombre === d.nombreAlmacen)?.id
+          }));
+        }
+
+        // ✅ IMPORTANTÍSIMO: Actualizar la lista de comprobantes según el tipo
+        this.cambiarTipoCompra(this.compra.tipoCompra as any);
+        this.recalcularTotales();
+
+        // ✅ EL TRUCO: Forzar detección de cambios para que pinte el formulario
+        this.cdr.detectChanges();
+      },
+      error: (e) => {
+        alert("Error al cargar la compra: " + e.message);
+        this.router.navigate(['/compras']);
+      }
+    });
   }
 
   cargarProveedores() {
-    this.proveedorService.listarActivos().subscribe(data => this.proveedores = data);
+    this.proveedorService.listarActivos().subscribe(data => {
+      this.proveedores = data;
+      this.cdr.detectChanges(); // ✅ Forzar actualización por si carga después del form
+    });
   }
 
   cargarAlmacenes() {
-    this.almacenService.listarAlmacenesActivos().subscribe(data => this.almacenes = data);
+    this.almacenService.listarAlmacenesActivos().subscribe(data => {
+        this.almacenes = data;
+        this.cdr.detectChanges();
+    });
   }
 
   cargarCuentas() {
-    this.cuentaService.listarActivas().subscribe(data => this.cuentasBancarias = data);
+    this.cuentaService.listarActivas().subscribe(data => {
+        this.cuentasBancarias = data;
+        this.cdr.detectChanges();
+    });
   }
 
   cambiarTipoCompra(tipo: 'BIEN' | 'SERVICIO') {
@@ -157,7 +245,8 @@ export class CompraFormComponent implements OnInit {
 
     if (tipo === 'BIEN') {
       this.listaComprobantes = this.comprobantesBien;
-      this.compra.tipoComprobante = 'FACTURA_COMERCIAL' as any; 
+      // ✅ Si es edición, NO sobrescribir el comprobante que viene de BD
+      if (!this.modoEdicion) this.compra.tipoComprobante = 'FACTURA_COMERCIAL' as any; 
       
       this.compra.detraccionPorcentaje = 0;
       this.compra.detraccionMonto = 0;
@@ -168,7 +257,8 @@ export class CompraFormComponent implements OnInit {
       }
     } else {
       this.listaComprobantes = this.comprobantesServicio;
-      this.compra.tipoComprobante = 'RECIBO_HONORARIOS' as any;
+      // ✅ Si es edición, NO sobrescribir el comprobante
+      if (!this.modoEdicion) this.compra.tipoComprobante = 'RECIBO_HONORARIOS' as any;
       this.compra.percepcion = 0;
       this.itemsAgregados.forEach(i => i.almacenId = null);
     }
@@ -177,10 +267,9 @@ export class CompraFormComponent implements OnInit {
 
   onTipoComprobanteChange() {
     if (this.compra.tipoComprobante !== 'FACTURA_COMERCIAL') {
-      // Limpiar datos de importación si no es comercial
       this.compra.codImportacion = '';
       this.compra.pesoNetoKg = 0;
-      this.compra.cbm = 0; // ✅ Limpiar CBM
+      this.compra.cbm = 0;
       this.compra.fob = 0; 
       this.recalcularTotales();
     }
@@ -267,21 +356,14 @@ export class CompraFormComponent implements OnInit {
     this.recalcularTotales();
   }
 
-  // ✅ LOGICA SIN IGV
   recalcularTotales() {
     const sumaItems = this.itemsAgregados.reduce((acc, item) => acc + (item.cantidad * item.precioUnitario), 0);
     this.compra.subTotal = sumaItems;
-    
-    // ✅ SIN IGV
     this.compra.igv = 0; 
 
-    // 2. Sumamos FOB Adicional
     const fobAdicional = Number(this.compra.fob) || 0;
-
-    // 3. Calculamos Total Documento (Subtotal + FOB)
     let totalDoc = this.compra.subTotal + fobAdicional;
 
-    // Sumar Percepción si aplica
     if (this.compra.tipoCompra === 'BIEN' && this.compra.percepcion) {
       totalDoc += Number(this.compra.percepcion);
     }
@@ -294,12 +376,13 @@ export class CompraFormComponent implements OnInit {
       this.compra.detraccionMonto = 0;
     }
 
-    // Actualizar monto de pago sugerido
-    if (this.tipoPago === TipoPago.CONTADO) {
-      this.pagoActual.monto = Number(this.compra.total.toFixed(2));
-    } else {
-      if (this.pagoActual.monto > this.compra.total) {
-        this.pagoActual.monto = 0; 
+    if (!this.modoEdicion) {
+      if (this.tipoPago === TipoPago.CONTADO) {
+        this.pagoActual.monto = Number(this.compra.total.toFixed(2));
+      } else {
+        if (this.pagoActual.monto > this.compra.total) {
+          this.pagoActual.monto = 0; 
+        }
       }
     }
   }
@@ -313,7 +396,7 @@ export class CompraFormComponent implements OnInit {
       return alert("⚠️ Todos los bienes deben tener almacén destino.");
     }
 
-    if (this.esPagoBancarizado() && !this.pagoActual.cuentaOrigenId) {
+    if (!this.modoEdicion && this.esPagoBancarizado() && !this.pagoActual.cuentaOrigenId) {
       return alert("⚠️ Para transferencias o Yape, debe seleccionar la Cuenta de Origen.");
     }
 
@@ -328,18 +411,15 @@ export class CompraFormComponent implements OnInit {
           return;
         }
       }
-      if ((!this.compra.pesoNetoKg || this.compra.pesoNetoKg <= 0) && this.compra.codImportacion) {
-         if(!confirm("⚠️ Estás registrando una importación SIN PESO (0 Kg).\n\nEsto hará que el prorrateo de flete sea CERO para esta factura. ¿Deseas continuar?")) {
-           return;
-         }
-      }
     }
 
     this.compra.pagos = [];
-    if (this.pagoActual.monto > 0) {
-      this.compra.pagos.push({ ...this.pagoActual });
-    } else if (this.tipoPago === TipoPago.CONTADO) {
-      return alert("⚠️ Una compra al CONTADO debe tener un monto de pago.");
+    if (!this.modoEdicion) {
+        if (this.pagoActual.monto > 0) {
+           this.compra.pagos.push({ ...this.pagoActual });
+        } else if (this.tipoPago === TipoPago.CONTADO) {
+           return alert("⚠️ Una compra al CONTADO debe tener un monto de pago.");
+        }
     }
 
     this.compra.detalles = this.itemsAgregados.map(item => ({
@@ -351,17 +431,31 @@ export class CompraFormComponent implements OnInit {
 
     console.log('🚀 ENVIANDO AL BACKEND:', this.compra); 
     
-    this.compraService.registrarCompra(this.compra).subscribe({
-      next: () => {
-        alert("✅ Compra registrada correctamente.");
-        this.router.navigate(['/compras']);
-      },
-      error: (err) => {
-        console.error(err);
-        const msg = err.error?.message || err.message || 'Error desconocido';
-        alert("❌ Error: " + msg);
-      }
-    });
+    if (this.modoEdicion && this.idCompraEditar) {
+      this.compraService.actualizarCompra(this.idCompraEditar, this.compra).subscribe({
+        next: () => {
+          alert("✅ Compra actualizada correctamente.");
+          this.router.navigate(['/compras']);
+        },
+        error: (err) => {
+          console.error(err);
+          const msg = err.error?.message || err.message || 'Error desconocido';
+          alert("❌ Error al actualizar: " + msg);
+        }
+      });
+    } else {
+      this.compraService.registrarCompra(this.compra).subscribe({
+        next: () => {
+          alert("✅ Compra registrada correctamente.");
+          this.router.navigate(['/compras']);
+        },
+        error: (err) => {
+          console.error(err);
+          const msg = err.error?.message || err.message || 'Error desconocido';
+          alert("❌ Error: " + msg);
+        }
+      });
+    }
   }
 
   getSimboloMoneda(): string { 

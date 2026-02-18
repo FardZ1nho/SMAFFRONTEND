@@ -9,16 +9,23 @@ import { environment } from '../../environments/environment';
 })
 export class CompraService {
 
-  // Asegúrate de que apunte a tu backend
   private apiUrl = `${environment.base}/compras`;
 
   constructor(private http: HttpClient) { }
 
   /**
-   * Registra una nueva compra (Factura, Boleta o Recibo)
+   * Registra una nueva compra
    */
   registrarCompra(compra: CompraRequest): Observable<CompraResponse> {
     return this.http.post<CompraResponse>(this.apiUrl, compra);
+  }
+
+  /**
+   * ✅ Actualiza una compra existente
+   * IMPORTANTE: El backend revertirá el stock anterior y aplicará el nuevo
+   */
+  actualizarCompra(id: number, compra: CompraRequest): Observable<CompraResponse> {
+    return this.http.put<CompraResponse>(`${this.apiUrl}/${id}`, compra);
   }
 
   /**
@@ -32,7 +39,6 @@ export class CompraService {
     if (cuentaId) params = params.set('cuentaId', cuentaId.toString());
     if (referencia) params = params.set('referencia', referencia);
 
-    // POST a /compras/{id}/pagos
     return this.http.post<CompraResponse>(`${this.apiUrl}/${compraId}/pagos`, null, { params });
   }
 
@@ -66,16 +72,14 @@ export class CompraService {
   }
 
   /**
-   * ✅ Listar facturas vinculadas a un Código de Importación (Texto)
-   * Útil para ver qué facturas dicen "2026-01" antes de crear la carpeta
+   * Listar facturas vinculadas a un Código de Importación
    */
   listarPorImportacion(codImportacion: string): Observable<CompraResponse[]> {
     return this.http.get<CompraResponse[]>(`${this.apiUrl}/importacion/${codImportacion}`);
   }
 
   /**
-   * ✅ Eliminar/Anular compra
-   * IMPORTANTE: Al llamar a esto, el Backend recalculará los costos de la importación
+   * Eliminar/Anular compra
    */
   anular(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);

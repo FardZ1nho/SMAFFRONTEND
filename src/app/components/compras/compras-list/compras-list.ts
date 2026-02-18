@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core'; // ✅ Importar ChangeDetectorRef
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -29,7 +29,7 @@ export class ComprasListComponent implements OnInit {
   constructor(
     private compraService: CompraService,
     private router: Router,
-    private cdr: ChangeDetectorRef // ✅ Inyección para forzar actualización de vista
+    private cdr: ChangeDetectorRef 
   ) {}
 
   ngOnInit(): void {
@@ -38,21 +38,19 @@ export class ComprasListComponent implements OnInit {
 
   cargarCompras() {
     this.cargando = true;
-    console.log('🔄 Iniciando carga de compras...'); // DEBUG
+    console.log('🔄 Iniciando carga de compras...'); 
 
     this.compraService.listarTodas().subscribe({
       next: (data) => {
-        console.log('✅ DATOS RECIBIDOS DEL BACKEND:', data); // DEBUG IMPORTANTE
+        console.log('✅ DATOS RECIBIDOS DEL BACKEND:', data); 
 
-        // Si data es null o vacío, avisa
         if (!data || data.length === 0) {
             console.warn('⚠️ El backend devolvió una lista vacía.');
         }
 
-        // Filtro de seguridad
+        // Filtro de seguridad para datos nulos
         const dataLimpia = data.filter(item => item && item.id !== null);
-        console.log('🧹 Datos limpios (sin nulos):', dataLimpia); // DEBUG
-
+        
         this.compras = dataLimpia.sort((a, b) => b.id - a.id);
         this.filtrar();
         this.cargando = false;
@@ -86,9 +84,6 @@ export class ComprasListComponent implements OnInit {
     this.filtrar();
   }
 
-  /**
-   * ✅ BLINDAJE CONTRA EL ERROR "replace of null"
-   */
   formatearTipo(tipo: string | null | undefined): string {
     if (!tipo) return 'ND'; 
     return tipo.replace(/_/g, ' ');
@@ -97,6 +92,13 @@ export class ComprasListComponent implements OnInit {
   verDetalle(id: number | null | undefined) {
     if (!id) return;
     this.router.navigate(['/compras/detalle', id]);
+  }
+
+  // ✅ ESTA ES LA FUNCIÓN QUE TE FALTABA
+  editarCompra(id: number | null | undefined) {
+    if (!id) return;
+    // Navega a la ruta de edición pasando el ID
+    this.router.navigate(['/compras/editar', id]); 
   }
 
   nuevaCompra() {

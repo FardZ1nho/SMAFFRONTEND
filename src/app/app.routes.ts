@@ -1,22 +1,34 @@
 import { Routes } from '@angular/router';
+
+// COMPONENTES PRINCIPALES
 import { Autenticador } from './components/autenticador/autenticador';
 import { InicioComponent } from './components/inicio/inicio';
 import { InventarioComponent } from './components/inventario/inventario';
+
+// GUARDS
 import { seguridadGuard } from './guard/seguridad-guard';
+
+// VENTAS
 import { VentasListaComponent } from './components/ventas/ventas-listar/ventas-lista';
+import { NotasCreditoListaComponent } from './components/ventas/notas-credito-lista/notas-credito-lista';
+
+// ALMACENES Y MOVIMIENTOS
 import { AlmacenesListComponent } from './components/almacenes/almacenes-list/almacenes-list';
 import { AlmacenForm } from './components/almacenes/almacen-form/almacen-form';
 import { MovimientosListComponent } from './components/movimientos/movimientos-list/movimientos-list';
 import { TrasladoFormComponent } from './components/movimientos/traslado-form/traslado-form';
-import { NotasCreditoListaComponent } from './components/ventas/notas-credito-lista/notas-credito-lista';
-import { ProveedorComponent } from './components/proveedor/proveedor';
-import { CompraDetalleComponent } from './components/compras/compra-detalle/compra-detalle';
+
+// COMPRAS (Aquí agregamos el import que faltaba)
+import { CompraFormComponent } from './components/compras/compra-form/compra-form'; // ✅ IMPORTANTE
+
+// CONFIGURACION Y OTROS
 import { CuentasListaComponent } from './components/configuracion/cuentas-lista/cuentas-lista';
 import { ImportacionesListComponent } from './components/importaciones/importaciones-list/importaciones-list';
 import { CotizacionListComponent } from './components/cotizaciones/cotizacion-list/cotizacion-list';
 import { CotizacionFormComponent } from './components/cotizaciones/cotizacion-form/cotizacion-form';
 
 export const routes: Routes = [
+  // ========== RUTAS BASE ==========
   {
     path: '',
     redirectTo: 'login',
@@ -31,12 +43,18 @@ export const routes: Routes = [
     component: InicioComponent,
     canActivate: [seguridadGuard]
   },
+
+  // ========== INVENTARIO ==========
   {
     path: 'inventario',
     component: InventarioComponent,
     canActivate: [seguridadGuard]
   },
-  // --- AQUI AGREGAMOS PROVEEDORES ---
+  { path: 'inventario/productos', component: InventarioComponent },
+  { path: 'inventario/servicios', component: InventarioComponent },
+  { path: 'inventario/suministros', component: InventarioComponent },
+
+  // ========== PROVEEDORES (Lazy Loading) ==========
   {
     path: 'proveedores',
     loadComponent: () => import('./components/proveedor/proveedor').then(m => m.ProveedorComponent)
@@ -49,35 +67,26 @@ export const routes: Routes = [
     path: 'proveedores/editar/:id',
     loadComponent: () => import('./components/proveedor/proveedor-form/proveedor-form').then(m => m.ProveedorFormComponent)
   },
-  // ----------------------------------
+
+  // ========== COMPRAS ==========
   {
     path: 'compras',
-    children: [
-      {
-        path: '', // Ruta: /compras (Muestra la lista)
-        loadComponent: () => import('./components/compras/compras-list/compras-list').then(m => m.ComprasListComponent),
-        // canActivate: [seguridadGuard] // Descomenta si usas guard
-      },
-      {
-        path: 'nueva', // Ruta: /compras/nueva (Muestra el formulario)
-        loadComponent: () => import('./components/compras/compra-form/compra-form').then(m => m.CompraFormComponent),
-        // canActivate: [seguridadGuard]
-      }
-    ]
+    loadComponent: () => import('./components/compras/compras-list/compras-list').then(m => m.ComprasListComponent)
   },
-  { path: 'configuracion/cuentas', component: CuentasListaComponent },
-
+  {
+    path: 'compras/nueva',
+    loadComponent: () => import('./components/compras/compra-form/compra-form').then(m => m.CompraFormComponent)
+  },
   { 
-        path: 'importaciones', 
-        component: ImportacionesListComponent,
-        title: 'Gestión de Importaciones' 
-    },
-
-  // En tus rutas:
+    path: 'compras/editar/:id', // ✅ AHORA SÍ FUNCIONA PORQUE YA ESTÁ IMPORTADO ARRIBA
+    component: CompraFormComponent 
+  },
   {
     path: 'compras/detalle/:id',
     loadComponent: () => import('./components/compras/compra-detalle/compra-detalle').then(m => m.CompraDetalleComponent)
   },
+
+  // ========== VENTAS ==========
   {
     path: 'ventas',
     loadComponent: () => import('./components/ventas/ventas').then(m => m.VentasComponent),
@@ -88,23 +97,32 @@ export const routes: Routes = [
     component: VentasListaComponent,
     canActivate: [seguridadGuard]
   },
-{ path: 'cotizaciones', component: CotizacionListComponent },
-{ path: 'cotizaciones/nuevo', component: CotizacionFormComponent },
-
-{ 
-  path: 'importaciones/prorrateo/:id', 
-  loadComponent: () => import('./components/importaciones/importacion-prorrateo/importacion-prorrateo').then(m => m.ImportacionProrrateoComponent)
-},
+  { 
+    path: 'ventas/notas-credito', 
+    component: NotasCreditoListaComponent 
+  },
   {
-    path: 'caja-chica',
-    loadComponent: () => import('./components/caja-chica/caja-chica').then(m => m.CajaChicaComponent),
+    path: 'ventas/:id', // Ruta dinámica va al final de las rutas de ventas
+    loadComponent: () => import('./components/ventas/ventas').then(m => m.VentasComponent),
     canActivate: [seguridadGuard]
   },
 
-  // ✅ MODIFICA LA SECCIÓN DE INVENTARIO ASÍ:
-  { path: 'inventario/productos', component: InventarioComponent },
-  { path: 'inventario/servicios', component: InventarioComponent },
-  { path: 'inventario/suministros', component: InventarioComponent },
+  // ========== COTIZACIONES ==========
+  { path: 'cotizaciones', component: CotizacionListComponent },
+  { path: 'cotizaciones/nuevo', component: CotizacionFormComponent },
+
+  // ========== IMPORTACIONES ==========
+  { 
+    path: 'importaciones', 
+    component: ImportacionesListComponent,
+    title: 'Gestión de Importaciones' 
+  },
+  { 
+    path: 'importaciones/prorrateo/:id', 
+    loadComponent: () => import('./components/importaciones/importacion-prorrateo/importacion-prorrateo').then(m => m.ImportacionProrrateoComponent)
+  },
+
+  // ========== CLIENTES ==========
   {
     path: 'clientes',
     loadComponent: () => import('./components/cliente/cliente').then(m => m.ClientesComponent),
@@ -140,15 +158,17 @@ export const routes: Routes = [
     canActivate: [seguridadGuard]
   },
 
-  { path: 'ventas/notas-credito', component: NotasCreditoListaComponent },
-
+  // ========== CAJA CHICA ==========
   {
-    path: 'ventas/:id',
-    loadComponent: () => import('./components/ventas/ventas').then(m => m.VentasComponent),
+    path: 'caja-chica',
+    loadComponent: () => import('./components/caja-chica/caja-chica').then(m => m.CajaChicaComponent),
     canActivate: [seguridadGuard]
   },
 
-  // Ruta por defecto
+  // ========== CONFIGURACIÓN ==========
+  { path: 'configuracion/cuentas', component: CuentasListaComponent },
+
+  // ========== RUTA COMODÍN (404) ==========
   {
     path: '**',
     redirectTo: 'login'

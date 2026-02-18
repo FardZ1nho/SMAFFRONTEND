@@ -5,8 +5,8 @@
       <mat-icon>arrow_back</mat-icon>
     </button>
     <div class="header-content">
-      <h1>Nueva Compra</h1>
-      <h3>Registre el ingreso de mercadería o servicios</h3>
+      <h1>{{ modoEdicion ? 'Editar Compra' : 'Nueva Compra' }}</h1>
+      <h3>{{ modoEdicion ? 'Modifique los datos de la compra' : 'Registre el ingreso de mercadería o servicios' }}</h3>
     </div>
   </div>
 
@@ -275,14 +275,13 @@
 
             <div class="grid-input">
               <label class="section-title">
-                {{ tipoPago === eTipoPago.CONTADO ? 'Monto Total' : 'Pago Inicial (Adelanto)' }}
+                {{ modoEdicion ? 'Monto Pagado (Inicial)' : (tipoPago === eTipoPago.CONTADO ? 'Monto Total' : 'Pago Inicial (Adelanto)') }}
               </label>
               <div class="input-group-sm">
                 <span class="currency-symbol">{{ getSimboloMoneda() }}</span>
                 <input type="number" class="form-control-smaf full-width currency-input fw-bold" 
                        [(ngModel)]="pagoActual.monto" 
-                       [readonly]="tipoPago === eTipoPago.CONTADO">
-              </div>
+                       [readonly]="tipoPago === eTipoPago.CONTADO || modoEdicion"> </div>
             </div>
 
             <div class="grid-input" *ngIf="tipoPago === eTipoPago.CREDITO">
@@ -293,7 +292,7 @@
             </div>
           </div>
 
-          <div class="config-row custom-grid-2" *ngIf="esPagoBancarizado()">
+          <div class="config-row custom-grid-2" *ngIf="!modoEdicion && esPagoBancarizado()">
             <div class="grid-input">
               <label class="section-title">Cuenta Origen (Salida de Dinero)</label>
               <select class="form-control-smaf full-width" [(ngModel)]="pagoActual.cuentaOrigenId">
@@ -317,7 +316,7 @@
   <div class="form-actions mt-4">
     <button class="btn-borrador" (click)="cancelar()">Cancelar</button>
     <button class="btn-completar" (click)="guardarCompra()">
-      <mat-icon>save</mat-icon> Guardar Compra
+      <mat-icon>save</mat-icon> {{ modoEdicion ? 'Actualizar Compra' : 'Guardar Compra' }}
     </button>
   </div>
 

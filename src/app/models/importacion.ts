@@ -157,9 +157,11 @@ export enum TipoTransporte {
 }
 
 // =========================================================
-// 🚀 AQUÍ ESTÁ EL CAMBIO IMPORTANTE PARA EL ÍTEM DETALLADO
+// 🚀 ÍTEM DETALLADO DE IMPORTACIÓN
 // =========================================================
 export interface DetalleItemImportacion {
+    id?: number; // ✅ SOLUCIÓN ERROR 1 Y 2: Añadido el ID del ítem
+
     nombreProducto: string;
     cantidad: number;
     precioUnitarioFob: number; 
@@ -167,7 +169,7 @@ export interface DetalleItemImportacion {
     
     factorParticipacion?: number; 
     
-    // --- GRUPO VOLUMEN (Desglosado) ---
+    // --- GRUPO VOLUMEN ---
     itemFlete?: number;
     itemAlmacenaje?: number;
     itemTransporte?: number;
@@ -177,7 +179,7 @@ export interface DetalleItemImportacion {
     // --- GRUPO PESO ---
     itemDesconsolidacion?: number;
 
-    // --- GRUPO VALOR / ADUANA (Desglosado) ---
+    // --- GRUPO VALOR / ADUANA ---
     itemVistosBuenos?: number;
     itemTransmision?: number;
     itemAgente?: number;
@@ -197,6 +199,10 @@ export interface DetalleItemImportacion {
 
     costoUnitarioLanded: number; 
     costoTotalLanded: number;
+
+    // Variables Front-End
+    adValoremUnitarioManual?: number;
+    _advTotalOriginal?: number;
 }
 
 // =========================================================
@@ -212,7 +218,6 @@ export interface FacturaResumen {
     pesoNetoKg: number;
     cbm: number;
 
-    // Prorrateo Nivel 1 (Factura)
     proFlete?: number;
     proAlmacenaje?: number;
     proTransporte?: number;
@@ -239,8 +244,6 @@ export interface FacturaResumen {
     proOtros4?: number;
 
     costoTotalImportacion: number;
-
-    // Lista de items con el desglose detallado
     items?: DetalleItemImportacion[];
 }
 
@@ -287,6 +290,7 @@ export interface ImportacionResponse {
 }
 
 export interface ImportacionRequest {
+  codigoAgrupador?: string; // ✅ SOLUCIÓN ERROR 3: Añadido
   estado?: EstadoImportacion | string; 
   tipoTransporte?: TipoTransporte | string;
   fechaEstimadaLlegada?: Date;
@@ -313,7 +317,8 @@ export interface ImportacionRequest {
   costoIpm?: number;
   costoPercepcion?: number;
   
-  adValoremPorFactura?: { [key: number]: number };
+  // ✅ SOLUCIÓN AL MAPA DE AD VALOREM: Actualizado el nombre a como lo espera la lógica nueva
+  adValoremPorItem?: { [key: number]: number };
 
   costoOtros1?: number;
   costoOtros2?: number;

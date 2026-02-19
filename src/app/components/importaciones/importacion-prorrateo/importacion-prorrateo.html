@@ -22,6 +22,11 @@
         <label>Total Landed</label>
         <div class="value">$ {{ calcularTotalLandedGlobal() | number:'1.2-2' }}</div>
       </div>
+      
+      <button mat-flat-button color="primary" class="me-2" (click)="guardarCambiosManuales()">
+        <mat-icon>save</mat-icon> Guardar AdValorem
+      </button>
+
       <button mat-stroked-button (click)="imprimir()">
         <mat-icon>print</mat-icon> Imprimir
       </button>
@@ -110,7 +115,7 @@
 
   <div class="section-divider">
     <h2 class="section-title">Desglose Detallado por Producto</h2>
-    <p class="section-subtitle">Costo unitario real calculado según participación FOB.</p>
+    <p class="section-subtitle">Costo unitario real calculado según participación FOB. El Ad Valorem es editable manualmente.</p>
   </div>
 
   <div class="invoices-list">
@@ -156,7 +161,7 @@
               <th class="col-val text-right">Gastos U.</th>
               <th class="col-val text-right">Resg. U.</th>
 
-              <th class="col-tax text-right">AdVal U.</th>
+              <th class="col-tax text-right" title="Ingreso Manual de Ad Valorem">AdVal U. ✏️</th>
               <th class="col-tax text-right">IGV U.</th>
               <th class="col-tax text-right">IPM U.</th>
               <th class="col-tax text-right">Percep U.</th>
@@ -192,7 +197,14 @@
               <td class="text-right col-val text-xs">{{ ((item.itemGastosOp||0)/item.cantidad) | number:'1.2-2' }}</td>
               <td class="text-right col-val text-xs">{{ ((item.itemResguardo||0)/item.cantidad) | number:'1.2-2' }}</td>
 
-              <td class="text-right col-tax text-xs font-bold">{{ ((item.itemAdv||0)/item.cantidad) | number:'1.2-2' }}</td>
+              <td class="text-right col-tax">
+                <input type="number" 
+                       class="manual-input" 
+                       [(ngModel)]="item.adValoremUnitarioManual" 
+                       (ngModelChange)="recalcularLanded(item, fact)"
+                       min="0" step="0.01" placeholder="0.00">
+              </td>
+
               <td class="text-right col-tax text-xs">{{ ((item.itemIgv||0)/item.cantidad) | number:'1.2-2' }}</td>
               <td class="text-right col-tax text-xs">{{ ((item.itemIpm||0)/item.cantidad) | number:'1.2-2' }}</td>
               <td class="text-right col-tax text-xs">{{ ((item.itemPercepcion||0)/item.cantidad) | number:'1.2-2' }}</td>

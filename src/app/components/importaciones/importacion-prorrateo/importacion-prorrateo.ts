@@ -1,6 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms'; // ✅ IMPORTANTE: Agregado para usar ngModel
+import { FormsModule } from '@angular/forms'; // ✅ Necesario para ngModel
 import { ActivatedRoute, Router } from '@angular/router';
 
 // MATERIAL
@@ -10,23 +10,25 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCardModule } from '@angular/material/card';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar'; // ✅ Para notificaciones visuales
 
 // SERVICIOS
 import { ImportacionService } from '../../../services/importacion-service';
-import { ImportacionResponse } from '../../../models/importacion';
+import { ImportacionResponse, ImportacionRequest } from '../../../models/importacion';
 
 @Component({
   selector: 'app-importacion-prorrateo',
   standalone: true,
   imports: [
     CommonModule, 
-    FormsModule, // ✅ Agregado aquí
+    FormsModule, 
     MatButtonModule, 
     MatIconModule, 
     MatProgressSpinnerModule, 
     MatCardModule, 
     MatTooltipModule,
-    MatDividerModule
+    MatDividerModule,
+    MatSnackBarModule // ✅ Importado para los mensajes
   ],
   templateUrl: './importacion-prorrateo.html',
   styleUrls: ['./importacion-prorrateo.css']
@@ -41,7 +43,8 @@ export class ImportacionProrrateoComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private importacionService: ImportacionService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private snackBar: MatSnackBar // ✅ Inyectado para notificaciones
   ) {}
 
   ngOnInit(): void {
@@ -77,29 +80,46 @@ export class ImportacionProrrateoComponent implements OnInit {
       error: (err) => {
         console.error(err);
         this.loading = false;
-        alert("Error al cargar la importación");
+        this.mostrarNotificacion("Error al cargar la importación", "error");
         this.volver();
       }
     });
   }
 
-  // ✅ NUEVO: RECALCULA TODO CUANDO SE CAMBIA EL AD VALOREM MANUALMENTE
+  // ✅ MÉTODO CORREGIDO: SUPERPONE EL AD VALOREM VIEJO Y EVITA ERRORES DE TEXTO
   recalcularLanded(item: any, factura: any) {
-    // 1. Calcular el nuevo Ad Valorem Total para esa fila
-    const nuevoAdvTotal = (item.adValoremUnitarioManual || 0) * item.cantidad;
+    // 1. Valor unitario ingresado (Number estricto para evitar concatenaciones raras)
+    const valorUnitario = Number(item.adValoremUnitarioManual) || 0;
     
-    // 2. ¿Cuánto cambió respecto al valor anterior?
-    const diferencia = nuevoAdvTotal - (item._advTotalOriginal || 0);
+    // 2. Nuevo Ad Valorem Total para el ÍTEM
+    const nuevoAdvTotalItem = valorUnitario * item.cantidad;
+    
+    // 3. Diferencia de costos SOLO para este ítem
+    const diferenciaItem = nuevoAdvTotalItem - (item._advTotalOriginal || 0);
 
-    // 3. Actualizar el Item
-    item.itemAdv = nuevoAdvTotal;
-    item._advTotalOriginal = nuevoAdvTotal; // Actualizar la referencia
-    item.costoTotalLanded = (item.costoTotalLanded || 0) + diferencia;
+    // 4. Actualizar el Ítem
+    item.itemAdv = nuevoAdvTotalItem;
+    item._advTotalOriginal = nuevoAdvTotalItem; 
+    item.costoTotalLanded = (item.costoTotalLanded || 0) + diferenciaItem;
     item.costoUnitarioLanded = item.costoTotalLanded / item.cantidad;
 
-    // 4. Actualizar los totales de la Factura
-    factura.proAdv = (factura.proAdv || 0) + diferencia;
-    factura.costoTotalImportacion = (factura.costoTotalImportacion || 0) + diferencia;
+    // =========================================================
+    // 🛑 5. ANULAR EL VIEJO AD VALOREM DE LA FACTURA Y SUPERPONER
+    // =========================================================
+    let sumaRealAdValoremFactura = 0;
+    
+    // Sumamos estrictamente los Ad Valorem de todos los ítems
+    factura.items.forEach((i: any) => {
+      sumaRealAdValoremFactura += (i.itemAdv || 0);
+    });
+
+    // 6. Calculamos la diferencia de la factura respecto a lo que tenía antes
+    // (Esto anula mágicamente cualquier valor manual viejo que tuviera la factura general)
+    const diferenciaFactura = sumaRealAdValoremFactura - (factura.proAdv || 0);
+
+    // 7. Actualizamos la Factura con la sumatoria real y limpia
+    factura.proAdv = sumaRealAdValoremFactura; 
+    factura.costoTotalImportacion = (factura.costoTotalImportacion || 0) + diferenciaFactura;
   }
 
   // Suma total de landed cost de todas las facturas
@@ -108,16 +128,82 @@ export class ImportacionProrrateoComponent implements OnInit {
     return this.importacion.facturasComerciales.reduce((acc, f) => acc + f.costoTotalImportacion, 0);
   }
 
+  // ✅ GUARDA LOS CAMBIOS EN EL BACKEND
   guardarCambiosManuales() {
-    // ✅ Aquí puedes agregar la llamada a tu servicio para guardar los nuevos valores en BD
-    /*
+    if (!this.importacion) return;
+    
     this.guardando = true;
-    this.importacionService.actualizarImportacion(this.importacion.id, this.importacion).subscribe({
-       next: () => { alert("Guardado"); this.guardando = false; },
-       error: () => { alert("Error"); this.guardando = false; }
+
+    // 1. Construir el mapa de Ad Valorem (ID_DEL_DETALLE -> MONTO_TOTAL_AD_VALOREM)
+    const adValoremMap: { [key: number]: number } = {};
+
+    this.importacion.facturasComerciales?.forEach(fact => {
+      fact.items?.forEach(item => {
+        if (item.id) { // Solo si el ítem tiene ID válido
+          adValoremMap[item.id] = item.itemAdv || 0;
+        }
+      });
     });
-    */
-    alert("Totales recalculados en pantalla. Conecta esto con tu backend si deseas guardar los cambios permanentemente.");
+
+    // 2. Construir el DTO para el backend
+    const requestParaBackend: ImportacionRequest = {
+      codigoAgrupador: this.importacion.codigoAgrupador,
+      estado: this.importacion.estado,
+      tipoTransporte: this.importacion.tipoTransporte,
+      numeroDua: this.importacion.numeroDua,
+      trackingNumber: this.importacion.trackingNumber,
+      agenteAduanas: this.importacion.agenteAduanas,
+      canal: this.importacion.canal,
+
+      costoFlete: this.importacion.costoFlete,
+      costoAlmacenajeCft: this.importacion.costoAlmacenajeCft,
+      costoTransporteSjl: this.importacion.costoTransporteSjl,
+      costoPersonalDescarga: this.importacion.costoPersonalDescarga,
+      costoMontacarga: this.importacion.costoMontacarga,
+      costoDesconsolidacion: this.importacion.costoDesconsolidacion,
+      costoVistosBuenos: this.importacion.costoVistosBuenos,
+      costoTransmision: this.importacion.costoTransmision,
+      costoComisionAgencia: this.importacion.costoComisionAgencia,
+      costoVobo: this.importacion.costoVobo,
+      costoGastosOperativos: this.importacion.costoGastosOperativos,
+      costoResguardo: this.importacion.costoResguardo,
+      costoIgv: this.importacion.costoIgv,
+      costoIpm: this.importacion.costoIpm,
+      costoPercepcion: this.importacion.costoPercepcion,
+      
+      costoOtros1: this.importacion.costoOtros1,
+      costoOtros2: this.importacion.costoOtros2,
+      costoOtros3: this.importacion.costoOtros3,
+      costoOtros4: this.importacion.costoOtros4,
+
+      // ✅ PASAMOS EL MAPA AL BACKEND
+      adValoremPorItem: adValoremMap 
+    };
+
+    // 3. Enviar al Backend
+    this.importacionService.actualizar(this.importacion.id, requestParaBackend).subscribe({
+      next: (data) => {
+        this.mostrarNotificacion("✅ Ad Valorem y Costos guardados en la Base de Datos", "success");
+        this.guardando = false;
+        
+        // Refrescamos los datos para estar sincronizados con la BD
+        this.cargarDatos(this.importacion!.id); 
+      },
+      error: (err) => {
+        console.error(err);
+        this.mostrarNotificacion("❌ Error al guardar los cambios en el servidor.", "error");
+        this.guardando = false;
+      }
+    });
+  }
+
+  mostrarNotificacion(mensaje: string, tipo: 'success' | 'error') {
+    this.snackBar.open(mensaje, 'Cerrar', {
+      duration: 3000,
+      panelClass: tipo === 'success' ? ['snackbar-success'] : ['snackbar-error'],
+      horizontalPosition: 'right',
+      verticalPosition: 'top'
+    });
   }
 
   volver() {

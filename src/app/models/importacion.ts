@@ -146,7 +146,7 @@ export enum EstadoImportacion {
   EN_TRANSITO = 'EN_TRANSITO',
   EN_ADUANAS = 'EN_ADUANAS',
   EN_ALMACEN = 'EN_ALMACEN',
-  CERRADA = 'CERRADA',
+  CERRADO = 'CERRADO',
   LIQUIDADA = 'LIQUIDADA'
 }
 
@@ -160,10 +160,12 @@ export enum TipoTransporte {
 // 🚀 ÍTEM DETALLADO DE IMPORTACIÓN
 // =========================================================
 export interface DetalleItemImportacion {
-    id?: number; // ✅ SOLUCIÓN ERROR 1 Y 2: Añadido el ID del ítem
+    id?: number; 
 
     nombreProducto: string;
     cantidad: number;
+    cantidadRecibida?: number; // ✅ NUEVO: La cantidad validada en almacén
+    
     precioUnitarioFob: number; 
     importeFob: number;        
     
@@ -290,7 +292,7 @@ export interface ImportacionResponse {
 }
 
 export interface ImportacionRequest {
-  codigoAgrupador?: string; // ✅ SOLUCIÓN ERROR 3: Añadido
+  codigoAgrupador?: string; 
   estado?: EstadoImportacion | string; 
   tipoTransporte?: TipoTransporte | string;
   fechaEstimadaLlegada?: Date;
@@ -317,11 +319,16 @@ export interface ImportacionRequest {
   costoIpm?: number;
   costoPercepcion?: number;
   
-  // ✅ SOLUCIÓN AL MAPA DE AD VALOREM: Actualizado el nombre a como lo espera la lógica nueva
   adValoremPorItem?: { [key: number]: number };
 
   costoOtros1?: number;
   costoOtros2?: number;
   costoOtros3?: number;
   costoOtros4?: number;
+}
+
+// ✅ NUEVO: DTO para confirmar la recepción física en el almacén
+export interface RecepcionItemRequest {
+    detalleId: number;
+    cantidadRecibida: number;
 }

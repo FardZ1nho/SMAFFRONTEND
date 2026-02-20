@@ -208,7 +208,7 @@
           </tr>
           
           <tr *ngIf="compra.tipoComprobante === 'FACTURA_COMERCIAL'">
-             <td [attr.colspan]="compra.tipoCompra === 'BIEN' ? 4 : 3" class="text-end label-total" style="color: #2563eb;">FOB ADICIONAL:</td>
+             <td [attr.colspan]="compra.tipoCompra === 'BIEN' ? 4 : 3" class="text-end label-total" style="color: #2563eb;">FOB/FLETE:</td>
              <td>
                 <div class="input-group-sm" style="justify-content: flex-end;">
                     <span class="currency-symbol">{{ getSimboloMoneda() }}</span>

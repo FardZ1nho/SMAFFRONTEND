@@ -2,6 +2,7 @@ import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { forkJoin } from 'rxjs'; // ✅ IMPORTANTE PARA SINCRONIZAR
 
 // MATERIAL
 import { MatIconModule } from '@angular/material/icon';
@@ -22,7 +23,6 @@ import {
   MetodoPago, 
   PagoCompraRequest 
 } from '../../../models/compra';
-
 import { Proveedor } from '../../../models/proveedor';
 import { Almacen } from '../../../models/almacen';
 import { CuentaBancaria } from '../../../models/cuenta-bancaria';
@@ -64,8 +64,10 @@ export class CompraFormComponent implements OnInit {
   ];
 
   listaComprobantes = this.comprobantesBien;
+
   tipoPago: TipoPago = TipoPago.CONTADO;
-  
+  porcentajeIgv: number = 18;
+
   pagoActual: PagoCompraRequest = {
     metodoPago: MetodoPago.TRANSFERENCIA,
     monto: 0,
@@ -90,7 +92,7 @@ export class CompraFormComponent implements OnInit {
     codImportacion: '', 
     pesoNetoKg: 0,
     cbm: 0,
-    fechaEmision: new Date().toISOString().split('T')[0] as any,
+    fechaEmision: new Date().toISOString().split('T')[0] as any, 
     proveedorId: 0,
     moneda: 'USD', 
     tipoCambio: 3.75,
@@ -122,40 +124,53 @@ export class CompraFormComponent implements OnInit {
     private almacenService: AlmacenService,
     private cuentaService: CuentaBancariaService,
     private router: Router,
-    private route: ActivatedRoute,
+    private route: ActivatedRoute, 
     private dialog: MatDialog,
-    private cdr: ChangeDetectorRef // ✅ CRUCIAL
+    private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit(): void {
-    // 1. Cargar catálogos primero
-    this.cargarProveedores();
-    this.cargarAlmacenes();
-    this.cargarCuentas();
     this.pagoActual.moneda = this.compra.moneda;
-
-    // 2. Verificar si es edición
     const id = this.route.snapshot.paramMap.get('id');
-    if (id) {
-      this.modoEdicion = true;
-      this.idCompraEditar = Number(id);
-      this.cargarDatosEdicion(this.idCompraEditar);
-    }
+
+    // ✅ LÓGICA CORREGIDA: Descargar todos los catálogos en paralelo ANTES de cargar los datos de edición
+    forkJoin({
+      proveedores: this.proveedorService.listarActivos(),
+      almacenes: this.almacenService.listarAlmacenesActivos(),
+      cuentas: this.cuentaService.listarActivas()
+    }).subscribe({
+      next: (res) => {
+        this.proveedores = res.proveedores;
+        this.almacenes = res.almacenes;
+        this.cuentasBancarias = res.cuentas;
+
+        // Una vez que tenemos las listas llenas, recién mapeamos la compra a editar
+        if (id) {
+          this.modoEdicion = true;
+          this.idCompraEditar = Number(id);
+          this.cargarDatosEdicion(this.idCompraEditar);
+        }
+      },
+      error: (err) => console.error("Error cargando catálogos", err)
+    });
   }
 
   cargarDatosEdicion(id: number) {
     this.compraService.obtenerPorId(id).subscribe({
       next: (data) => {
-        // Mapeo completo
+        
+        // 1. Configuramos el tipo de compra PRIMERO para cargar la lista de comprobantes correcta
+        this.cambiarTipoCompra(data.tipoCompra as any);
+
+        // 2. Asignamos los datos a la cabecera
         this.compra = {
-          ...this.compra,
+          ...this.compra, 
           tipoCompra: data.tipoCompra as any,
           tipoComprobante: data.tipoComprobante as any,
           tipoPago: data.tipoPago as any,
           serie: data.serie,
           numero: data.numero,
           fechaEmision: data.fechaEmision.split('T')[0] as any,
-          proveedorId: 0, // Se intentará asignar abajo
           moneda: data.moneda as 'PEN' | 'USD', 
           tipoCambio: data.tipoCambio,
           observaciones: data.observaciones || '',
@@ -172,45 +187,40 @@ export class CompraFormComponent implements OnInit {
           cbm: data.cbm || 0
         };
 
-        // Lógica segura para asignar Proveedor
+        // 3. Calculamos IGV si aplica
+        if (data.tipoComprobante !== 'FACTURA_COMERCIAL' && data.igv > 0 && data.subTotal > 0) {
+            this.porcentajeIgv = Math.round((data.igv / data.subTotal) * 100);
+        } else {
+            this.porcentajeIgv = 18;
+        }
+
+        // 4. Asignamos Proveedor
         if ((data as any).proveedorId) {
              this.compra.proveedorId = (data as any).proveedorId;
-        } else if (this.proveedores.length > 0) {
-            // Si ya cargaron los proveedores, buscamos por RUC
+        } else {
             const provEncontrado = this.proveedores.find(p => p.ruc === data.rucProveedor);
             if(provEncontrado) this.compra.proveedorId = provEncontrado.id!;
-        } else {
-            // Si no han cargado, guardamos el RUC temporalmente (opcional) o confiamos en que cargarProveedores lo resolverá si lo implementamos bidireccional,
-            // pero lo más seguro es confiar en que el backend envíe proveedorId.
-            // Si no, forzamos un re-intento simple:
-             setTimeout(() => {
-                 const p = this.proveedores.find(prov => prov.ruc === data.rucProveedor);
-                 if(p) {
-                    this.compra.proveedorId = p.id!;
-                    this.cdr.detectChanges();
-                 }
-             }, 500);
         }
 
         this.tipoPago = this.compra.tipoPago;
 
+        // ✅ 5. Asignamos Detalles y Almacén (Ahora funcionará siempre)
         if (data.detalles) {
-          this.itemsAgregados = data.detalles.map(d => ({
-            productoId: d.productoId,
-            nombre: d.nombreProducto,
-            codigo: d.codigoProducto,
-            cantidad: d.cantidad,
-            precioUnitario: d.precioUnitario,
-            almacenId: this.almacenes.find(a => a.nombre === d.nombreAlmacen)?.id
-          }));
+          this.itemsAgregados = data.detalles.map(d => {
+            const almacenEncontrado = this.almacenes.find(a => a.nombre === d.nombreAlmacen);
+            return {
+              productoId: d.productoId,
+              nombre: d.nombreProducto,
+              codigo: d.codigoProducto,
+              cantidad: d.cantidad,
+              precioUnitario: d.precioUnitario,
+              almacenId: almacenEncontrado ? almacenEncontrado.id : undefined
+            };
+          });
         }
 
-        // ✅ IMPORTANTÍSIMO: Actualizar la lista de comprobantes según el tipo
-        this.cambiarTipoCompra(this.compra.tipoCompra as any);
         this.recalcularTotales();
-
-        // ✅ EL TRUCO: Forzar detección de cambios para que pinte el formulario
-        this.cdr.detectChanges();
+        this.cdr.detectChanges(); // Forzamos actualización de vista
       },
       error: (e) => {
         alert("Error al cargar la compra: " + e.message);
@@ -219,33 +229,11 @@ export class CompraFormComponent implements OnInit {
     });
   }
 
-  cargarProveedores() {
-    this.proveedorService.listarActivos().subscribe(data => {
-      this.proveedores = data;
-      this.cdr.detectChanges(); // ✅ Forzar actualización por si carga después del form
-    });
-  }
-
-  cargarAlmacenes() {
-    this.almacenService.listarAlmacenesActivos().subscribe(data => {
-        this.almacenes = data;
-        this.cdr.detectChanges();
-    });
-  }
-
-  cargarCuentas() {
-    this.cuentaService.listarActivas().subscribe(data => {
-        this.cuentasBancarias = data;
-        this.cdr.detectChanges();
-    });
-  }
-
   cambiarTipoCompra(tipo: 'BIEN' | 'SERVICIO') {
     this.compra.tipoCompra = tipo;
 
     if (tipo === 'BIEN') {
       this.listaComprobantes = this.comprobantesBien;
-      // ✅ Si es edición, NO sobrescribir el comprobante que viene de BD
       if (!this.modoEdicion) this.compra.tipoComprobante = 'FACTURA_COMERCIAL' as any; 
       
       this.compra.detraccionPorcentaje = 0;
@@ -257,7 +245,6 @@ export class CompraFormComponent implements OnInit {
       }
     } else {
       this.listaComprobantes = this.comprobantesServicio;
-      // ✅ Si es edición, NO sobrescribir el comprobante
       if (!this.modoEdicion) this.compra.tipoComprobante = 'RECIBO_HONORARIOS' as any;
       this.compra.percepcion = 0;
       this.itemsAgregados.forEach(i => i.almacenId = null);
@@ -271,8 +258,8 @@ export class CompraFormComponent implements OnInit {
       this.compra.pesoNetoKg = 0;
       this.compra.cbm = 0;
       this.compra.fob = 0; 
-      this.recalcularTotales();
     }
+    this.recalcularTotales();
   }
 
   cambiarTipoPago(tipo: TipoPago) {
@@ -311,10 +298,6 @@ export class CompraFormComponent implements OnInit {
   nuevoProducto(): void {
     const dialogRef = this.dialog.open(ProductoModalComponent, {
       width: '90%', height: '90vh', disableClose: true, data: { modo: 'crear' }
-    });
-    dialogRef.afterClosed().subscribe(result => {
-      if (result === true) { 
-      }
     });
   }
 
@@ -359,10 +342,17 @@ export class CompraFormComponent implements OnInit {
   recalcularTotales() {
     const sumaItems = this.itemsAgregados.reduce((acc, item) => acc + (item.cantidad * item.precioUnitario), 0);
     this.compra.subTotal = sumaItems;
-    this.compra.igv = 0; 
-
+    
     const fobAdicional = Number(this.compra.fob) || 0;
-    let totalDoc = this.compra.subTotal + fobAdicional;
+    const baseImponible = this.compra.subTotal + fobAdicional;
+
+    if (this.compra.tipoComprobante !== 'FACTURA_COMERCIAL') {
+        this.compra.igv = baseImponible * (this.porcentajeIgv / 100);
+    } else {
+        this.compra.igv = 0;
+    }
+
+    let totalDoc = baseImponible + this.compra.igv;
 
     if (this.compra.tipoCompra === 'BIEN' && this.compra.percepcion) {
       totalDoc += Number(this.compra.percepcion);
@@ -428,8 +418,6 @@ export class CompraFormComponent implements OnInit {
       cantidad: item.cantidad,
       precioUnitario: item.precioUnitario
     }));
-
-    console.log('🚀 ENVIANDO AL BACKEND:', this.compra); 
     
     if (this.modoEdicion && this.idCompraEditar) {
       this.compraService.actualizarCompra(this.idCompraEditar, this.compra).subscribe({

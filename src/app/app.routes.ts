@@ -18,14 +18,18 @@ import { AlmacenForm } from './components/almacenes/almacen-form/almacen-form';
 import { MovimientosListComponent } from './components/movimientos/movimientos-list/movimientos-list';
 import { TrasladoFormComponent } from './components/movimientos/traslado-form/traslado-form';
 
-// COMPRAS (Aquí agregamos el import que faltaba)
-import { CompraFormComponent } from './components/compras/compra-form/compra-form'; // ✅ IMPORTANTE
+// COMPRAS
+import { CompraFormComponent } from './components/compras/compra-form/compra-form'; 
 
 // CONFIGURACION Y OTROS
 import { CuentasListaComponent } from './components/configuracion/cuentas-lista/cuentas-lista';
 import { ImportacionesListComponent } from './components/importaciones/importaciones-list/importaciones-list';
 import { CotizacionListComponent } from './components/cotizaciones/cotizacion-list/cotizacion-list';
 import { CotizacionFormComponent } from './components/cotizaciones/cotizacion-form/cotizacion-form';
+
+// RECEPCIONES
+import { RecepcionChecklistComponent } from './components/importaciones/recepcion-checklist/recepcion-checklist'; 
+import { RecepcionListaComponent } from './components/importaciones/recepcion-lista/recepcion-lista';
 
 export const routes: Routes = [
   // ========== RUTAS BASE ==========
@@ -78,7 +82,7 @@ export const routes: Routes = [
     loadComponent: () => import('./components/compras/compra-form/compra-form').then(m => m.CompraFormComponent)
   },
   { 
-    path: 'compras/editar/:id', // ✅ AHORA SÍ FUNCIONA PORQUE YA ESTÁ IMPORTADO ARRIBA
+    path: 'compras/editar/:id', 
     component: CompraFormComponent 
   },
   {
@@ -102,7 +106,7 @@ export const routes: Routes = [
     component: NotasCreditoListaComponent 
   },
   {
-    path: 'ventas/:id', // Ruta dinámica va al final de las rutas de ventas
+    path: 'ventas/:id', 
     loadComponent: () => import('./components/ventas/ventas').then(m => m.VentasComponent),
     canActivate: [seguridadGuard]
   },
@@ -111,7 +115,7 @@ export const routes: Routes = [
   { path: 'cotizaciones', component: CotizacionListComponent },
   { path: 'cotizaciones/nuevo', component: CotizacionFormComponent },
 
-  // ========== IMPORTACIONES ==========
+  // ========== IMPORTACIONES Y RECEPCIONES ==========
   { 
     path: 'importaciones', 
     component: ImportacionesListComponent,
@@ -120,6 +124,18 @@ export const routes: Routes = [
   { 
     path: 'importaciones/prorrateo/:id', 
     loadComponent: () => import('./components/importaciones/importacion-prorrateo/importacion-prorrateo').then(m => m.ImportacionProrrateoComponent)
+  },
+  { 
+    path: 'recepciones', 
+    component: RecepcionListaComponent,
+    title: 'Recepciones Pendientes',
+    canActivate: [seguridadGuard] // ✅ Añadida seguridad
+  },
+  { 
+    path: 'recepciones/:id', 
+    component: RecepcionChecklistComponent,
+    title: 'Checklist de Recepción',
+    canActivate: [seguridadGuard] // ✅ Añadida seguridad
   },
 
   // ========== CLIENTES ==========
@@ -168,7 +184,8 @@ export const routes: Routes = [
   // ========== CONFIGURACIÓN ==========
   { path: 'configuracion/cuentas', component: CuentasListaComponent },
 
-  // ========== RUTA COMODÍN (404) ==========
+  // ========== ⚠️ RUTA COMODÍN (404) ⚠️ ==========
+  // ¡ESTO SIEMPRE DEBE IR AL FINAL DEL ARCHIVO!
   {
     path: '**',
     redirectTo: 'login'

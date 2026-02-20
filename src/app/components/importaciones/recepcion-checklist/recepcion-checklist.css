@@ -1,0 +1,72 @@
+.page-container { padding: 24px; background-color: #f8fafc; min-height: 100vh; font-family: 'Roboto', sans-serif;}
+.page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+.header-left { display: flex; align-items: flex-start; gap: 16px; }
+.page-title { font-size: 24px; font-weight: 700; color: #1e293b; margin: 0 0 8px 0; display: flex; align-items: center; gap: 12px; }
+.status-badge { font-size: 11px; padding: 4px 10px; background: #e0e7ff; color: #1d4ed8; border-radius: 12px; font-weight: 600; letter-spacing: 0.5px; }
+.meta-data { font-size: 13px; color: #64748b; display: flex; gap: 16px; }
+
+.btn-confirmar { height: 44px; font-size: 15px; font-weight: 600; letter-spacing: 0.5px; }
+
+.card { background: white; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; }
+.card-header-custom { display: flex; align-items: center; gap: 12px; padding: 16px 20px; background: #f1f5f9; border-bottom: 1px solid #e2e8f0; }
+.card-header-custom h3 { margin: 0; font-size: 16px; font-weight: 700; color: #334155; }
+.card-header-custom mat-icon { color: #64748b; }
+
+.custom-table { width: 100%; border-collapse: collapse; }
+.custom-table th { background: #f8fafc; color: #475569; font-weight: 700; font-size: 12px; text-transform: uppercase; padding: 14px 16px; border-bottom: 2px solid #e2e8f0; text-align: left; }
+.custom-table td { padding: 14px 16px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+
+/* Badge para cantidad esperada */
+.badge-esperado {
+  background-color: #f1f5f9;
+  color: #475569;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 6px 16px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+/* Input destacado para recepción */
+.input-recepcion {
+  width: 90px;
+  font-size: 18px;
+  font-weight: 800;
+  padding: 8px;
+  border: 2px solid #cbd5e1;
+  border-radius: 8px;
+  background-color: #ffffff;
+  color: #0f172a;
+  text-align: center;
+  transition: all 0.2s;
+}
+.input-recepcion:focus { border-color: #2563eb; outline: none; box-shadow: 0 0 0 3px rgba(37,99,235,0.2); }
+.input-recepcion:disabled { background-color: #f1f5f9; color: #94a3b8; border-color: #e2e8f0; cursor: not-allowed; }
+
+/* Ocultar flechas del input number */
+.input-recepcion::-webkit-outer-spin-button,
+.input-recepcion::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.input-recepcion[type=number] { -moz-appearance: textfield; }
+
+/* Colores de las filas según estado */
+.row-success { background-color: #f0fdf4 !important; }
+.row-warning { background-color: #fffbeb !important; }
+.row-info { background-color: #eff6ff !important; }
+
+/* Iconos de validación */
+.icon-success { color: #16a34a; font-size: 28px; width: 28px; height: 28px; }
+.icon-warning { color: #d97706; font-size: 28px; width: 28px; height: 28px; }
+.icon-info { color: #2563eb; font-size: 28px; width: 28px; height: 28px; }
+
+.text-main { color: #0f172a; font-size: 15px;}
+.text-sub { color: #64748b; }
+.font-bold { font-weight: 700; }
+.text-center { text-align: center; }
+
+.btn-spinner { margin-right: 8px; display: inline-block; vertical-align: middle;}
+.loading-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 300px; color: #64748b; font-weight: 500;}
+.loading-container mat-spinner { margin-bottom: 16px; }
+
+/* Notificaciones */
+::ng-deep .snackbar-success { background-color: #15803d !important; color: white !important; font-weight: 500;}
+::ng-deep .snackbar-error { background-color: #dc2626 !important; color: white !important; font-weight: 500;}

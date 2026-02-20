@@ -2,7 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { ImportacionResponse, ImportacionRequest, EstadoImportacion } from '../models/importacion';
+// ✅ NUEVO: Añadida la importación de RecepcionItemRequest
+import { ImportacionResponse, ImportacionRequest, EstadoImportacion, RecepcionItemRequest } from '../models/importacion';
 
 @Injectable({
   providedIn: 'root'
@@ -49,7 +50,7 @@ export class ImportacionService {
   }
 
   /**
-   * ✅ ACTUALIZAR CARPETA Y COSTOS
+   * ACTUALIZAR CARPETA Y COSTOS
    * Este método dispara el PRORRATEO en el Backend
    */
   actualizar(id: number, request: ImportacionRequest): Observable<ImportacionResponse> {
@@ -61,5 +62,13 @@ export class ImportacionService {
    */
   recalcularCostos(id: number): Observable<void> {
     return this.http.post<void>(`${this.apiUrl}/${id}/recalcular`, {});
+  }
+
+  /**
+   * ✅ NUEVO: CONFIRMAR RECEPCIÓN EN ALMACÉN
+   * Esto actualizará la cantidad recibida y sumará el stock real en el Kardex
+   */
+  confirmarRecepcion(id: number, items: RecepcionItemRequest[]): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/${id}/recepcion`, items);
   }
 }

@@ -68,6 +68,14 @@
       <span class="nav-text">Importaciones</span>
     </a>
 
+    <a routerLink="/recepciones" class="nav-item" routerLinkActive="active" (click)="onItemClick()" title="Recepción">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+        <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+        <polyline points="9 14 11 16 15 12"></polyline>
+      </svg>
+      <span class="nav-text">Recepción</span>
+    </a>
     <a routerLink="/proveedores" class="nav-item" routerLinkActive="active" (click)="onItemClick()" title="Proveedores">
       <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -144,7 +152,9 @@
   <div class="sidebar-footer">
     <button class="nav-item btn-collapse" (click)="toggleSidebarState()">
       <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path *ngIf="!isCollapsed" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path> <path *ngIf="isCollapsed" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path>   </svg>
+        <path *ngIf="!isCollapsed" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path> 
+        <path *ngIf="isCollapsed" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path>   
+      </svg>
       <span class="nav-text">Contraer menú</span>
     </button>
   </div>

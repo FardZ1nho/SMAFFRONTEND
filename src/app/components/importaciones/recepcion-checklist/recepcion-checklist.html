@@ -1,0 +1,95 @@
+<div class="page-container" *ngIf="importacion; else loadingTpl">
+  <header class="page-header">
+    <div class="header-left">
+      <button mat-icon-button (click)="volver()">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div>
+        <h1 class="page-title">
+          Recepción de Mercadería Física
+          <span class="status-badge">{{ importacion.estado }}</span>
+        </h1>
+        <div class="meta-data">
+          <span><strong>CÓDIGO:</strong> {{ importacion.codigoAgrupador }}</span>
+          <span *ngIf="importacion.numeroDua"><strong>DUA:</strong> {{ importacion.numeroDua }}</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="header-right">
+      <button mat-flat-button color="primary" class="btn-confirmar" (click)="confirmarIngreso()" [disabled]="guardando || listaPlanaItems.length === 0 || importacion.estado === 'CERRADO'">
+        <mat-spinner *ngIf="guardando" diameter="20" class="btn-spinner"></mat-spinner>
+        <mat-icon *ngIf="!guardando">inventory_2</mat-icon>
+        <span *ngIf="!guardando">Confirmar Ingreso al Kardex</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="card shadow-sm">
+    <div class="card-header-custom">
+      <mat-icon>checklist</mat-icon> 
+      <h3>Checklist de Unidades (Verificación Física)</h3>
+    </div>
+    
+    <div class="table-responsive">
+      <table class="custom-table">
+        <thead>
+          <tr>
+            <th class="ps-4">Producto</th>
+            <th>Factura Ref.</th>
+            <th class="text-center" width="180">Unidades Esperadas</th>
+            <th class="text-center" width="200">Llegaron (Conteo Físico)</th>
+            <th class="text-center" width="120">Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of listaPlanaItems" 
+              [ngClass]="{
+                'row-warning': item.cantidadRecibida < item.cantidadEsperada, 
+                'row-success': item.cantidadRecibida === item.cantidadEsperada,
+                'row-info': item.cantidadRecibida > item.cantidadEsperada
+              }">
+            
+            <td class="ps-4 font-bold text-main">{{ item.nombreProducto }}</td>
+            <td class="text-sub text-sm">{{ item.facturaReferencia }}</td>
+            
+            <td class="text-center">
+              <span class="badge-esperado">{{ item.cantidadEsperada }} und</span>
+            </td>
+            
+            <td class="text-center">
+              <input type="number" class="input-recepcion" 
+                     [(ngModel)]="item.cantidadRecibida" 
+                     min="0"
+                     [disabled]="importacion.estado === 'CERRADO'">
+            </td>
+            
+            <td class="text-center">
+              <mat-icon *ngIf="item.cantidadRecibida === item.cantidadEsperada" 
+                        class="icon-success" matTooltip="Stock completo">
+                check_circle
+              </mat-icon>
+              
+              <mat-icon *ngIf="item.cantidadRecibida < item.cantidadEsperada" 
+                        class="icon-warning" matTooltip="¡Falta mercadería! Merma detectada">
+                warning
+              </mat-icon>
+
+              <mat-icon *ngIf="item.cantidadRecibida > item.cantidadEsperada" 
+                        class="icon-info" matTooltip="Excedente detectado">
+                info
+              </mat-icon>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<ng-template #loadingTpl>
+  <div class="loading-container">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>Cargando información del embarque...</p>
+  </div>
+</ng-template>

@@ -41,7 +41,6 @@ import { StockModalComponent } from './stock-modal/stock-modal';
 })
 export class InventarioComponent implements OnInit, OnDestroy {
   
-  // ✅ 1. ACTUALIZAR TIPO DE VISTA
   vistaActual: 'PRODUCTO' | 'SERVICIO' | 'SUMINISTRO' = 'PRODUCTO';
   routerSubscription: Subscription | undefined;
 
@@ -89,7 +88,6 @@ export class InventarioComponent implements OnInit, OnDestroy {
   }
 
   configurarVista(): void {
-    // ✅ 2. LÓGICA DE URL PARA SUMINISTROS
     if (this.router.url.includes('servicios')) {
       this.vistaActual = 'SERVICIO';
       this.displayedColumns = ['codigo', 'nombre', 'categoria', 'precio', 'acciones'];
@@ -101,7 +99,6 @@ export class InventarioComponent implements OnInit, OnDestroy {
       this.displayedColumns = ['codigo', 'nombre', 'categoria', 'stock', 'precio', 'acciones'];
     }
     
-    // Resetear filtros al cambiar de vista
     this.filtroCategoria = 'TODAS';
     this.filtroEstadoStock = 'TODOS';
     this.terminoBusqueda = '';
@@ -111,16 +108,13 @@ export class InventarioComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.productoService.listarProductosActivos().subscribe({
       next: (data) => {
-        // ✅ 3. FILTRADO CORRECTO INCLUYENDO SUMINISTROS Y KITS
         this.productos = data.filter(p => {
           const tipoItem = p.tipo || 'PRODUCTO';
-          
           if (this.vistaActual === 'SERVICIO') {
             return tipoItem === 'SERVICIO';
           } else if (this.vistaActual === 'SUMINISTRO') {
             return tipoItem === 'SUMINISTRO';
           } else {
-            // PRODUCTOS (Incluye KITS)
             return tipoItem === 'PRODUCTO' || tipoItem === 'KIT';
           }
         });
@@ -138,6 +132,7 @@ export class InventarioComponent implements OnInit, OnDestroy {
       error: (error) => {
         console.error(error);
         this.isLoading = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -157,12 +152,10 @@ export class InventarioComponent implements OnInit, OnDestroy {
       resultado = resultado.filter(p => p.nombreCategoria === this.filtroCategoria);
     }
 
-    // Filtrar por estado de stock (Solo para Productos y Suministros)
     if (this.vistaActual !== 'SERVICIO' && this.filtroEstadoStock !== 'TODOS') {
       resultado = resultado.filter(p => {
         const stock = p.stockActual || 0;
         const min = p.stockMinimo || 0;
-        
         switch (this.filtroEstadoStock) {
           case 'AGOTADO': return stock <= 0;
           case 'BAJO': return stock > 0 && stock < min;
@@ -180,7 +173,8 @@ export class InventarioComponent implements OnInit, OnDestroy {
       resultado = resultado.filter(p => (p.precioVenta || 0) <= (this.filtroPrecioMax as number));
     }
 
-    this.productosFiltrados.data = resultado;
+    // Obliga a Angular a repintar la tabla instantáneamente
+    this.productosFiltrados.data = [...resultado];
   }
 
   toggleFiltros(): void { this.mostrarFiltros = !this.mostrarFiltros; }
@@ -202,7 +196,6 @@ export class InventarioComponent implements OnInit, OnDestroy {
   abrirModalNuevo(): void {
     const dialogRef = this.dialog.open(ProductoModalComponent, {
       width: '1000px', maxWidth: '95vw', disableClose: false, panelClass: 'producto-modal',
-      // Se pasa el tipo fijo (SUMINISTRO, SERVICIO o PRODUCTO)
       data: { modo: 'crear', tipoFijo: this.vistaActual } 
     });
     dialogRef.afterClosed().subscribe(result => { if (result) this.cargarDatos(); });
@@ -218,8 +211,8 @@ export class InventarioComponent implements OnInit, OnDestroy {
          this.productoAlmacenService.listarUbicacionesPorProducto(producto.id).subscribe({
            next: (ubicaciones) => {
                const stockRealCalculado = ubicaciones.reduce((acc, item) => acc + item.stock, 0);
-               console.log('Stock actualizado desde almacenes:', stockRealCalculado);
                producto.stockActual = stockRealCalculado;
+               this.aplicarFiltros();
                this.cdr.detectChanges();
            },
            error: (err) => console.error("Error al refrescar stock real", err)
@@ -242,16 +235,9 @@ export class InventarioComponent implements OnInit, OnDestroy {
       data: { productoId: producto.id }
     });
 
-    dialogRef.afterClosed().subscribe(resultado => { 
-      if (resultado && typeof resultado === 'object' && resultado.id) {
-         const index = this.productos.findIndex(p => p.id === resultado.id);
-         if (index !== -1) {
-           this.productos[index] = resultado; 
-           this.aplicarFiltros(); 
-         }
-      } else if (resultado === true || (resultado && resultado.accion === 'eliminado')) {
-         this.cargarDatos(); 
-      }
+    // Siempre recargar la data fresca del backend al cerrar
+    dialogRef.afterClosed().subscribe(() => { 
+       this.cargarDatos(); 
     });
   }
 
@@ -287,4 +273,22 @@ export class InventarioComponent implements OnInit, OnDestroy {
   }
   
   exportarDatos(): void { console.log(`Exportando ${this.vistaActual}...`); }
+
+  sincronizarStockGeneral(): void {
+
+
+    this.isLoading = true;
+    this.productoService.sincronizarStockReal().subscribe({
+      next: (res) => {
+        this.mostrarMensaje('✅ Stock general sincronizado y corregido', 'success');
+        this.cargarDatos(); // Recarga la tabla con la verdad
+      },
+      error: (err) => {
+        console.error(err);
+        this.mostrarMensaje('❌ Error al sincronizar el stock', 'error');
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
 }

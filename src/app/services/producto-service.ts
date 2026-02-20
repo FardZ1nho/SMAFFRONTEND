@@ -21,6 +21,8 @@ export class ProductoService {
     return this.http.get<Producto[]>(`${this.apiUrl}/activos`);
   }
 
+
+
   obtenerProducto(id: number): Observable<Producto> {
     return this.http.get<Producto>(`${this.apiUrl}/${id}`);
   }
@@ -47,7 +49,9 @@ export class ProductoService {
   }
 
   // --- ESCRITURA (FICHA TÉCNICA) ---
-  
+  sincronizarStockReal(): Observable<any> {
+    return this.http.post(`${this.apiUrl}/sincronizar-stock`, {});
+  }
   crearProducto(producto: ProductoRequest): Observable<Producto> {
     return this.http.post<Producto>(this.apiUrl, producto);
   }

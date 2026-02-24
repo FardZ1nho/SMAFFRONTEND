@@ -1,0 +1,58 @@
+<div class="dashboard-container">
+  <div class="header">
+    <h1>📊 Panel de Control CRM</h1>
+    <p>Bienvenido. Aquí tienes el resumen de tu gestión comercial.</p>
+  </div>
+
+  <div class="quick-access-grid">
+    
+    <div class="access-card primary" routerLink="/crm/pipeline">
+      <div class="icon-wrapper"><mat-icon>view_kanban</mat-icon></div>
+      <div class="text-content">
+        <h3>Pipeline de Ventas</h3>
+        <p>Gestiona cotizaciones y cierra tratos</p>
+      </div>
+      <mat-icon class="arrow">arrow_forward</mat-icon>
+    </div>
+
+    <div class="access-card" routerLink="/clientes">
+      <div class="icon-wrapper"><mat-icon>groups</mat-icon></div>
+      <div class="text-content">
+        <h3>Directorio de Clientes</h3>
+        <p>Perfiles 360° e historial de compras</p>
+      </div>
+      <mat-icon class="arrow">arrow_forward</mat-icon>
+    </div>
+
+  </div>
+
+ <h2 class="section-title">Resumen del Mes</h2>
+  
+  <div class="loading-state" *ngIf="isLoading" style="text-align: center; padding: 20px;">
+    <mat-spinner diameter="30" style="margin: 0 auto;"></mat-spinner>
+    <p style="color: #64748b; font-size: 13px; margin-top: 10px;">Calculando métricas en tiempo real...</p>
+  </div>
+
+  <div class="stats-grid" *ngIf="!isLoading">
+    <div class="stat-card">
+      <div class="stat-icon"><mat-icon>monetization_on</mat-icon></div>
+      <div class="stat-info">
+        <span class="label">Valor en Negociación</span>
+        <span class="value">S/ {{pipelineValor | number:'1.2-2'}}</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon alert"><mat-icon>pending_actions</mat-icon></div>
+      <div class="stat-info">
+        <span class="label">Oportunidades Abiertas</span>
+        <span class="value">{{cotizacionesActivas}}</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon success"><mat-icon>trending_up</mat-icon></div>
+      <div class="stat-info">
+        <span class="label">Tasa de Cierre</span>
+        <span class="value">{{tasaCierre}}%</span>
+      </div>
+    </div>
+  </div>

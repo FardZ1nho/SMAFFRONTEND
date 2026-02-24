@@ -1,6 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router'; // ✅ IMPORTACIÓN DEL ROUTER AGREGADA
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -33,8 +34,9 @@ import { ClienteModalComponent } from './cliente-modal/cliente-modal';
     MatDialogModule,
     MatSnackBarModule,
     MatChipsModule,
-    MatSelectModule
-  ],
+    MatSelectModule,
+    RouterLink
+],
   templateUrl: './cliente.html',
   styleUrls: ['./cliente.css']
 })
@@ -64,7 +66,8 @@ export class ClientesComponent implements OnInit {
     private clienteService: ClienteService,
     private cdr: ChangeDetectorRef,
     private dialog: MatDialog,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private router: Router // ✅ ROUTER INYECTADO AQUÍ
   ) {}
 
   ngOnInit(): void {
@@ -166,9 +169,10 @@ export class ClientesComponent implements OnInit {
     return tipo === 'PERSONA' ? 'tipo-persona' : 'tipo-empresa';
   }
 
+  // ⭐ AQUÍ ESTÁ LA NUEVA FUNCIÓN QUE CONECTA CON EL PERFIL 360° ⭐
   verDetalle(cliente: Cliente): void {
-    console.log('Ver detalle:', cliente);
-    this.mostrarMensaje('Función en desarrollo', 'error');
+    console.log('Ver detalle del cliente ID:', cliente.id);
+    this.router.navigate(['/crm/clientes/perfil', cliente.id]);
   }
 
   editarCliente(cliente: Cliente): void {

@@ -21,7 +21,12 @@ export class CotizacionService {
     return this.http.post<CotizacionResponse>(this.apiUrl, cotizacion);
   }
 
-  // ⭐ NUEVO: Mueve la cotización por el embudo CRM
+  // ⭐ NUEVO: Trae una sola cotización por su ID (¡Esto era lo que faltaba!)
+  obtenerPorId(id: number): Observable<CotizacionResponse> {
+    return this.http.get<CotizacionResponse>(`${this.apiUrl}/${id}`);
+  }
+
+  // Mueve la cotización por el embudo CRM
   actualizarEstadoPipeline(id: number, estado: EstadoPipeline, motivoPerdida?: string): Observable<CotizacionResponse> {
     let params = new HttpParams().set('estado', estado);
     
@@ -34,7 +39,7 @@ export class CotizacionService {
     return this.http.put<CotizacionResponse>(`${this.apiUrl}/${id}/estado`, {}, { params });
   }
 
-  // ✅ EL MÉTODO MÁGICO PARA EL PDF (Intacto)
+  // EL MÉTODO MÁGICO PARA EL PDF (Intacto)
   descargarPdf(id: number): Observable<Blob> {
     return this.http.get(`${this.apiUrl}/${id}/pdf`, {
       responseType: 'blob' 

@@ -1,0 +1,127 @@
+<div class="loading-container" *ngIf="isLoading" style="display: flex; justify-content: center; padding: 50px;">
+  <mat-spinner></mat-spinner>
+</div>
+
+<div class="perfil-container" *ngIf="!isLoading && cliente">
+  
+  <div class="perfil-header">
+    <div class="header-info">
+      <button mat-icon-button routerLink="/clientes" class="btn-back"><mat-icon>arrow_back</mat-icon></button>
+      <div>
+        <h1>{{cliente.tipoCliente === 'EMPRESA' ? cliente.razonSocial : cliente.nombreCompleto}}</h1>
+        <p class="subtitle">
+          <mat-icon>business</mat-icon> {{cliente.tipoDocumento}}: {{cliente.numeroDocumento}} | 
+          <mat-icon>calendar_today</mat-icon> Cliente desde: {{cliente.fechaCreacion | date:'dd/MM/yyyy'}}
+        </p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <mat-chip class="status-chip" [class.active]="cliente.activo">
+        {{cliente.activo ? 'Activo' : 'Inactivo'}}
+      </mat-chip>
+      <button mat-flat-button color="primary" (click)="abrirWhatsApp()" [disabled]="!cliente.telefono">
+        <mat-icon>chat</mat-icon> Contactar
+      </button>
+    </div>
+  </div>
+
+  <div class="perfil-body">
+    <div class="panel-lateral">
+      <div class="info-card">
+        <h3><mat-icon>contact_phone</mat-icon> Datos de Contacto</h3>
+        <ul>
+          <li><strong>Teléfono:</strong> {{cliente.telefono || 'No registrado'}}</li>
+          <li><strong>Email:</strong> {{cliente.email || 'No registrado'}}</li>
+          <li><strong>Dirección:</strong> {{cliente.direccionCompleta || cliente.direccion || 'No registrada'}}</li>
+        </ul>
+      </div>
+
+      <div class="info-card crm-card">
+        <h3><mat-icon>psychology</mat-icon> Inteligencia CRM</h3>
+        
+        <div class="notas-box" *ngIf="cliente.notas; else sinNotas">
+          <strong>Notas Internas:</strong>
+          <p>{{cliente.notas}}</p>
+        </div>
+        <ng-template #sinNotas>
+          <div class="notas-box" style="border-left-color: #cbd5e1; background: #f8fafc;">
+            <p style="color: #64748b;">No hay notas registradas para este cliente.</p>
+          </div>
+        </ng-template>
+      </div>
+    </div>
+
+    <div class="panel-principal">
+      <mat-tab-group animationDuration="0ms">
+        
+        <mat-tab label="Cotizaciones ({{historialCotizaciones.length}})">
+          <div class="tab-content">
+            <table class="historial-table">
+              <thead>
+                <tr>
+                  <th>Documento</th>
+                  <th>Fecha</th>
+                  <th>Total</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let cot of historialCotizaciones">
+                  <td class="doc-link">#{{cot.numero}}</td>
+                  <td>{{cot.fechaEmision | date:'dd/MM/yyyy'}}</td> 
+                  <td>S/ {{cot.total | number:'1.2-2'}}</td>
+                  <td>
+                    <span class="badge" [ngClass]="cot.estado | lowercase">{{cot.estado}}</span>
+                  </td>
+                </tr>
+                
+                <tr *ngIf="isLoadingCotizaciones">
+                  <td colspan="4" class="empty-state">Buscando cotizaciones en la base de datos...</td>
+                </tr>
+                <tr *ngIf="!isLoadingCotizaciones && historialCotizaciones.length === 0">
+                  <td colspan="4" class="empty-state">No se encontraron cotizaciones para este cliente.</td>
+                </tr>
+
+              </tbody>
+            </table>
+          </div>
+        </mat-tab>
+
+       <mat-tab label="Ventas ({{historialVentas.length}})">
+          <div class="tab-content">
+            <table class="historial-table">
+              <thead>
+                <tr>
+                  <th>Comprobante</th>
+                  <th>Fecha</th>
+                  <th>Total</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let venta of historialVentas">
+                  <td class="doc-link">#{{venta.codigo}}</td>
+                  <td>{{venta.fechaVenta | date:'dd/MM/yyyy'}}</td>
+                  <td>S/ {{venta.total | number:'1.2-2'}}</td>
+                  <td>
+                    <span class="badge" [ngClass]="venta.estado === 'COMPLETADA' ? 'success' : 'en_negociacion'">
+                      {{venta.estado}}
+                    </span>
+                  </td>
+                </tr>
+
+                <tr *ngIf="isLoadingVentas">
+                  <td colspan="4" class="empty-state">Buscando compras en la base de datos...</td>
+                </tr>
+                <tr *ngIf="!isLoadingVentas && historialVentas.length === 0">
+                  <td colspan="4" class="empty-state">Este cliente no tiene compras registradas aún.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </mat-tab>
+
+      </mat-tab-group>
+    </div>
+  </div>
+</div>

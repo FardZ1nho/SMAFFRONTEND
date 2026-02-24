@@ -1,5 +1,6 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core'; // 1. Importar ChangeDetectorRef
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router'; // ✅ IMPORTAMOS EL ROUTER PARA LA REDIRECCIÓN
 import { CdkDragDrop, DragDropModule, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -35,7 +36,8 @@ export class CrmTableroComponent implements OnInit {
   constructor(
     private cotizacionService: CotizacionService,
     private snackBar: MatSnackBar,
-    private cdr: ChangeDetectorRef // 2. Inyectar el detector de cambios
+    private cdr: ChangeDetectorRef,
+    private router: Router // ✅ INYECTAMOS EL ROUTER
   ) { }
 
   ngOnInit(): void {
@@ -61,7 +63,7 @@ export class CrmTableroComponent implements OnInit {
           else if (cot.estado === 'PERDIDA') this.perdida.push(cot);
         });
 
-        // 3. Forzar actualización de la vista al terminar de cargar
+        // Forzar actualización de la vista al terminar de cargar
         this.cdr.detectChanges();
       },
       error: () => this.mostrarMensaje('Error al cargar el CRM', 'error')
@@ -86,7 +88,7 @@ export class CrmTableroComponent implements OnInit {
         motivo = respuesta;
       }
 
-      // 1. Movemos la tarjeta visualmente al instante
+      // Movemos la tarjeta visualmente al instante
       transferArrayItem(
         event.previousContainer.data,
         event.container.data,
@@ -94,14 +96,27 @@ export class CrmTableroComponent implements OnInit {
         event.currentIndex
       );
 
-      // 3. Forzar actualización visual inmediata (para que no haya lag visual)
+      // Forzar actualización visual inmediata (para que no haya lag visual)
       this.cdr.detectChanges();
 
-      // 2. Le avisamos al Backend del cambio
+      // Le avisamos al Backend del cambio
       this.cotizacionService.actualizarEstadoPipeline(cotizacionMovida.id, nuevoEstado, motivo).subscribe({
         next: () => {
           this.mostrarMensaje(`Cotización #${cotizacionMovida.numero} movida a ${nuevoEstado}`, 'success');
-          // Opcional: Volver a detectar cambios por seguridad
+          
+          // ⭐ AQUÍ OCURRE LA MAGIA AUTOMÁTICA ⭐
+          if (nuevoEstado === 'GANADA') {
+            // Un pequeño delay (300ms) para que se vea bonita la animación de la tarjeta cayendo
+            setTimeout(() => {
+              const deseaFacturar = confirm(`🎉 ¡Excelente cierre!\n\n¿Deseas generar el comprobante de venta para la cotización #${cotizacionMovida.numero} ahora mismo?`);
+              
+              if (deseaFacturar) {
+                // ✅ AQUÍ ESTÁ EL CAMBIO: Enviamos el ID en la URL como parámetro (queryParams)
+                this.router.navigate(['/ventas/nueva'], { queryParams: { cotizacionId: cotizacionMovida.id } }); 
+              }
+            }, 300);
+          }
+          
           this.cdr.detectChanges();
         },
         error: () => {
@@ -119,7 +134,7 @@ export class CrmTableroComponent implements OnInit {
     });
   }
 
- // ✅ BOTÓN WHATSAPP INTELIGENTE (Plantillas dinámicas según el Embudo)
+  // BOTÓN WHATSAPP INTELIGENTE
   abrirWhatsApp(telefono: string, cliente: string, numeroCotizacion: string, estado: EstadoPipeline): void {
     if (!telefono) {
       this.mostrarMensaje('El cliente no tiene teléfono registrado', 'warning');

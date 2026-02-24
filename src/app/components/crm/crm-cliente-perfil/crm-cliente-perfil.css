@@ -1,0 +1,38 @@
+.perfil-container { padding: 24px; max-width: 1200px; margin: 0 auto; background: #f8fafc; min-height: 100vh; }
+
+.perfil-header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 20px 24px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 24px; }
+.header-info { display: flex; align-items: center; gap: 16px; }
+.header-info h1 { margin: 0; font-size: 24px; color: #1e293b; font-weight: 700; }
+.subtitle { margin: 4px 0 0 0; color: #64748b; display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.subtitle mat-icon { font-size: 16px; width: 16px; height: 16px; }
+.btn-back { margin-right: 8px; color: #64748b; }
+
+.header-actions { display: flex; align-items: center; gap: 16px; }
+.status-chip { background: #dcfce7; color: #166534; font-weight: 600; }
+
+.perfil-body { display: grid; grid-template-columns: 320px 1fr; gap: 24px; align-items: start; }
+
+.info-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 24px; }
+.info-card h3 { margin-top: 0; font-size: 16px; color: #334155; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; }
+.info-card h3 mat-icon { color: #3b82f6; }
+.info-card ul { list-style: none; padding: 0; margin: 0; }
+.info-card li { padding: 10px 0; border-bottom: 1px dashed #f1f5f9; color: #475569; font-size: 14px; }
+.info-card li strong { color: #1e293b; display: inline-block; width: 80px; }
+
+.notas-box { margin-top: 16px; background: #fffbeb; padding: 12px; border-radius: 8px; border-left: 4px solid #f59e0b; }
+.notas-box p { margin: 8px 0 0 0; font-size: 13px; color: #92400e; font-style: italic; }
+
+.panel-principal { background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden; }
+.tab-content { padding: 20px; }
+
+.historial-table { width: 100%; border-collapse: collapse; }
+.historial-table th { text-align: left; padding: 12px; border-bottom: 2px solid #e2e8f0; color: #64748b; font-size: 13px; font-weight: 600; }
+.historial-table td { padding: 14px 12px; border-bottom: 1px solid #f1f5f9; color: #334155; font-size: 14px; }
+.doc-link { color: #2563eb; font-weight: 600; cursor: pointer; }
+.doc-link:hover { text-decoration: underline; }
+
+.badge { padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+.badge.ganada, .badge.success { background: #dcfce7; color: #166534; }
+.badge.en_negociacion { background: #fef3c7; color: #b45309; }
+.badge.perdida { background: #fee2e2; color: #b91c1c; }
+.empty-state { text-align: center; color: #94a3b8; font-style: italic; padding: 32px !important; }

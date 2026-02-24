@@ -31,6 +31,9 @@ import { CotizacionFormComponent } from './components/cotizaciones/cotizacion-fo
 import { RecepcionChecklistComponent } from './components/importaciones/recepcion-checklist/recepcion-checklist'; 
 import { RecepcionListaComponent } from './components/importaciones/recepcion-lista/recepcion-lista';
 import { CrmTableroComponent } from './components/crm/crm-tablero/crm-tablero';
+import { CrmClientePerfilComponent } from './components/crm/crm-cliente-perfil/crm-cliente-perfil';
+import { CrmDashboardComponent } from './components/crm/crm-dashboard/crm-dashboard';
+import { CrmClienteListComponent } from './components/crm/crm-cliente-list/crm-cliente-list';
 
 export const routes: Routes = [
   // ========== RUTAS BASE ==========
@@ -48,9 +51,18 @@ export const routes: Routes = [
     component: InicioComponent,
     canActivate: [seguridadGuard]
   },
-
-  { path: 'crm', component: CrmTableroComponent },
-
+// 🏠 El Panel Principal del CRM
+ // 1. EL PANEL DE CONTROL
+  { path: 'crm', component: CrmDashboardComponent },
+  
+  // 2. EL TABLERO KANBAN
+  { path: 'crm/pipeline', component: CrmTableroComponent },
+  
+  // 3. LA NUEVA LISTA DEL CRM (Fíjate que diga CrmClienteListComponent y no ClienteListComponent)
+  { path: 'crm/clientes', component: CrmClienteListComponent },
+  
+  // 4. EL PERFIL 360° (El ojito debe llevar a CrmClientePerfilComponent)
+  { path: 'crm/clientes/perfil/:id', component: CrmClientePerfilComponent },
   // ========== INVENTARIO ==========
   {
     path: 'inventario',

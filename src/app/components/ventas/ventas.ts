@@ -20,6 +20,7 @@ import { VentaService } from '../../services/venta-service';
 import { ProductoService } from '../../services/producto-service';
 import { ClienteService } from '../../services/cliente-service';
 import { CuentaBancariaService } from '../../services/cuenta-bancaria-service';
+import { CotizacionService } from '../../services/cotizacion-service'; // ✅ Servicio inyectado
 
 // Modelos
 import { Producto } from '../../models/producto';
@@ -131,6 +132,7 @@ export class VentasComponent implements OnInit {
     private productoService: ProductoService,
     private clienteService: ClienteService,
     private cuentaService: CuentaBancariaService,
+    private cotizacionService: CotizacionService, // ✅ Inyectado
     private router: Router,
     private route: ActivatedRoute,
     private cdr: ChangeDetectorRef,
@@ -151,21 +153,122 @@ export class VentasComponent implements OnInit {
         this.productosFiltrados = listaProductos;
         this.clientes = listaClientes;
 
-        // Verificar si estamos editando
+        // Verificar si estamos editando una VENTA EXISTENTE
         const idParam = this.route.snapshot.paramMap.get('id');
-        if (idParam) {
+        
+        // Verificar si venimos desde una COTIZACIÓN en el Kanban
+        const cotizacionIdParam = this.route.snapshot.queryParamMap.get('cotizacionId');
+
+        // ⭐ EL CAMBIO ESTÁ AQUÍ: Ignoramos la palabra "nueva"
+        if (idParam && idParam !== 'nueva') {
+          // Modo Edición Normal
           this.ventaId = +idParam;
           this.esEdicion = true;
           this.cargarDatosVenta(this.ventaId);
+        } else if (cotizacionIdParam) {
+          // Modo "Cerrar Trato" desde el CRM
+          this.isLoadingProductos = false;
+          this.pagoActual.moneda = this.moneda;
+          this.cargarDatosCotizacion(+cotizacionIdParam);
         } else {
+          // Modo Nueva Venta Normal
           this.isLoadingProductos = false;
           this.pagoActual.moneda = this.moneda;
         }
       },
-      error: (err) => {
+      error: (err: any) => { // ✅ CORRECCIÓN DE TIPADO
         console.error('Error cargando datos base:', err);
         this.isLoadingProductos = false;
         this.mostrarNotificacion('Error cargando datos iniciales', 'error');
+      }
+    });
+  }
+
+  // --- CARGAR DATOS DESDE LA COTIZACIÓN GANADA ---
+ // --- CARGAR DATOS DESDE LA COTIZACIÓN GANADA ---
+  cargarDatosCotizacion(cotizacionId: number): void {
+    this.isLoadingProductos = true;
+    this.mostrarNotificacion('Cargando datos de la cotización...', 'success');
+    
+    this.cotizacionService.obtenerPorId(cotizacionId).subscribe({
+      next: (cotizacion: any) => {
+        
+        // ⭐ EL CHISMOSO: Abre la consola (F12) para ver qué llegó realmente
+        console.log('✅ Cotización recibida de Spring Boot:', cotizacion);
+        
+        // 1. Asignar la Moneda
+        if (cotizacion.moneda) {
+          this.moneda = cotizacion.moneda;
+          this.pagoActual.moneda = this.moneda;
+        }
+
+        // 2. Asignar el Cliente
+        if (cotizacion.cliente && cotizacion.cliente.id) {
+          const clienteEncontrado = this.clientes.find(c => String(c.id) === String(cotizacion.cliente.id));
+          if (clienteEncontrado) {
+            this.seleccionarCliente(clienteEncontrado);
+          } else {
+            this.nombreCliente = cotizacion.cliente.nombreCompleto;
+            this.clienteSeleccionado = { id: cotizacion.cliente.id, nombreCompleto: cotizacion.cliente.nombreCompleto } as any;
+            this.busquedaCliente = cotizacion.cliente.nombreCompleto;
+          }
+        }
+
+        // 3. Pasar los detalles de la cotización al carrito
+        if (cotizacion.detalles && cotizacion.detalles.length > 0) {
+          const nuevosProductos: ProductoEnVenta[] = [];
+
+          cotizacion.detalles.forEach((detalle: any) => {
+            // ⭐ BLINDAJE EXTREMO: Buscamos el ID y los datos sin importar cómo los llame tu backend
+            const idRealProducto = detalle.producto?.id || detalle.productoId || detalle.idProducto || detalle.id;
+            const nombreRealProducto = detalle.producto?.nombre || detalle.productoNombre || 'Producto de Cotización';
+            const precioReal = detalle.precioUnitario || detalle.precio || 0;
+            const cantidadReal = detalle.cantidad || 1;
+
+            let productoCatalogo = this.productos.find(p => String(p.id) === String(idRealProducto));
+            
+            if (!productoCatalogo) {
+              productoCatalogo = {
+                id: idRealProducto, 
+                nombre: nombreRealProducto, 
+                codigo: '---', 
+                precioVenta: precioReal, 
+                stockActual: 999, 
+                moneda: this.moneda, 
+                tipo: 'PRODUCTO'
+              } as Producto;
+            }
+
+            nuevosProductos.push({
+              producto: productoCatalogo,
+              cantidad: cantidadReal,
+              precioUnitario: precioReal,
+              descuento: 0,
+              subtotal: 0
+            });
+          });
+
+          this.productosEnVenta = nuevosProductos;
+          this.productosEnVenta.forEach(item => this.calcularSubtotalProducto(item));
+          this.calcularTotales();
+
+        } else {
+          // Si entra aquí, Spring Boot te está ocultando los datos
+          this.mostrarNotificacion('La cotización cargó, pero vino sin productos', 'warning');
+          console.warn('⚠️ OJO: Spring Boot no envió el array "detalles". Revisa tu backend.');
+        }
+
+        // 4. Agregar nota automática
+        this.notas = `Venta generada a partir de la Cotización #${cotizacion.numero}`;
+        
+        this.isLoadingProductos = false;
+        this.cdr.detectChanges();
+      },
+      error: (err: any) => { 
+        console.error('Error cargando la cotización', err);
+        this.isLoadingProductos = false;
+        this.mostrarNotificacion('Error al recuperar los detalles de la cotización', 'error');
+        this.cdr.detectChanges();
       }
     });
   }
@@ -200,17 +303,16 @@ export class VentasComponent implements OnInit {
                 metodoPago: p.metodoPago,
                 monto: p.monto,
                 moneda: p.moneda,
-                cuentaBancariaId: undefined, // Como acordamos, no pedimos el ID al editar
+                cuentaBancariaId: undefined, 
                 referencia: p.referencia || ''
             }));
         }
 
-        // Cargar Detalles de Productos (Con los nuevos datos del backend)
+        // Cargar Detalles de Productos 
         if (venta.detalles) {
           this.productosEnVenta = venta.detalles.map((detalle: any) => {
             const productoCatalogo = this.productos.find(p => String(p.id) === String(detalle.productoId));
             
-            // Si por alguna razón el producto fue borrado del sistema, lo recreamos temporalmente
             const productoReal = productoCatalogo || {
               id: detalle.productoId, nombre: detalle.productoNombre, codigo: '---', 
               precioVenta: detalle.precioUnitario, stockActual: 999, moneda: this.moneda, tipo: 'PRODUCTO'
@@ -219,8 +321,8 @@ export class VentasComponent implements OnInit {
             return {
               producto: productoReal,
               cantidad: detalle.cantidad,
-              precioUnitario: detalle.precioUnitario, // Trae el precio con el que se guardó
-              descuento: detalle.descuento || 0,      // Trae el descuento original
+              precioUnitario: detalle.precioUnitario, 
+              descuento: detalle.descuento || 0,      
               subtotal: 0
             };
           });
@@ -232,7 +334,7 @@ export class VentasComponent implements OnInit {
         this.isLoadingProductos = false;
         this.cdr.detectChanges();
       },
-      error: () => {
+      error: (err: any) => { // ✅ CORRECCIÓN DE TIPADO
         this.isLoadingProductos = false;
         this.mostrarNotificacion('Error cargando la venta', 'error');
       }
@@ -348,7 +450,6 @@ export class VentasComponent implements OnInit {
   onCantidadChange(item: ProductoEnVenta) { 
       const esServicio = item.producto.tipo === 'SERVICIO';
 
-      // Al editar, el stock en BD ya se redujo. Permitimos la cantidad que ya estaba.
       if(!esServicio && item.cantidad > item.producto.stockActual && !this.esEdicion) {
           item.cantidad = item.producto.stockActual;
       }
@@ -522,10 +623,9 @@ export class VentasComponent implements OnInit {
         next: () => {
             this.mostrarNotificacion('✅ Venta guardada exitosamente', 'success');
             this.isSaving = false;
-            // ✅ REDIRECCIÓN A LA LISTA DESPUÉS DE GUARDAR O ACTUALIZAR
             this.router.navigate(['/ventas/lista']); 
         },
-        error: (err: any) => {
+        error: (err: any) => { // ✅ CORRECCIÓN DE TIPADO
             this.isSaving = false;
             const msg = err.error?.message || 'Error al procesar venta';
             this.mostrarNotificacion(msg, 'error');
@@ -548,10 +648,9 @@ export class VentasComponent implements OnInit {
         next: () => {
             this.mostrarNotificacion('✅ Borrador guardado exitosamente', 'success');
             this.isSaving = false;
-            // ✅ REDIRECCIÓN A LA LISTA DESPUÉS DE GUARDAR O ACTUALIZAR
             this.router.navigate(['/ventas/lista']);
         },
-        error: () => { 
+        error: (err: any) => { // ✅ CORRECCIÓN DE TIPADO
             this.isSaving = false; 
             this.mostrarNotificacion('Error al guardar borrador', 'error'); 
         }
@@ -563,6 +662,7 @@ export class VentasComponent implements OnInit {
        this.ventaService.guardarBorrador(request).subscribe(observer);
     }
   }
+  
   limpiarFormulario(): void {
     this.productosEnVenta = [];
     this.listaPagos = [];

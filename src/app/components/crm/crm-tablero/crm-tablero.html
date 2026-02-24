@@ -1,0 +1,130 @@
+<div class="crm-container">
+  <div class="header">
+    <h1>🚀 Pipeline de Ventas</h1>
+    <p>Arrastra las oportunidades de negocio para actualizar su estado.</p>
+  </div>
+
+  <div class="kanban-board">
+    
+    <div class="kanban-column">
+      <h3 class="col-title inicial">Contacto Inicial <span>{{contactoInicial.length}}</span></h3>
+      <div class="card-list" cdkDropList #listaInicial="cdkDropList" [cdkDropListData]="contactoInicial"
+           [cdkDropListConnectedTo]="[listaEnviada, listaNegociacion, listaGanada, listaPerdida]"
+           (cdkDropListDropped)="drop($event, 'CONTACTO_INICIAL')">
+        
+        <div class="crm-card" *ngFor="let item of contactoInicial" cdkDrag>
+          <div class="card-header">
+            <span class="cot-num">#{{item.numero}}</span>
+            <span class="cot-date">{{item.fechaEmision | date:'dd MMM'}}</span>
+          </div>
+          <div class="card-client"><mat-icon>person</mat-icon> {{item.cliente.nombreCompleto}}</div>
+          <div class="card-amount">{{item.moneda === 'PEN' ? 'S/' : '$'}} {{item.total | number:'1.2-2'}}</div>
+          <div class="card-actions">
+            <button mat-icon-button (click)="descargarPDF(item.id)" matTooltip="Ver PDF"><mat-icon>picture_as_pdf</mat-icon></button>
+            <button mat-icon-button color="primary" matTooltip="Enviar Saludo" 
+                    (click)="abrirWhatsApp(item.cliente.telefono || '', item.cliente.nombreCompleto, item.numero, 'CONTACTO_INICIAL')">
+              <mat-icon>chat</mat-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kanban-column">
+      <h3 class="col-title enviada">Cotización Enviada <span>{{cotizacionEnviada.length}}</span></h3>
+      <div class="card-list" cdkDropList #listaEnviada="cdkDropList" [cdkDropListData]="cotizacionEnviada"
+           [cdkDropListConnectedTo]="[listaInicial, listaNegociacion, listaGanada, listaPerdida]"
+           (cdkDropListDropped)="drop($event, 'COTIZACION_ENVIADA')">
+        
+        <div class="crm-card" *ngFor="let item of cotizacionEnviada" cdkDrag>
+          <div class="card-header">
+            <span class="cot-num">#{{item.numero}}</span>
+          </div>
+          <div class="card-client"><mat-icon>person</mat-icon> {{item.cliente.nombreCompleto}}</div>
+          <div class="card-amount">{{item.moneda === 'PEN' ? 'S/' : '$'}} {{item.total | number:'1.2-2'}}</div>
+          <div class="card-actions">
+             <button mat-icon-button (click)="descargarPDF(item.id)" matTooltip="Ver PDF"><mat-icon>picture_as_pdf</mat-icon></button>
+             <button mat-icon-button color="primary" matTooltip="Hacer Seguimiento" 
+                     (click)="abrirWhatsApp(item.cliente.telefono || '', item.cliente.nombreCompleto, item.numero, 'COTIZACION_ENVIADA')">
+               <mat-icon>chat</mat-icon>
+             </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kanban-column">
+      <h3 class="col-title negociacion">En Negociación <span>{{enNegociacion.length}}</span></h3>
+      <div class="card-list" cdkDropList #listaNegociacion="cdkDropList" [cdkDropListData]="enNegociacion"
+           [cdkDropListConnectedTo]="[listaInicial, listaEnviada, listaGanada, listaPerdida]"
+           (cdkDropListDropped)="drop($event, 'EN_NEGOCIACION')">
+        
+        <div class="crm-card" *ngFor="let item of enNegociacion" cdkDrag>
+          <div class="card-header">
+            <span class="cot-num">#{{item.numero}}</span>
+            <span class="cot-margin" *ngIf="item.margenGananciaEstimado">
+              Margen: +{{item.moneda === 'PEN' ? 'S/' : '$'}}{{item.margenGananciaEstimado | number:'1.2-2'}}
+            </span>
+          </div>
+          <div class="card-client"><mat-icon>person</mat-icon> {{item.cliente.nombreCompleto}}</div>
+          <div class="card-amount">{{item.moneda === 'PEN' ? 'S/' : '$'}} {{item.total | number:'1.2-2'}}</div>
+          <div class="card-actions">
+            <button mat-icon-button (click)="descargarPDF(item.id)" matTooltip="Ver PDF"><mat-icon>picture_as_pdf</mat-icon></button>
+            <button mat-icon-button color="primary" matTooltip="Negociar Cierre" 
+                    (click)="abrirWhatsApp(item.cliente.telefono || '', item.cliente.nombreCompleto, item.numero, 'EN_NEGOCIACION')">
+              <mat-icon>chat</mat-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kanban-column">
+      <h3 class="col-title ganada">Ganada <span>{{ganada.length}}</span></h3>
+      <div class="card-list" cdkDropList #listaGanada="cdkDropList" [cdkDropListData]="ganada"
+           [cdkDropListConnectedTo]="[listaInicial, listaEnviada, listaNegociacion, listaPerdida]"
+           (cdkDropListDropped)="drop($event, 'GANADA')">
+        
+        <div class="crm-card success" *ngFor="let item of ganada" cdkDrag>
+          <div class="card-header"><span class="cot-num">#{{item.numero}}</span></div>
+          <div class="card-client"><mat-icon>person</mat-icon> {{item.cliente.nombreCompleto}}</div>
+          <div class="card-amount">{{item.moneda === 'PEN' ? 'S/' : '$'}} {{item.total | number:'1.2-2'}}</div>
+          <div class="card-actions">
+            <button mat-icon-button (click)="descargarPDF(item.id)" matTooltip="Ver PDF"><mat-icon>picture_as_pdf</mat-icon></button>
+            <button mat-icon-button color="primary" matTooltip="Enviar Cuentas de Pago" 
+                    (click)="abrirWhatsApp(item.cliente.telefono || '', item.cliente.nombreCompleto, item.numero, 'GANADA')">
+              <mat-icon>chat</mat-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kanban-column">
+      <h3 class="col-title perdida">Perdida <span>{{perdida.length}}</span></h3>
+      <div class="card-list" cdkDropList #listaPerdida="cdkDropList" [cdkDropListData]="perdida"
+           [cdkDropListConnectedTo]="[listaInicial, listaEnviada, listaNegociacion, listaGanada]"
+           (cdkDropListDropped)="drop($event, 'PERDIDA')">
+        
+        <div class="crm-card danger" *ngFor="let item of perdida" cdkDrag>
+          <div class="card-header"><span class="cot-num">#{{item.numero}}</span></div>
+          <div class="card-client"><mat-icon>person</mat-icon> {{item.cliente.nombreCompleto}}</div>
+          <div class="card-amount" style="text-decoration: line-through;">
+            {{item.moneda === 'PEN' ? 'S/' : '$'}} {{item.total | number:'1.2-2'}}
+          </div>
+          <div class="card-motivo" *ngIf="item.motivoPerdida">
+             Motivo: {{item.motivoPerdida}}
+          </div>
+          <div class="card-actions">
+            <button mat-icon-button (click)="descargarPDF(item.id)" matTooltip="Ver PDF"><mat-icon>picture_as_pdf</mat-icon></button>
+            <button mat-icon-button color="primary" matTooltip="Mensaje de Despedida" 
+                    (click)="abrirWhatsApp(item.cliente.telefono || '', item.cliente.nombreCompleto, item.numero, 'PERDIDA')">
+              <mat-icon>chat</mat-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

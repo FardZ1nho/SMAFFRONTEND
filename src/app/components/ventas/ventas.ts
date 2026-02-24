@@ -170,11 +170,12 @@ export class VentasComponent implements OnInit {
     });
   }
 
-  // --- MÉTODOS DE CARGA ---
+  // --- MÉTODOS DE CARGA PARA EDICIÓN ---
   cargarDatosVenta(id: number): void {
     this.isLoadingProductos = true;
     this.ventaService.obtenerVenta(id).subscribe({
       next: (venta: any) => {
+        // Cargar Cliente
         let idCliente = venta.clienteId || (venta.cliente ? venta.cliente.id : null);
         const clienteEncontrado = this.clientes.find(c => String(c.id) === String(idCliente));
         if (clienteEncontrado) this.seleccionarCliente(clienteEncontrado);
@@ -183,43 +184,51 @@ export class VentasComponent implements OnInit {
           this.clienteSeleccionado = { id: idCliente || 0, nombreCompleto: venta.nombreCliente } as any;
         }
 
+        // Cargar Datos Generales
         this.fechaVenta = new Date(venta.fechaVenta);
         this.notas = venta.notas || '';
         this.moneda = venta.moneda || 'PEN';
         this.tipoCambio = venta.tipoCambio || 3.80;
         this.tipoDocumento = venta.tipoDocumento || 'FACTURA';
         this.numeroDocumento = venta.numeroDocumento || '';
-        
         this.tipoPago = venta.tipoPago || TipoPago.CONTADO;
         this.numeroCuotas = venta.numeroCuotas || 1;
 
+        // Cargar Pagos Anteriores
         if (venta.pagos && venta.pagos.length > 0) {
             this.listaPagos = venta.pagos.map((p: any) => ({
                 metodoPago: p.metodoPago,
                 monto: p.monto,
                 moneda: p.moneda,
-                cuentaBancariaId: p.cuentaDestinoId || (p.cuentaDestino ? p.cuentaDestino.id : undefined),
-                referencia: p.referencia
+                cuentaBancariaId: undefined, // Como acordamos, no pedimos el ID al editar
+                referencia: p.referencia || ''
             }));
         }
 
+        // Cargar Detalles de Productos (Con los nuevos datos del backend)
         if (venta.detalles) {
           this.productosEnVenta = venta.detalles.map((detalle: any) => {
             const productoCatalogo = this.productos.find(p => String(p.id) === String(detalle.productoId));
-            const productoReal = productoCatalogo || detalle.producto || {
-              id: detalle.productoId, nombre: 'No Disponible', codigo: '???', precioVenta: 0, stockActual: 0, moneda: 'PEN'
+            
+            // Si por alguna razón el producto fue borrado del sistema, lo recreamos temporalmente
+            const productoReal = productoCatalogo || {
+              id: detalle.productoId, nombre: detalle.productoNombre, codigo: '---', 
+              precioVenta: detalle.precioUnitario, stockActual: 999, moneda: this.moneda, tipo: 'PRODUCTO'
             };
+
             return {
               producto: productoReal,
               cantidad: detalle.cantidad,
-              precioUnitario: detalle.precioUnitario,
-              descuento: detalle.descuento || 0,
+              precioUnitario: detalle.precioUnitario, // Trae el precio con el que se guardó
+              descuento: detalle.descuento || 0,      // Trae el descuento original
               subtotal: 0
             };
           });
+          
           this.productosEnVenta.forEach(item => this.calcularSubtotalProducto(item));
           this.calcularTotales(); 
         }
+        
         this.isLoadingProductos = false;
         this.cdr.detectChanges();
       },
@@ -257,6 +266,7 @@ export class VentasComponent implements OnInit {
   }
     
   limpiarCliente(): void { this.clienteSeleccionado = null; this.busquedaCliente = ''; this.nombreCliente = ''; }
+  
   buscarClientes(): void { 
     if (!this.busquedaCliente.trim()) { this.clientesFiltrados = []; this.mostrarListaClientes = false; return; }
     const termino = this.busquedaCliente.toLowerCase();
@@ -298,7 +308,6 @@ export class VentasComponent implements OnInit {
 
   // --- GESTIÓN PRODUCTOS ---
   agregarProducto(producto: Producto): void {
-      // ✅ CORRECCIÓN CLAVE: Validar stock solo si NO es servicio
       const esServicio = producto.tipo === 'SERVICIO';
 
       if (!esServicio && producto.stockActual <= 0) { 
@@ -309,7 +318,6 @@ export class VentasComponent implements OnInit {
       const existe = this.productosEnVenta.find(p => p.producto.id === producto.id);
       
       if (existe) {
-        // ✅ CORRECCIÓN: Si es servicio, no limitar cantidad por stock
         if (!esServicio && existe.cantidad >= producto.stockActual) {
             this.mostrarNotificacion('Stock máximo alcanzado', 'warning'); 
             return;
@@ -338,13 +346,14 @@ export class VentasComponent implements OnInit {
   }
     
   onCantidadChange(item: ProductoEnVenta) { 
-      // ✅ CORRECCIÓN: Si es servicio, no limitar cantidad
       const esServicio = item.producto.tipo === 'SERVICIO';
 
-      if(!esServicio && item.cantidad > item.producto.stockActual) {
+      // Al editar, el stock en BD ya se redujo. Permitimos la cantidad que ya estaba.
+      if(!esServicio && item.cantidad > item.producto.stockActual && !this.esEdicion) {
           item.cantidad = item.producto.stockActual;
       }
-      this.calcularSubtotalProducto(item); this.calcularTotales(); 
+      this.calcularSubtotalProducto(item); 
+      this.calcularTotales(); 
   }
 
   onPrecioChange(item: ProductoEnVenta) { this.calcularSubtotalProducto(item); this.calcularTotales(); }
@@ -359,7 +368,7 @@ export class VentasComponent implements OnInit {
   }
 
   // ============================================
-  // ✅ GESTIÓN DE PAGOS MÚLTIPLES Y HELPERS
+  // GESTIÓN DE PAGOS MÚLTIPLES Y HELPERS
   // ============================================
 
   esPagoDigital(metodo: MetodoPago): boolean {
@@ -391,7 +400,6 @@ export class VentasComponent implements OnInit {
 
     this.listaPagos.push({ ...this.pagoActual });
 
-    // Reiniciar para siguiente pago
     this.pagoActual.monto = 0;
     this.pagoActual.referencia = '';
     this.calcularTotales();
@@ -492,7 +500,7 @@ export class VentasComponent implements OnInit {
         this.agregarPagoALista();
     }
 
-    if (this.listaPagos.length === 0) {
+    if (this.listaPagos.length === 0 && this.tipoPago !== TipoPago.CREDITO) {
          this.mostrarNotificacion('Debe agregar al menos un pago para procesar la venta', 'warning');
          return;
     }
@@ -505,15 +513,16 @@ export class VentasComponent implements OnInit {
         }
     }
 
-    if (!confirm('¿Estás seguro de emitir esta venta?')) return;
+    if (!confirm('¿Estás seguro de registrar esta venta?')) return;
 
     this.isSaving = true;
     const request = this.prepararRequest();
 
     const observer = {
         next: () => {
-            this.mostrarNotificacion('✅ Venta registrada exitosamente', 'success');
+            this.mostrarNotificacion('✅ Venta guardada exitosamente', 'success');
             this.isSaving = false;
+            // ✅ REDIRECCIÓN A LA LISTA DESPUÉS DE GUARDAR O ACTUALIZAR
             this.router.navigate(['/ventas/lista']); 
         },
         error: (err: any) => {
@@ -537,11 +546,15 @@ export class VentasComponent implements OnInit {
 
     const observer = {
         next: () => {
-            this.mostrarNotificacion('✅ Borrador guardado', 'success');
+            this.mostrarNotificacion('✅ Borrador guardado exitosamente', 'success');
             this.isSaving = false;
-            if(!this.esEdicion) this.limpiarFormulario();
+            // ✅ REDIRECCIÓN A LA LISTA DESPUÉS DE GUARDAR O ACTUALIZAR
+            this.router.navigate(['/ventas/lista']);
         },
-        error: () => { this.isSaving = false; this.mostrarNotificacion('Error al guardar borrador', 'error'); }
+        error: () => { 
+            this.isSaving = false; 
+            this.mostrarNotificacion('Error al guardar borrador', 'error'); 
+        }
     };
 
     if (this.esEdicion && this.ventaId) {
@@ -550,7 +563,6 @@ export class VentasComponent implements OnInit {
        this.ventaService.guardarBorrador(request).subscribe(observer);
     }
   }
-
   limpiarFormulario(): void {
     this.productosEnVenta = [];
     this.listaPagos = [];

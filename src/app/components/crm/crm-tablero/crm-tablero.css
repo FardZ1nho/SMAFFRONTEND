@@ -1,0 +1,76 @@
+.crm-container { padding: 24px; background-color: #f8fafc; min-height: 100vh; }
+.header h1 { font-size: 24px; font-weight: 700; color: #1e293b; margin: 0; }
+.header p { color: #64748b; margin-bottom: 24px; }
+
+/* El Tablero (Grid horizontal) */
+.kanban-board {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  overflow-x: auto;
+  padding-bottom: 16px;
+}
+
+/* Las Columnas grises */
+.kanban-column {
+  background: #e2e8f0;
+  border-radius: 8px;
+  width: 280px;
+  min-width: 280px;
+  display: flex;
+  flex-direction: column;
+}
+
+.col-title {
+  padding: 12px 16px; margin: 0; font-size: 14px; font-weight: 700; color: #334155;
+  display: flex; justify-content: space-between; border-radius: 8px 8px 0 0;
+}
+.col-title.inicial { border-top: 4px solid #94a3b8; }
+.col-title.enviada { border-top: 4px solid #3b82f6; }
+.col-title.negociacion { border-top: 4px solid #f59e0b; }
+.col-title.ganada { border-top: 4px solid #10b981; }
+.col-title.perdida { border-top: 4px solid #ef4444; }
+
+.col-title span { background: #cbd5e1; padding: 2px 8px; border-radius: 12px; font-size: 12px; }
+
+/* La zona donde se arrastran las tarjetas */
+.card-list {
+  padding: 12px;
+  min-height: 150px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Las Tarjetas Blancas (Tus Cotizaciones) */
+.crm-card {
+  background: white; padding: 12px; border-radius: 8px; cursor: grab;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #cbd5e1;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.crm-card:hover { box-shadow: 0 4px 6px rgba(0,0,0,0.1); transform: translateY(-2px); }
+.crm-card:active { cursor: grabbing; }
+
+.crm-card.success { border-left: 4px solid #10b981; }
+.crm-card.danger { border-left: 4px solid #ef4444; opacity: 0.8; }
+
+.card-header { display: flex; justify-content: space-between; margin-bottom: 8px; align-items: center; }
+.cot-num { font-size: 12px; font-weight: 700; color: #475569; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; }
+.cot-date { font-size: 11px; color: #94a3b8; }
+.cot-margin { font-size: 11px; color: #059669; font-weight: 700; background: #dcfce7; padding: 2px 6px; border-radius: 4px; }
+
+.card-client { font-size: 13px; font-weight: 600; color: #1e293b; display: flex; align-items: center; gap: 4px; margin-bottom: 6px;}
+.card-client mat-icon { font-size: 16px; width: 16px; height: 16px; color: #94a3b8; }
+
+.card-amount { font-size: 16px; font-weight: 800; color: #2563eb; }
+.card-motivo { font-size: 11px; color: #ef4444; margin-top: 8px; font-style: italic; }
+
+.card-actions { display: flex; justify-content: flex-end; margin-top: 8px; border-top: 1px solid #f1f5f9; padding-top: 8px;}
+.card-actions mat-icon { font-size: 18px; width: 18px; height: 18px; }
+
+/* Efecto cuando estás arrastrando una tarjeta */
+.cdk-drag-preview {
+  box-sizing: border-box; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+.cdk-drag-placeholder { opacity: 0.3; }
+.cdk-drag-animating { transition: transform 250ms cubic-bezier(0, 0, 0.2, 1); }

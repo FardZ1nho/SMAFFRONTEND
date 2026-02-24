@@ -70,12 +70,22 @@ export class CotizacionListComponent implements OnInit {
     });
   }
 
+ // 📄 LÓGICA PARA APROBAR (AHORA ES MOVER AL ESTADO "GANADA")
   aprobar(cot: CotizacionResponse): void {
-    if(confirm(`¿Deseas aprobar la cotización ${cot.serie}-${cot.numero} y convertirla en venta?`)) {
-      this.cotizacionService.aprobar(cot.id).subscribe(() => {
-        alert('Cotización aprobada correctamente');
-        this.cargarDatos();
+    if(confirm(`¿Deseas marcar la cotización ${cot.serie}-${cot.numero} como GANADA y convertirla en venta?`)) {
+      
+      // ✅ Usamos el nuevo método del CRM
+      this.cotizacionService.actualizarEstadoPipeline(cot.id, 'GANADA').subscribe({
+        next: () => {
+          alert('¡Cotización ganada exitosamente!');
+          this.cargarDatos(); // Recarga la tabla
+        },
+        error: (err) => {
+          console.error('Error al actualizar estado:', err);
+          alert('Error al actualizar la cotización');
+        }
       });
+      
     }
   }
 }

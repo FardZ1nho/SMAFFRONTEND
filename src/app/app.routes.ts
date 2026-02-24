@@ -30,6 +30,7 @@ import { CotizacionFormComponent } from './components/cotizaciones/cotizacion-fo
 // RECEPCIONES
 import { RecepcionChecklistComponent } from './components/importaciones/recepcion-checklist/recepcion-checklist'; 
 import { RecepcionListaComponent } from './components/importaciones/recepcion-lista/recepcion-lista';
+import { CrmTableroComponent } from './components/crm/crm-tablero/crm-tablero';
 
 export const routes: Routes = [
   // ========== RUTAS BASE ==========
@@ -47,6 +48,8 @@ export const routes: Routes = [
     component: InicioComponent,
     canActivate: [seguridadGuard]
   },
+
+  { path: 'crm', component: CrmTableroComponent },
 
   // ========== INVENTARIO ==========
   {

@@ -1,5 +1,5 @@
 <div class="ventas-lista-container">
-    
+
     <div class="header">
         <div class="header-left">
             <div class="title-with-icon">
@@ -27,10 +27,10 @@
     </div>
 
     <mat-tab-group animationDuration="200ms" class="custom-tabs">
-        
+
         <mat-tab label="Historial Completo">
             <div class="tab-content">
-                
+
                 <div class="search-bar-section">
                     <div class="filter-group search-main">
                         <label class="search-label">
@@ -38,7 +38,8 @@
                             Buscar Venta:
                         </label>
                         <div class="input-wrapper">
-                            <input type="text" class="filter-input" placeholder="Buscar por código de ticket o nombre de cliente..."
+                            <input type="text" class="filter-input"
+                                placeholder="Buscar por código de ticket o nombre de cliente..."
                                 [(ngModel)]="terminoBusqueda" (keyup)="buscarVentas()">
                             <button class="btn-clear" *ngIf="terminoBusqueda" (click)="limpiarBusqueda()">
                                 <mat-icon>close</mat-icon>
@@ -75,13 +76,15 @@
                         <button mat-flat-button color="warn" (click)="cargarVentas()">Reintentar</button>
                     </div>
 
-                    <div *ngIf="!isLoading && !errorMessage && ventasFiltradas.data.length === 0" class="state-container empty">
+                    <div *ngIf="!isLoading && !errorMessage && ventasFiltradas.data.length === 0"
+                        class="state-container empty">
                         <mat-icon>receipt</mat-icon>
                         <h3>No se encontraron ventas</h3>
                         <p>Ajusta los filtros o crea una nueva transacción</p>
                     </div>
 
-                    <div class="table-responsive" *ngIf="!isLoading && !errorMessage && ventasFiltradas.data.length > 0">
+                    <div class="table-responsive"
+                        *ngIf="!isLoading && !errorMessage && ventasFiltradas.data.length > 0">
                         <table mat-table [dataSource]="ventasFiltradas">
 
                             <ng-container matColumnDef="codigo">
@@ -118,7 +121,8 @@
                                     <div class="payment-method-tag">
                                         <mat-icon>{{ getMetodoPagoIcon(venta.metodoPago) }}</mat-icon>
                                         <span>{{ venta.metodoPago }}</span>
-                                        <span *ngIf="venta.tipoPago === 'CREDITO'" style="font-size: 10px; color: #dc2626; margin-left: 4px;">(CRÉDITO)</span>
+                                        <span *ngIf="venta.tipoPago === 'CREDITO'"
+                                            style="font-size: 10px; color: #dc2626; margin-left: 4px;">(CRÉDITO)</span>
                                     </div>
                                 </td>
                             </ng-container>
@@ -128,7 +132,8 @@
                                 <td mat-cell *matCellDef="let venta">
                                     <div style="display: flex; flex-direction: column; align-items: flex-end;">
                                         <span class="amount-val">S/ {{ venta.total.toFixed(2) }}</span>
-                                        <span *ngIf="venta.estado === 'PENDIENTE'" style="font-size: 11px; color: #dc2626; font-weight: 600;">
+                                        <span *ngIf="venta.estado === 'PENDIENTE'"
+                                            style="font-size: 11px; color: #dc2626; font-weight: 600;">
                                             Debe: S/ {{ venta.saldoPendiente?.toFixed(2) }}
                                         </span>
                                     </div>
@@ -157,27 +162,37 @@
                                             <span>Ver Venta</span>
                                         </button>
 
-                                        <button mat-menu-item (click)="amortizarDeuda(venta)" *ngIf="venta.estado === 'PENDIENTE'">
+                                        <button mat-menu-item (click)="amortizarDeuda(venta)"
+                                            *ngIf="venta.estado === 'PENDIENTE'">
                                             <mat-icon style="color: #10b981;">attach_money</mat-icon>
                                             <span>Amortizar Deuda</span>
                                         </button>
 
-                                        <button mat-menu-item (click)="abrirModalNotaCredito(venta)" *ngIf="venta.estado === 'COMPLETADA'">
+                                        <button mat-menu-item (click)="abrirModalNotaCredito(venta)"
+                                            *ngIf="venta.estado === 'COMPLETADA'">
                                             <mat-icon style="color: #ef4444;">replay</mat-icon>
                                             <span>Emitir Nota de Crédito</span>
                                         </button>
 
-                                        <button mat-menu-item (click)="editarBorrador(venta)" *ngIf="venta.estado === 'BORRADOR'">
+                                        <button mat-menu-item (click)="editarBorrador(venta)"
+                                            *ngIf="venta.estado === 'BORRADOR'">
                                             <mat-icon style="color: #f59e0b;">edit</mat-icon>
                                             <span>Editar Borrador</span>
                                         </button>
 
-                                        <button mat-menu-item (click)="completarVenta(venta)" *ngIf="venta.estado === 'BORRADOR'">
+                                        <button mat-menu-item (click)="editarVenta(venta)">
+                                            <mat-icon style="color: #f59e0b;">edit</mat-icon>
+                                            <span>Editar Venta</span>
+                                        </button>
+
+                                        <button mat-menu-item (click)="completarVenta(venta)"
+                                            *ngIf="venta.estado === 'BORRADOR'">
                                             <mat-icon style="color: #059669;">check_circle</mat-icon>
                                             <span>Emitir Venta</span>
                                         </button>
 
-                                        <button mat-menu-item (click)="cancelarVenta(venta)" *ngIf="venta.estado !== 'CANCELADA'">
+                                        <button mat-menu-item (click)="cancelarVenta(venta)"
+                                            *ngIf="venta.estado !== 'CANCELADA'">
                                             <mat-icon color="warn">cancel</mat-icon>
                                             <span>Anular Comprobante</span>
                                         </button>
@@ -212,7 +227,8 @@
                             <span class="stat-label">Ingreso Neto</span>
                             <span class="stat-value">S/ {{ ingresoNetoReal.toFixed(2) }}</span>
                             <div style="font-size: 10px; color: #64748b; margin-top: 2px;">
-                                Bruto: {{ totalVentas | number:'1.0-0' }} | Devoluciones: -{{ totalNotasCredito | number:'1.0-0' }}
+                                Bruto: {{ totalVentas | number:'1.0-0' }} | Devoluciones: -{{ totalNotasCredito |
+                                number:'1.0-0' }}
                             </div>
                         </div>
                     </div>
@@ -222,7 +238,7 @@
 
         <mat-tab label="Cuentas por Cobrar">
             <div class="tab-content">
-                
+
                 <div class="stats-row-deudas">
                     <div class="stat-card-debt total-debt">
                         <div class="stat-label">Total por Cobrar</div>
@@ -236,27 +252,30 @@
 
                 <div class="table-card">
                     <div *ngIf="deudasFiltradas.data.length === 0" class="state-container empty">
-                        <mat-icon style="color: #10b981; font-size: 48px; width: 48px; height: 48px;">check_circle</mat-icon>
+                        <mat-icon
+                            style="color: #10b981; font-size: 48px; width: 48px; height: 48px;">check_circle</mat-icon>
                         <h3>¡Todo al día!</h3>
                         <p>No tienes cuentas pendientes de cobro.</p>
                     </div>
 
                     <div class="table-responsive" *ngIf="deudasFiltradas.data.length > 0">
                         <table mat-table [dataSource]="deudasFiltradas">
-                            
+
                             <ng-container matColumnDef="cliente">
                                 <th mat-header-cell *matHeaderCellDef>Cliente</th>
                                 <td mat-cell *matCellDef="let row">
                                     <div class="client-info">
                                         <span class="client-name">{{ row.nombreCliente }}</span>
-                                        <span class="client-doc" *ngIf="row.numeroDocumentoCliente">{{ row.numeroDocumentoCliente }}</span>
+                                        <span class="client-doc" *ngIf="row.numeroDocumentoCliente">{{
+                                            row.numeroDocumentoCliente }}</span>
                                     </div>
                                 </td>
                             </ng-container>
 
                             <ng-container matColumnDef="codigo">
                                 <th mat-header-cell *matHeaderCellDef>Factura</th>
-                                <td mat-cell *matCellDef="let row"><span class="ticket-code">#{{ row.codigo }}</span></td>
+                                <td mat-cell *matCellDef="let row"><span class="ticket-code">#{{ row.codigo }}</span>
+                                </td>
                             </ng-container>
 
                             <ng-container matColumnDef="fechaVenta">
@@ -266,15 +285,19 @@
 
                             <ng-container matColumnDef="total">
                                 <th mat-header-cell *matHeaderCellDef class="text-right">Total Orig.</th>
-                                <td mat-cell *matCellDef="let row" class="text-right">S/ {{ row.total | number:'1.2-2' }}</td>
+                                <td mat-cell *matCellDef="let row" class="text-right">S/ {{ row.total | number:'1.2-2'
+                                    }}</td>
                             </ng-container>
 
                             <ng-container matColumnDef="abonado">
                                 <th mat-header-cell *matHeaderCellDef class="text-center">Progreso</th>
-                                <td mat-cell *matCellDef="let row" class="text-center" style="width: 140px; padding: 0 16px;">
+                                <td mat-cell *matCellDef="let row" class="text-center"
+                                    style="width: 140px; padding: 0 16px;">
                                     <div class="progress-container">
-                                        <span class="progress-text">{{ getPorcentajePagado(row) | number:'1.0-0' }}% Pagado</span>
-                                        <mat-progress-bar mode="determinate" [value]="getPorcentajePagado(row)"></mat-progress-bar>
+                                        <span class="progress-text">{{ getPorcentajePagado(row) | number:'1.0-0' }}%
+                                            Pagado</span>
+                                        <mat-progress-bar mode="determinate"
+                                            [value]="getPorcentajePagado(row)"></mat-progress-bar>
                                     </div>
                                 </td>
                             </ng-container>
@@ -289,7 +312,8 @@
                             <ng-container matColumnDef="acciones">
                                 <th mat-header-cell *matHeaderCellDef class="text-center">Acción</th>
                                 <td mat-cell *matCellDef="let row" class="text-center">
-                                    <button mat-flat-button color="primary" class="btn-cobrar" (click)="amortizarDeuda(row)">
+                                    <button mat-flat-button color="primary" class="btn-cobrar"
+                                        (click)="amortizarDeuda(row)">
                                         <mat-icon>payments</mat-icon> Cobrar
                                     </button>
                                 </td>

@@ -142,7 +142,10 @@ export class VentasListaComponent implements OnInit {
             error: (err) => console.error('Error cargando notas de crédito', err)
         });
     }
-    
+  editarVenta(venta: Venta): void {
+        // Navegamos directo al formulario sin importar el estado de la venta
+        this.router.navigate(['/ventas', venta.id]);
+    }
     calcularFinanzas(): void {
         let sumaCompletadas = this.ventas
             .filter(v => v.estado === EstadoVenta.COMPLETADA)

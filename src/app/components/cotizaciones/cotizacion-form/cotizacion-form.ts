@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormControl } from '@angular/forms'; // ✅ Importar ReactiveFormsModule y FormControl
+import { FormsModule, ReactiveFormsModule, FormControl } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { Observable } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
@@ -13,7 +13,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatCardModule } from '@angular/material/card';
-import { MatAutocompleteModule } from '@angular/material/autocomplete'; // ✅ Importante
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatFormFieldModule } from '@angular/material/form-field';
 
 import { CotizacionService } from '../../../services/cotizacion-service'; 
@@ -24,7 +24,7 @@ import { ProductoService } from '../../../services/producto-service';
   selector: 'app-cotizacion-form',
   standalone: true,
   imports: [
-    CommonModule, FormsModule, ReactiveFormsModule, RouterModule, // ✅ Agregar ReactiveFormsModule
+    CommonModule, FormsModule, ReactiveFormsModule, RouterModule, 
     MatButtonModule, MatIconModule, MatInputModule, 
     MatSelectModule, MatDatepickerModule, MatNativeDateModule,
     MatCardModule, MatAutocompleteModule, MatFormFieldModule
@@ -46,9 +46,13 @@ export class CotizacionFormComponent implements OnInit {
   clientes: any[] = [];
   productos: any[] = [];
   
-  // ✅ CONTROL PARA EL AUTOCOMPLETE
+  // ✅ CONTROLES PARA EL AUTOCOMPLETE
   productoControl = new FormControl('');
   productosFiltrados!: Observable<any[]>;
+
+  // ⭐ NUEVO: CONTROLES PARA EL AUTOCOMPLETE DE CLIENTES
+  clienteControl = new FormControl('');
+  clientesFiltrados!: Observable<any[]>;
 
   prodSeleccionado: any = null;
   cantidadTemp: number = 1;
@@ -80,20 +84,28 @@ export class CotizacionFormComponent implements OnInit {
   cargarClientes() {
     this.clienteService.listarClientes().subscribe((data: any[]) => {
       this.clientes = data;
+
+      // ⭐ NUEVO: Configurar filtro reactivo para Clientes
+      this.clientesFiltrados = this.clienteControl.valueChanges.pipe(
+        startWith(''),
+        map((value: string | any) => {
+          const nombre = typeof value === 'string' ? value : value?.nombreCompleto;
+          return nombre ? this._filterClientes(nombre as string) : this.clientes.slice();
+        })
+      );
     });
   }
 
-cargarProductos() {
+  cargarProductos() {
     const service: any = this.productoService;
     const obs = service.listarProductos ? service.listarProductos() : service.listar();
     
     obs.subscribe((data: any[]) => {
       this.productos = data;
 
-      // ✅ CORRECCIÓN: Tipar explícitamente 'value' como 'string | any'
       this.productosFiltrados = this.productoControl.valueChanges.pipe(
         startWith(''),
-        map((value: string | any) => { // <--- AQUÍ ESTABA EL ERROR
+        map((value: string | any) => { 
           const nombre = typeof value === 'string' ? value : value?.nombre;
           return nombre ? this._filter(nombre as string) : this.productos.slice();
         })
@@ -101,7 +113,16 @@ cargarProductos() {
     });
   }
 
-  // ✅ FUNCIÓN DE FILTRADO (Busca por Nombre o Código)
+  // ⭐ NUEVO: Función de filtrado para Clientes (Busca por nombre o documento)
+  private _filterClientes(value: string): any[] {
+    const filterValue = value.toLowerCase();
+    return this.clientes.filter(option => 
+      option.nombreCompleto.toLowerCase().includes(filterValue) || 
+      (option.numeroDocumento && option.numeroDocumento.toLowerCase().includes(filterValue))
+    );
+  }
+
+  // ✅ FUNCIÓN DE FILTRADO PARA PRODUCTOS
   private _filter(value: string): any[] {
     const filterValue = value.toLowerCase();
     return this.productos.filter(option => 
@@ -110,9 +131,22 @@ cargarProductos() {
     );
   }
 
-  // ✅ MOSTRAR NOMBRE BONITO EN EL INPUT
+  // ⭐ NUEVO: Mostrar el nombre del cliente en el input cuando lo seleccionas
+  displayClienteFn(cliente: any): string {
+    return cliente && cliente.nombreCompleto ? `${cliente.nombreCompleto} - ${cliente.numeroDocumento}` : '';
+  }
+
+  // ✅ MOSTRAR NOMBRE BONITO EN EL INPUT DE PRODUCTOS
   displayFn(producto: any): string {
     return producto && producto.nombre ? `${producto.codigo} - ${producto.nombre}` : '';
+  }
+
+  // ⭐ NUEVO: Qué hacer al seleccionar un cliente de la lista
+  seleccionarCliente(event: any) {
+    const cliente = event.option.value;
+    if (cliente) {
+      this.cotizacion.idCliente = cliente.id; // Vinculamos el ID para mandarlo al backend
+    }
   }
 
   // ✅ CUANDO SELECCIONAS UN PRODUCTO DE LA LISTA

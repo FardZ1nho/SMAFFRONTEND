@@ -19,14 +19,20 @@
       </mat-card-header>
       
       <mat-card-content class="form-grid">
+        
         <mat-form-field appearance="outline" class="col-span-2">
-          <mat-label>Cliente</mat-label>
-          <mat-select [(ngModel)]="cotizacion.idCliente" placeholder="Seleccione un cliente">
-            <mat-option *ngFor="let c of clientes" [value]="c.id">
+          <mat-label>Buscar Cliente (Nombre o DNI/RUC)</mat-label>
+          <input type="text"
+                 placeholder="Escribe para buscar un cliente..."
+                 matInput
+                 [formControl]="clienteControl"
+                 [matAutocomplete]="autoCliente">
+          <mat-autocomplete #autoCliente="matAutocomplete" [displayWith]="displayClienteFn" (optionSelected)="seleccionarCliente($event)">
+            <mat-option *ngFor="let c of clientesFiltrados | async" [value]="c">
               {{ c.nombreCompleto }} - {{ c.numeroDocumento }}
             </mat-option>
-          </mat-select>
-          <mat-icon matSuffix>person</mat-icon>
+          </mat-autocomplete>
+          <mat-icon matSuffix>person_search</mat-icon>
         </mat-form-field>
 
         <mat-form-field appearance="outline">

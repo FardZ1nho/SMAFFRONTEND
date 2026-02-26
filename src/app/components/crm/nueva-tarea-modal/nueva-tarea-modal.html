@@ -1,0 +1,48 @@
+<div class="custom-modal-backdrop" (click)="cerrarModal.emit()"></div>
+
+<div class="custom-modal">
+  <div class="custom-modal-content">
+    
+    <div class="custom-modal-header">
+      <h5 style="margin:0; font-weight: bold; color: #1e40af;">
+         Nuevo Recordatorio
+      </h5>
+      <button type="button" (click)="cerrarModal.emit()" class="close-btn">&times;</button>
+    </div>
+
+    <div class="custom-modal-body">
+      <form [formGroup]="tareaForm" (ngSubmit)="guardarTarea()">
+        
+        <div style="margin-bottom: 15px;">
+          <label class="form-label">Título de la tarea <span style="color:red">*</span></label>
+          <input type="text" formControlName="titulo" class="form-input" placeholder="Ej: Llamar al cliente">
+        </div>
+
+        <div style="display:flex; gap: 15px; margin-bottom: 15px;">
+          <div style="flex:1;">
+            <label class="form-label">Tipo de Acción <span style="color:red">*</span></label>
+            <select formControlName="tipo" class="form-input">
+              <option *ngFor="let t of tiposTarea" [value]="t">{{t}}</option>
+            </select>
+          </div>
+          <div style="flex:1;">
+            <label class="form-label">Fecha y Hora <span style="color:red">*</span></label>
+            <input type="datetime-local" formControlName="fechaLimite" class="form-input">
+          </div>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+          <label class="form-label">Notas / Descripción</label>
+          <textarea formControlName="descripcion" class="form-input" rows="3" placeholder="Detalles opcionales..."></textarea>
+        </div>
+
+        <div style="display:flex; justify-content: flex-end; gap: 10px;">
+          <button type="button" (click)="cerrarModal.emit()" class="btn-cancelar">Cancelar</button>
+          <button type="submit" [disabled]="tareaForm.invalid" class="btn-guardar">Guardar Tarea</button>
+        </div>
+
+      </form>
+    </div>
+
+  </div>
+</div>

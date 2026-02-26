@@ -25,6 +25,9 @@
                     (click)="abrirWhatsApp(item.cliente.telefono || '', item.cliente.nombreCompleto, item.numero, 'CONTACTO_INICIAL')">
               <mat-icon>chat</mat-icon>
             </button>
+            <button mat-icon-button color="accent" matTooltip="Crear Tarea" (click)="abrirModalNuevaTarea(item.id)">
+              <mat-icon>add_alert</mat-icon>
+            </button>
           </div>
         </div>
       </div>
@@ -48,6 +51,9 @@
                      (click)="abrirWhatsApp(item.cliente.telefono || '', item.cliente.nombreCompleto, item.numero, 'COTIZACION_ENVIADA')">
                <mat-icon>chat</mat-icon>
              </button>
+             <button mat-icon-button color="accent" matTooltip="Crear Tarea" (click)="abrirModalNuevaTarea(item.id)">
+              <mat-icon>add_alert</mat-icon>
+            </button>
           </div>
         </div>
       </div>
@@ -74,6 +80,9 @@
                     (click)="abrirWhatsApp(item.cliente.telefono || '', item.cliente.nombreCompleto, item.numero, 'EN_NEGOCIACION')">
               <mat-icon>chat</mat-icon>
             </button>
+            <button mat-icon-button color="accent" matTooltip="Crear Tarea" (click)="abrirModalNuevaTarea(item.id)">
+              <mat-icon>add_alert</mat-icon>
+            </button>
           </div>
         </div>
       </div>
@@ -94,6 +103,9 @@
             <button mat-icon-button color="primary" matTooltip="Enviar Cuentas de Pago" 
                     (click)="abrirWhatsApp(item.cliente.telefono || '', item.cliente.nombreCompleto, item.numero, 'GANADA')">
               <mat-icon>chat</mat-icon>
+            </button>
+            <button mat-icon-button color="accent" matTooltip="Crear Tarea" (click)="abrirModalNuevaTarea(item.id)">
+              <mat-icon>add_alert</mat-icon>
             </button>
           </div>
         </div>
@@ -121,6 +133,9 @@
                     (click)="abrirWhatsApp(item.cliente.telefono || '', item.cliente.nombreCompleto, item.numero, 'PERDIDA')">
               <mat-icon>chat</mat-icon>
             </button>
+            <button mat-icon-button color="accent" matTooltip="Crear Tarea" (click)="abrirModalNuevaTarea(item.id)">
+              <mat-icon>add_alert</mat-icon>
+            </button>
           </div>
         </div>
       </div>
@@ -128,3 +143,10 @@
 
   </div>
 </div>
+
+<app-nueva-tarea-modal 
+  *ngIf="mostrarModalTarea" 
+  [cotizacionId]="cotizacionSeleccionadaId"
+  (cerrarModal)="mostrarModalTarea = false"
+  (tareaCreada)="onTareaCreada()">
+</app-nueva-tarea-modal>

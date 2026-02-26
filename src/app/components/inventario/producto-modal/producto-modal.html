@@ -22,6 +22,17 @@
 
     <div class="form-row full-width">
         <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Categoría</mat-label>
+            <mat-select formControlName="idCategoria">
+                <mat-option *ngFor="let cat of categorias" [value]="cat.id">
+                    {{ cat.nombre }}
+                </mat-option>
+            </mat-select>
+        </mat-form-field>
+    </div>
+
+    <div class="form-row full-width">
+        <mat-form-field appearance="outline" class="full-width">
             <mat-label>Nombre del {{ tipoSeleccionado }}</mat-label>
             <input matInput formControlName="nombre" placeholder="Ej: Taladro Percutor / Kit de Herramientas">
             <mat-icon matSuffix>edit</mat-icon>
@@ -40,29 +51,18 @@
         </div>
     </div>
 
-    <div class="form-row two-col">
-        <mat-form-field appearance="outline">
+    <div class="form-row" [ngClass]="esSuministro || tipoSeleccionado === 'SERVICIO' ? 'full-width' : 'two-col'">
+        <mat-form-field appearance="outline" [ngClass]="{'full-width': esSuministro || tipoSeleccionado === 'SERVICIO'}">
             <mat-label>Código SKU {{ tipoSeleccionado === 'KIT' ? '(Set)' : '' }}</mat-label>
             <input matInput formControlName="codigo" 
                    [placeholder]="tipoSeleccionado === 'KIT' ? 'Ej: KIT-001' : 'Ej: PROD-123'">
             <mat-icon matSuffix>qr_code</mat-icon>
         </mat-form-field>
 
-        <mat-form-field appearance="outline" *ngIf="tipoSeleccionado !== 'SERVICIO'">
+        <mat-form-field appearance="outline" *ngIf="tipoSeleccionado !== 'SERVICIO' && !esSuministro">
             <mat-label>Cód. Internacional</mat-label>
             <input matInput formControlName="codigoInternacional" placeholder="Ej: INT-9988">
             <mat-icon matSuffix>public</mat-icon>
-        </mat-form-field>
-    </div>
-
-    <div class="form-row full-width">
-        <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Categoría</mat-label>
-            <mat-select formControlName="idCategoria">
-                <mat-option *ngFor="let cat of categorias" [value]="cat.id">
-                    {{ cat.nombre }}
-                </mat-option>
-            </mat-select>
         </mat-form-field>
     </div>
 
@@ -134,21 +134,22 @@
         </mat-form-field>
     </div>
 
-    <div class="form-row three-col">
-        <mat-form-field appearance="outline" *ngIf="tipoSeleccionado === 'PRODUCTO'">
+    <div class="form-row" [ngClass]="esSuministro || tipoSeleccionado === 'SERVICIO' ? 'two-col' : 'three-col'">
+        
+        <mat-form-field appearance="outline" *ngIf="tipoSeleccionado === 'PRODUCTO' && !esSuministro">
             <mat-label>Precio Compra (China)</mat-label>
             <span matPrefix>{{ getSimboloMoneda() }}&nbsp;</span>
             <input matInput type="number" formControlName="precioChina">
         </mat-form-field>
 
         <mat-form-field appearance="outline">
-            <mat-label>{{ tipoSeleccionado === 'KIT' ? 'Costo Set (Manual)' : 'Costo Unit. (Landed)' }}</mat-label>
+            <mat-label>{{ esSuministro ? 'Costo / Precio de Compra' : (tipoSeleccionado === 'KIT' ? 'Costo Set (Manual)' : 'Costo Unit. (Landed)') }}</mat-label>
             <span matPrefix>{{ getSimboloMoneda() }}&nbsp;</span>
             <input matInput type="number" formControlName="costoTotal">
             <mat-hint *ngIf="tipoSeleccionado === 'KIT'">Sugerido: {{ costoSugeridoKit | number:'1.2-2' }}</mat-hint>
         </mat-form-field>
 
-        <mat-form-field appearance="outline">
+        <mat-form-field appearance="outline" *ngIf="!esSuministro">
             <mat-label>Precio Venta</mat-label>
             <span matPrefix>{{ getSimboloMoneda() }}&nbsp;</span>
             <input matInput type="number" formControlName="precioVenta">

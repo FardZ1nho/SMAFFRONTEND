@@ -31,3 +31,74 @@
 .stat-info { display: flex; flex-direction: column; }
 .stat-info .label { font-size: 13px; color: #64748b; font-weight: 500; }
 .stat-info .value { font-size: 22px; font-weight: 700; color: #1e293b; margin-top: 4px; }
+
+/* ESTILOS DEL WIDGET DE TAREAS PENDIENTES */
+.tareas-widget {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0 !important;
+}
+
+.tarea-item {
+    transition: all 0.2s ease-in-out;
+    border-left: 4px solid transparent;
+    cursor: default;
+    background-color: white;
+}
+
+.tarea-item:hover {
+    background-color: #f8fafc;
+    border-left: 4px solid #3b82f6;
+}
+
+.tarea-icon-box {
+    width: 45px;
+    height: 45px;
+    border-radius: 10px;
+    background-color: #f1f5f9;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.tarea-item:hover .tarea-icon-box {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+/* Clases de Bootstrap básicas por si no tienes Bootstrap global */
+.row { display: flex; flex-wrap: wrap; margin-right: -15px; margin-left: -15px; }
+.col-md-6, .col-lg-5 { position: relative; width: 100%; padding-right: 15px; padding-left: 15px; }
+@media (min-width: 768px) { .col-md-6 { flex: 0 0 50%; max-width: 50%; } }
+@media (min-width: 992px) { .col-lg-5 { flex: 0 0 41.666667%; max-width: 41.666667%; } }
+.card { position: relative; display: flex; flex-direction: column; min-width: 0; word-wrap: break-word; background-color: #fff; background-clip: border-box; }
+.card-header { padding: .75rem 1.25rem; margin-bottom: 0; background-color: rgba(0,0,0,.03); border-bottom: 1px solid rgba(0,0,0,.125); }
+.card-body { flex: 1 1 auto; padding: 1.25rem; }
+.list-group { display: flex; flex-direction: column; padding-left: 0; margin-bottom: 0; }
+.list-group-item { position: relative; display: block; padding: .75rem 1.25rem; background-color: #fff; border: 1px solid rgba(0,0,0,.125); }
+.list-group-flush .list-group-item { border-right: 0; border-left: 0; border-radius: 0; }
+.list-group-flush .list-group-item:first-child { border-top: 0; }
+.list-group-flush .list-group-item:last-child { border-bottom: 0; }
+.d-flex { display: flex !important; }
+.justify-content-between { justify-content: space-between !important; }
+.align-items-center { align-items: center !important; }
+.bg-white { background-color: #fff !important; }
+.text-center { text-align: center !important; }
+.text-muted { color: #6c757d !important; }
+.text-danger { color: #dc3545 !important; }
+.fw-bold { font-weight: 700 !important; }
+.mb-0 { margin-bottom: 0 !important; }
+.mt-1 { margin-top: .25rem !important; }
+.mt-2 { margin-top: .5rem !important; }
+.mt-4 { margin-top: 1.5rem !important; }
+.p-0 { padding: 0 !important; }
+.p-3 { padding: 1rem !important; }
+.p-4 { padding: 1.5rem !important; }
+.pt-4 { padding-top: 1.5rem !important; }
+.pb-2 { padding-bottom: .5rem !important; }
+.gap-3 { gap: 1rem !important; }
+.shadow-sm { box-shadow: 0 .125rem .25rem rgba(0,0,0,.075) !important; }
+.border-0 { border: 0 !important; }
+.border-bottom-0 { border-bottom: 0 !important; }

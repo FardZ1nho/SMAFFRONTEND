@@ -9,7 +9,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
-// ✅ 1. IMPORTAR SNACKBAR
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { debounceTime, distinctUntilChanged, switchMap, map } from 'rxjs/operators';
 import { of } from 'rxjs';
@@ -26,10 +25,8 @@ import { Categoria } from '../../../models/categoria';
     CommonModule, ReactiveFormsModule, MatDialogModule, MatFormFieldModule,
     MatInputModule, MatSelectModule, MatButtonModule,
     MatIconModule, MatProgressSpinnerModule, MatAutocompleteModule,
-    MatSnackBarModule // ✅ 2. AGREGAR EL MÓDULO AQUÍ
-    ,
-    FormsModule
-],
+    MatSnackBarModule, FormsModule
+  ],
   templateUrl: './producto-modal.html',
   styleUrls: ['./producto-modal.css']
 })
@@ -43,6 +40,9 @@ export class ProductoModalComponent implements OnInit {
     
   tipoSeleccionado: 'PRODUCTO' | 'SERVICIO' | 'KIT' = 'PRODUCTO';
   tipoFijo: boolean = false; 
+
+  // 🟢 NUEVO: Bandera para saber si se seleccionó suministro
+  esSuministro: boolean = false; 
 
   coincidencias: any[] = [];
   buscandoCoincidencias = false;
@@ -66,7 +66,7 @@ export class ProductoModalComponent implements OnInit {
     private productoService: ProductoService,
     private categoriaService: CategoriaService,
     private cdr: ChangeDetectorRef,
-    private snackBar: MatSnackBar // ✅ 3. INYECTAR EL SERVICIO
+    private snackBar: MatSnackBar
   ) { }
 
   ngOnInit(): void {
@@ -75,8 +75,19 @@ export class ProductoModalComponent implements OnInit {
     this.categoriaService.listarCategoriasActivas().subscribe({
       next: (data) => {
         this.categorias = data;
+        
+        // Si estamos en edición y ya hay una categoría cargada, verificamos si es suministro
+        if (this.productoForm.get('idCategoria')?.value) {
+            this.verificarSiEsSuministro(this.productoForm.get('idCategoria')?.value);
+        }
+        
         this.cdr.detectChanges();
       }
+    });
+
+    // 🟢 NUEVO: Escuchamos los cambios en el selector de categoría
+    this.productoForm.get('idCategoria')?.valueChanges.subscribe(id => {
+        this.verificarSiEsSuministro(id);
     });
 
     if (this.data && this.data.tipoFijo) {
@@ -114,6 +125,24 @@ export class ProductoModalComponent implements OnInit {
     });
   }
 
+  // 🟢 NUEVO: Método para activar o desactivar la bandera y las validaciones
+  verificarSiEsSuministro(idCategoria: number): void {
+      if (!this.categorias || this.categorias.length === 0) return;
+      
+      const catSeleccionada = this.categorias.find(c => c.id === idCategoria);
+      
+      if (catSeleccionada && catSeleccionada.nombre.toUpperCase().includes('SUMINISTRO')) {
+          this.esSuministro = true;
+          // Quitamos la obligación de ponerle precio de venta
+          this.productoForm.get('precioVenta')?.clearValidators();
+      } else {
+          this.esSuministro = false;
+          // Volvemos a hacer obligatorio el precio de venta
+          this.productoForm.get('precioVenta')?.setValidators([Validators.required, Validators.min(0)]);
+      }
+      this.productoForm.get('precioVenta')?.updateValueAndValidity();
+  }
+
   configurarBuscadorComponentes(): void {
     this.buscadorComponentesControl.valueChanges.pipe(
       debounceTime(300),
@@ -140,7 +169,6 @@ export class ProductoModalComponent implements OnInit {
 
   seleccionarComponente(producto: any): void {
     const existe = this.componentesSeleccionados.find(c => c.idProducto === producto.id);
-    
     if (existe) {
       existe.cantidad++; 
     } else {
@@ -152,7 +180,6 @@ export class ProductoModalComponent implements OnInit {
         costoUnitario: producto.costoTotal || 0 
       });
     }
-
     this.buscadorComponentesControl.setValue(''); 
     this.calcularCostoSugerido();
   }
@@ -164,11 +191,9 @@ export class ProductoModalComponent implements OnInit {
 
   calcularCostoSugerido(): void {
     if (this.tipoSeleccionado !== 'KIT') return;
-    
     const total = this.componentesSeleccionados.reduce((acc, item) => {
       return acc + ((item.costoUnitario || 0) * item.cantidad);
     }, 0);
-    
     this.costoSugeridoKit = total;
     if (!this.productoForm.get('costoTotal')?.value) {
       this.productoForm.patchValue({ costoTotal: total });
@@ -235,6 +260,11 @@ export class ProductoModalComponent implements OnInit {
       unidadMedida: producto.unidadMedida || 'Unidad'
     });
     
+    // Si ya teníamos cargadas las categorías, disparamos la verificación de suministro
+    if(this.categorias.length > 0 && categoriaId) {
+        this.verificarSiEsSuministro(categoriaId);
+    }
+    
     if (tipo === 'KIT' && producto.componentes) {
       this.componentesSeleccionados = producto.componentes.map((c: any) => ({
         idProducto: c.idProducto,
@@ -255,6 +285,9 @@ export class ProductoModalComponent implements OnInit {
     this.productoForm.get('stockMinimo')?.clearValidators();
     this.productoForm.get('precioChina')?.clearValidators();
     this.productoForm.get('costoTotal')?.clearValidators();
+    
+    // Restablecemos el validador del precio de venta por defecto (luego verificarSiEsSuministro podría quitarlo)
+    this.productoForm.get('precioVenta')?.setValidators([Validators.required, Validators.min(0)]);
 
     if (tipo === 'SERVICIO') {
         const catServicio = this.categorias.find(c => c.nombre.toUpperCase().includes('SERVIC'));
@@ -283,6 +316,7 @@ export class ProductoModalComponent implements OnInit {
         }
     }
     this.productoForm.get('stockMinimo')?.updateValueAndValidity();
+    this.productoForm.get('precioVenta')?.updateValueAndValidity();
   }
 
   guardarProducto(): void {
@@ -292,7 +326,6 @@ export class ProductoModalComponent implements OnInit {
     }
 
     if (this.tipoSeleccionado === 'KIT' && this.componentesSeleccionados.length === 0) {
-        // ✅ USAR SNACKBAR TAMBIÉN PARA ERRORES
         this.snackBar.open('Un SET/KIT debe tener al menos un componente.', 'Cerrar', { duration: 3000 });
         return;
     }
@@ -308,14 +341,16 @@ export class ProductoModalComponent implements OnInit {
       tipo: this.tipoSeleccionado, 
       nombre: val.nombre,
       codigo: val.codigo,
-      codigoInternacional: val.codigoInternacional,
+      // Si es suministro, no mandamos código internacional
+      codigoInternacional: this.esSuministro ? '' : val.codigoInternacional,
       idCategoria: val.idCategoria, 
       descripcion: val.descripcion,
       stockMinimo: val.stockMinimo,
       moneda: val.moneda,
       precioChina: val.precioChina,
       costoTotal: val.costoTotal,
-      precioVenta: val.precioVenta,
+      // Si es suministro, el precio de venta va en 0 para que BD no moleste
+      precioVenta: this.esSuministro ? 0 : val.precioVenta,
       unidadMedida: val.unidadMedida,
       componentes: componentesBackend
     };
@@ -330,18 +365,14 @@ export class ProductoModalComponent implements OnInit {
     });
   }
 
-  // ✅ 4. MOSTRAR MENSAJE AQUÍ
   finalizarGuardado(mensaje: string) {
     this.isSaving = false;
-    
-    // Abrir mensaje de confirmación
     this.snackBar.open(mensaje, 'Aceptar', {
       duration: 3000,
       horizontalPosition: 'center',
       verticalPosition: 'bottom',
-      panelClass: ['success-snackbar'] // Puedes agregar estilos css si quieres
+      panelClass: ['success-snackbar']
     });
-
     this.dialogRef.close(true);
   }
 
@@ -353,7 +384,6 @@ export class ProductoModalComponent implements OnInit {
 
   manejarError(e: any) {
     this.isSaving = false;
-    // Mostrar error también en SnackBar en vez de alert()
     this.snackBar.open('Error: ' + (e.error?.message || 'Error desconocido'), 'Cerrar', {
         duration: 5000,
         panelClass: ['error-snackbar']

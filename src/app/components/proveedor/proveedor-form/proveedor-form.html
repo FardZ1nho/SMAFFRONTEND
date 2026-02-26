@@ -40,7 +40,7 @@
             <input type="text" class="form-control-smaf no-border" 
                    name="ruc" [(ngModel)]="proveedor.ruc" 
                    [placeholder]="proveedor.pais === 'PERÚ' ? 'Ej: 20601234567' : 'Ej: USCC-9131... o TAX-ID'"
-                   [maxlength]="proveedor.pais === 'PERÚ' ? 11 : 20" 
+                   [attr.maxlength]="proveedor.pais === 'PERÚ' ? 11 : null" 
                    required>
           </div>
         </div>

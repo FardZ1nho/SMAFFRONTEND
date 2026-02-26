@@ -1,0 +1,55 @@
+<div class="custom-modal-backdrop" (click)="cerrarModal.emit()"></div>
+
+<div class="custom-modal">
+  <div class="custom-modal-content">
+    
+    <div class="custom-modal-header">
+      <h5 style="margin:0; font-weight: bold; color: #1e40af;">
+         Registrar Movimiento Manual
+      </h5>
+      <button type="button" (click)="cerrarModal.emit()" class="close-btn">&times;</button>
+    </div>
+
+    <div class="custom-modal-body">
+      <form [formGroup]="movimientoForm" (ngSubmit)="guardar()">
+        
+        <div style="display:flex; gap: 15px; margin-bottom: 15px;">
+          <div style="flex:1;">
+            <label class="form-label">Tipo de Movimiento <span style="color:red">*</span></label>
+            <select formControlName="tipo" class="form-input">
+              <option value="EGRESO">🔴 Egreso (Retirar dinero)</option>
+              <option value="INGRESO">🟢 Ingreso (Meter dinero)</option>
+            </select>
+          </div>
+          <div style="flex:1;">
+            <label class="form-label">Monto (S/) <span style="color:red">*</span></label>
+            <input type="number" formControlName="monto" class="form-input" placeholder="0.00" step="0.1">
+          </div>
+        </div>
+
+        <div style="margin-bottom: 15px;">
+          <label class="form-label">Motivo / Concepto <span style="color:red">*</span></label>
+          <input type="text" formControlName="motivo" class="form-input" placeholder="Ej: Pasajes, Compra de agua, Depósito a banco...">
+        </div>
+
+        <div style="display:flex; gap: 15px; margin-bottom: 20px;">
+          <div style="flex:1;">
+            <label class="form-label">Responsable <span style="color:red">*</span></label>
+            <input type="text" formControlName="responsable" class="form-input" placeholder="¿Quién lo solicita?">
+          </div>
+          <div style="flex:1;">
+            <label class="form-label">Fecha y Hora <span style="color:red">*</span></label>
+            <input type="datetime-local" formControlName="fechaHora" class="form-input">
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content: flex-end; gap: 10px;">
+          <button type="button" (click)="cerrarModal.emit()" class="btn-cancelar">Cancelar</button>
+          <button type="submit" [disabled]="movimientoForm.invalid" class="btn-guardar">Registrar</button>
+        </div>
+
+      </form>
+    </div>
+
+  </div>
+</div>

@@ -11,17 +11,26 @@
       </div>
     </div>
     
-    <div class="date-filter">
-      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="dense-datepicker">
-        <mat-label>Filtrar por día</mat-label>
-        <input matInput [matDatepicker]="picker" [(ngModel)]="filtroFecha" (dateChange)="aplicarFiltroFecha()" readonly>
-        <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
-        <mat-datepicker #picker></mat-datepicker>
-      </mat-form-field>
+    <div class="header-actions" style="display: flex; gap: 16px; align-items: center;">
       
-      <button mat-icon-button *ngIf="filtroFecha" (click)="limpiarFiltro()" matTooltip="Ver todo el historial">
-        <mat-icon>close</mat-icon>
+      <div class="date-filter">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="dense-datepicker">
+          <mat-label>Filtrar por día</mat-label>
+          <input matInput [matDatepicker]="picker" [(ngModel)]="filtroFecha" (dateChange)="aplicarFiltroFecha()" readonly>
+          <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+          <mat-datepicker #picker></mat-datepicker>
+        </mat-form-field>
+        
+        <button mat-icon-button *ngIf="filtroFecha" (click)="limpiarFiltro()" matTooltip="Ver todo el historial">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <button mat-flat-button color="primary" (click)="abrirModalAjuste()" style="height: 40px;">
+        <mat-icon>add_circle_outline</mat-icon>
+        Nuevo Ajuste
       </button>
+
     </div>
   </div>
 
@@ -91,8 +100,12 @@
           <th mat-header-cell *matHeaderCellDef> CONCEPTO </th>
           <td mat-cell *matCellDef="let row">
             <div class="desc-cell">
-              <span class="main-desc">{{ row.descripcion }}</span>
-              <span class="sub-desc">Doc: {{ row.referencia }}</span>
+              <span class="main-desc" [style.color]="row.esAjuste ? '#2563eb' : 'inherit'">{{ row.descripcion }}</span>
+              
+              <span class="sub-desc" *ngIf="!row.esAjuste">Doc: {{ row.referencia }}</span>
+              <span class="sub-desc" *ngIf="row.esAjuste" style="background:#dbeafe; color:#1e40af; padding:2px 6px; border-radius:4px; display:inline-block; width:fit-content; margin-top:2px;">
+                 Movimiento Manual
+              </span>
             </div>
           </td>
         </ng-container>
@@ -117,7 +130,7 @@
         </ng-container>
 
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="hover-row"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="hover-row" [style.background-color]="row.esAjuste ? '#f8fafc' : 'white'"></tr>
       </table>
 
       <div *ngIf="dataSource.data.length === 0 && !cargando" class="empty-state">
@@ -127,3 +140,9 @@
     </div>
   </div>
 </div>
+
+<app-nuevo-movimiento-modal
+  *ngIf="mostrarModalAjuste"
+  (cerrarModal)="mostrarModalAjuste = false"
+  (movimientoCreado)="onAjusteCreado()">
+</app-nuevo-movimiento-modal>

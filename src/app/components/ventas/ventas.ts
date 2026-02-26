@@ -185,7 +185,6 @@ export class VentasComponent implements OnInit {
   }
 
   // --- CARGAR DATOS DESDE LA COTIZACIÓN GANADA ---
- // --- CARGAR DATOS DESDE LA COTIZACIÓN GANADA ---
   cargarDatosCotizacion(cotizacionId: number): void {
     this.isLoadingProductos = true;
     this.mostrarNotificacion('Cargando datos de la cotización...', 'success');
@@ -587,6 +586,7 @@ export class VentasComponent implements OnInit {
     };
   }
 
+  // ⭐ EL CAMBIO PARA COMPLETAR LA VENTA ESTÁ AQUÍ ⭐
   completarVenta(): void {
     if (this.productosEnVenta.length === 0 || !this.clienteSeleccionado) {
       this.mostrarNotificacion('Seleccione un cliente y productos para continuar', 'warning');
@@ -621,11 +621,11 @@ export class VentasComponent implements OnInit {
 
     const observer = {
         next: () => {
-            this.mostrarNotificacion('✅ Venta guardada exitosamente', 'success');
+            this.mostrarNotificacion('✅ Venta guardada y completada exitosamente', 'success');
             this.isSaving = false;
             this.router.navigate(['/ventas/lista']); 
         },
-        error: (err: any) => { // ✅ CORRECCIÓN DE TIPADO
+        error: (err: any) => { 
             this.isSaving = false;
             const msg = err.error?.message || 'Error al procesar venta';
             this.mostrarNotificacion(msg, 'error');
@@ -633,8 +633,19 @@ export class VentasComponent implements OnInit {
     };
 
     if (this.esEdicion && this.ventaId) {
-      this.ventaService.actualizarVenta(this.ventaId, request).subscribe(observer);
+      // 1. Primero mandamos la actualización de los datos
+      this.ventaService.actualizarVenta(this.ventaId, request).subscribe({
+        next: () => {
+           // 2. Si se actualizó correctamente, lanzamos la orden de COMPLETAR
+           this.ventaService.completarVenta(this.ventaId!).subscribe(observer);
+        },
+        error: (err: any) => {
+           this.isSaving = false;
+           this.mostrarNotificacion('Error al actualizar los datos del borrador', 'error');
+        }
+      });
     } else {
+      // Si es una venta nueva, se crea y completa automáticamente
       this.ventaService.crearVenta(request).subscribe(observer);
     }
   }

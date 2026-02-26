@@ -56,3 +56,57 @@
       </div>
     </div>
   </div>
+
+  <h2 class="section-title" style="margin-top: 40px;">Tu Agenda Comercial</h2>
+  <div class="row">
+    <div class="col-md-6 col-lg-5">
+      
+      <div class="card shadow-sm border-0 tareas-widget">
+        <div class="card-header bg-white border-bottom-0 pt-4 pb-2 d-flex justify-content-between align-items-center">
+          <h5 class="fw-bold mb-0" style="color: #1e40af;">
+            <mat-icon class="align-middle me-1">assignment</mat-icon> Tareas Pendientes
+          </h5>
+          <span class="badge" style="background-color: #f59e0b; color: white; border-radius: 50px; padding: 5px 10px;">
+            {{ tareasPendientes.length }}
+          </span>
+        </div>
+
+        <div class="card-body p-0">
+          <div class="p-4 text-center text-muted" *ngIf="tareasPendientes.length === 0">
+            <mat-icon style="font-size: 3rem; height: 3rem; width: 3rem; color: #cbd5e1;">check_circle_outline</mat-icon>
+            <p class="mt-2 mb-0" style="font-size: 14px;">¡Todo al día! No tienes tareas pendientes.</p>
+          </div>
+
+          <ul class="list-group list-group-flush" *ngIf="tareasPendientes.length > 0">
+            <li class="list-group-item tarea-item d-flex justify-content-between align-items-center p-3" 
+                *ngFor="let tarea of tareasPendientes" style="border-bottom: 1px solid #f1f5f9;">
+              
+              <div class="d-flex align-items-center gap-3">
+                <div class="tarea-icon-box">
+                  <mat-icon>{{ obtenerIconoTarea(tarea.tipo) }}</mat-icon>
+                </div>
+                
+                <div>
+                  <h6 class="mb-0 fw-bold" style="color: #1e293b; font-size: 15px;">{{ tarea.titulo }}</h6>
+                  <small style="color: #64748b; font-size: 12px; display: block;">Cotización #{{ tarea.cotizacionId }}</small>
+                  <small class="text-danger fw-bold mt-1 d-block" style="font-size: 12px; display: flex; align-items: center; gap: 4px;">
+                    <mat-icon style="font-size: 14px; width: 14px; height: 14px;">schedule</mat-icon>
+                    Vence: {{ tarea.fechaLimite | date:'dd MMM, h:mm a' }}
+                  </small>
+                </div>
+              </div>
+
+              <button mat-icon-button style="color: #10b981;" 
+                      matTooltip="Marcar como lista" 
+                      (click)="marcarComoCompletada(tarea.id)">
+                <mat-icon>check_circle</mat-icon>
+              </button>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>

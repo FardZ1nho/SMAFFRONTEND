@@ -4,14 +4,24 @@ import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 // IMPORTAMOS TUS SERVICIOS REALES
 import { CotizacionService } from '../../../services/cotizacion-service';
+import { TareaCrmService } from '../../../services/tarea-crm-service'; 
+import { TareaCrmResponse } from '../../../models/tarea-crm'; 
 
 @Component({
   selector: 'app-crm-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, MatIconModule, MatButtonModule, MatProgressSpinnerModule],
+  imports: [
+    CommonModule, 
+    RouterModule, 
+    MatIconModule, 
+    MatButtonModule, 
+    MatProgressSpinnerModule,
+    MatSnackBarModule
+  ],
   templateUrl: './crm-dashboard.html',
   styleUrls: ['./crm-dashboard.css']
 })
@@ -24,13 +34,19 @@ export class CrmDashboardComponent implements OnInit {
   
   isLoading: boolean = true;
 
+  // Variables para las tareas
+  tareasPendientes: TareaCrmResponse[] = [];
+
   constructor(
     private cotizacionService: CotizacionService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private tareaCrmService: TareaCrmService,
+    private snackBar: MatSnackBar
   ) {}
 
   ngOnInit(): void {
     this.calcularMetricas();
+    this.cargarTareasPendientes(); // Cargamos las tareas al iniciar
   }
 
   calcularMetricas(): void {
@@ -69,5 +85,43 @@ export class CrmDashboardComponent implements OnInit {
         this.cdr.detectChanges();
       }
     });
+  }
+
+  // --- MÉTODOS DE TAREAS PENDIENTES ---
+
+  cargarTareasPendientes(): void {
+    this.tareaCrmService.obtenerPendientes().subscribe({
+      next: (data) => {
+        this.tareasPendientes = data;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Error al cargar tareas', err);
+        this.snackBar.open('Error al cargar las tareas pendientes', 'Cerrar', { duration: 3000 });
+      }
+    });
+  }
+
+  marcarComoCompletada(id: number): void {
+    this.tareaCrmService.completarTarea(id).subscribe({
+      next: () => {
+        this.snackBar.open('¡Tarea completada! Buen trabajo 🚀', 'Cerrar', { duration: 3000, panelClass: 'snackbar-success' });
+        this.cargarTareasPendientes(); // Recargamos para actualizar la vista
+      },
+      error: (err) => {
+        console.error('Error al completar', err);
+        this.snackBar.open('Error al completar la tarea', 'Cerrar', { duration: 3000, panelClass: 'snackbar-error' });
+      }
+    });
+  }
+
+  obtenerIconoTarea(tipo: string): string {
+    switch (tipo) {
+      case 'LLAMADA': return 'call';
+      case 'CORREO': return 'mail';
+      case 'MENSAJE': return 'chat';
+      case 'REUNION': return 'groups';
+      default: return 'task';
+    }
   }
 }

@@ -112,5 +112,6 @@ td.mat-cell { padding: 14px 24px; border-bottom: 1px solid var(--border); font-s
 
 @media (max-width: 768px) {
   .page-header { flex-direction: column; align-items: flex-start; gap: 16px; }
+  .header-actions { flex-direction: column; width: 100%; align-items: flex-start; }
   .date-filter { width: 100%; }
 }

@@ -121,7 +121,7 @@ export class ProveedorFormComponent implements OnInit, OnChanges {
         return;
       }
     } 
-    // ✅ Para CHINA/OTROS no hay validación estricta de regex (acepta letras y números)
+    // ✅ ELIMINADA CUALQUIER OTRA RESTRICCIÓN (Para CHINA y OTRO acepta la longitud y caracteres que quieras)
 
     this.isLoading = true;
     this.cd.markForCheck();
@@ -167,7 +167,6 @@ export class ProveedorFormComponent implements OnInit, OnChanges {
     this.cerrar(false);
   }
 
-  // Método helper para cerrar ya sea modal o componente hijo
   private cerrar(exito: boolean): void {
     if (this.dialogRef) {
       this.dialogRef.close(exito);

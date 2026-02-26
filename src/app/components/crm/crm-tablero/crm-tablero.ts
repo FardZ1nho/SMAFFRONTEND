@@ -1,6 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router'; // ✅ IMPORTAMOS EL ROUTER PARA LA REDIRECCIÓN
+import { Router } from '@angular/router';
 import { CdkDragDrop, DragDropModule, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -9,6 +9,9 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 import { CotizacionService } from '../../../services/cotizacion-service';
 import { CotizacionResponse, EstadoPipeline } from '../../../models/cotizacion';
+
+// Importamos el modal que creamos (Asegúrate de que la ruta coincida con el nombre de tu archivo)
+import { NuevaTareaModalComponent } from '../nueva-tarea-modal/nueva-tarea-modal'; 
 
 @Component({
   selector: 'app-crm-tablero',
@@ -19,7 +22,8 @@ import { CotizacionResponse, EstadoPipeline } from '../../../models/cotizacion';
     MatIconModule, 
     MatButtonModule, 
     MatTooltipModule, 
-    MatSnackBarModule
+    MatSnackBarModule,
+    NuevaTareaModalComponent
   ],
   templateUrl: './crm-tablero.html',
   styleUrls: ['./crm-tablero.css']
@@ -33,11 +37,15 @@ export class CrmTableroComponent implements OnInit {
   ganada: CotizacionResponse[] = [];
   perdida: CotizacionResponse[] = [];
 
+  // Variables para controlar el modal de Tareas
+  mostrarModalTarea: boolean = false;
+  cotizacionSeleccionadaId: number = 0;
+
   constructor(
     private cotizacionService: CotizacionService,
     private snackBar: MatSnackBar,
     private cdr: ChangeDetectorRef,
-    private router: Router // ✅ INYECTAMOS EL ROUTER
+    private router: Router
   ) { }
 
   ngOnInit(): void {
@@ -70,7 +78,6 @@ export class CrmTableroComponent implements OnInit {
     });
   }
 
-  // ✅ EL MOTOR DEL DRAG & DROP
   drop(event: CdkDragDrop<CotizacionResponse[]>, nuevoEstado: EstadoPipeline) {
     // Si se mueve dentro de la misma columna (reordenar)
     if (event.previousContainer === event.container) {
@@ -104,14 +111,12 @@ export class CrmTableroComponent implements OnInit {
         next: () => {
           this.mostrarMensaje(`Cotización #${cotizacionMovida.numero} movida a ${nuevoEstado}`, 'success');
           
-          // ⭐ AQUÍ OCURRE LA MAGIA AUTOMÁTICA ⭐
           if (nuevoEstado === 'GANADA') {
             // Un pequeño delay (300ms) para que se vea bonita la animación de la tarjeta cayendo
             setTimeout(() => {
               const deseaFacturar = confirm(`🎉 ¡Excelente cierre!\n\n¿Deseas generar el comprobante de venta para la cotización #${cotizacionMovida.numero} ahora mismo?`);
               
               if (deseaFacturar) {
-                // ✅ AQUÍ ESTÁ EL CAMBIO: Enviamos el ID en la URL como parámetro (queryParams)
                 this.router.navigate(['/ventas/nueva'], { queryParams: { cotizacionId: cotizacionMovida.id } }); 
               }
             }, 300);
@@ -178,5 +183,16 @@ export class CrmTableroComponent implements OnInit {
 
   private mostrarMensaje(msj: string, tipo: string) {
     this.snackBar.open(msj, 'Cerrar', { duration: 3000, panelClass: `snackbar-${tipo}` });
+  }
+
+  // FUNCIONES PARA ABRIR Y CERRAR EL MODAL
+  abrirModalNuevaTarea(idCotizacion: number) {
+    this.cotizacionSeleccionadaId = idCotizacion;
+    this.mostrarModalTarea = true;
+  }
+
+  onTareaCreada() {
+    this.mostrarModalTarea = false;
+    this.mostrarMensaje('¡Recordatorio guardado con éxito!', 'success');
   }
 }

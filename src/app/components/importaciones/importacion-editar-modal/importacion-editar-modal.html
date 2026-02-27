@@ -221,29 +221,7 @@
             <div class="cost-column">
               <h4 class="group-title text-purple">🏛️ Impuestos (Aduanas)</h4>
               
-              <div class="manual-adv-box">
-                <div class="adv-header">
-                  <mat-icon>edit_note</mat-icon> Ad Valorem (Asignar por Factura)
-                </div>
-                
-                <div class="adv-list">
-                  <div *ngFor="let f of data.facturasComerciales" class="adv-item">
-                    <div class="adv-label">
-                      <span class="adv-prov" [title]="f.nombreProveedor">{{ f.nombreProveedor | slice:0:15 }}...</span>
-                      <span class="adv-serie">{{ f.serie }}-{{ f.numero }}</span>
-                    </div>
-                    <mat-form-field appearance="outline" class="dense-field no-bottom">
-                      <span matPrefix>$&nbsp;</span>
-                      <input matInput type="number" class="money-input" 
-                             [(ngModel)]="adValoremInputs[f.id]" 
-                             (focus)="limpiarCeroAdv(f.id)" 
-                             (blur)="verificarVacioAdv(f.id)"
-                             placeholder="0.00">
-                    </mat-form-field>
-                  </div>
-                </div>
-              </div>
-              <mat-form-field appearance="outline" class="dense-field mt-2">
+              <mat-form-field appearance="outline" class="dense-field">
                 <mat-label>IGV (Importación)</mat-label>
                 <span matPrefix>$&nbsp;</span>
                 <input matInput type="number" class="money-input" 
@@ -271,12 +249,14 @@
               <div class="sub-group">
                 <mat-form-field appearance="outline" class="dense-field">
                   <mat-label>Otros 1</mat-label>
+                  <span matPrefix>$&nbsp;</span>
                   <input matInput type="number" class="money-input" 
                          [(ngModel)]="form.costoOtros1"
                          (focus)="limpiarCero('costoOtros1')" (blur)="verificarVacio('costoOtros1')">
                 </mat-form-field>
                 <mat-form-field appearance="outline" class="dense-field">
                   <mat-label>Otros 2</mat-label>
+                  <span matPrefix>$&nbsp;</span>
                   <input matInput type="number" class="money-input" 
                          [(ngModel)]="form.costoOtros2"
                          (focus)="limpiarCero('costoOtros2')" (blur)="verificarVacio('costoOtros2')">

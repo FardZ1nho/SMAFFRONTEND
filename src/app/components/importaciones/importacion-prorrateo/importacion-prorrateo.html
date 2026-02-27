@@ -1,8 +1,8 @@
 <div class="page-container" *ngIf="importacion; else loadingTpl">
   
-  <header class="page-header">
+  <header class="page-header soft-card">
     <div class="header-left">
-      <button mat-icon-button (click)="volver()">
+      <button mat-icon-button class="btn-back" (click)="volver()">
         <mat-icon>arrow_back</mat-icon>
       </button>
       <div>
@@ -23,20 +23,22 @@
         <div class="value">$ {{ calcularTotalLandedGlobal() | number:'1.2-2' }}</div>
       </div>
       
-      <button mat-flat-button color="primary" class="me-2" (click)="guardarCambiosManuales()">
-        <mat-icon>save</mat-icon> Guardar AdValorem
+      <button mat-flat-button color="primary" class="me-2 btn-save" (click)="guardarCambiosManuales()">
+        <mat-icon>save</mat-icon> Sincronizar Datos
       </button>
 
-      <button mat-stroked-button (click)="imprimir()">
+      <button mat-stroked-button class="btn-print" (click)="imprimir()">
         <mat-icon>print</mat-icon> Imprimir
       </button>
     </div>
   </header>
 
-  <mat-card class="mb-4 shadow-sm">
+  <div class="soft-card mb-4">
     <div class="card-header-custom">
-      <mat-icon>table_view</mat-icon> 
-      <h3>Sábana de Costos (Resumen por Factura)</h3>
+      <div class="title-group">
+        <div class="icon-wrapper"><mat-icon>table_view</mat-icon></div>
+        <h3>Sábana de Costos (Resumen por Factura)</h3>
+      </div>
     </div>
     
     <div class="table-responsive">
@@ -75,10 +77,10 @@
         <tbody>
           <tr *ngFor="let f of importacion.facturasComerciales">
             <td class="sticky-col name-col">
-              <strong>{{ f.serie }}-{{ f.numero }}</strong>
-              <br><small>{{ f.nombreProveedor | slice:0:12 }}...</small>
+              <div class="factura-name">{{ f.serie }}-{{ f.numero }}</div>
+              <div class="factura-sub">{{ f.nombreProveedor | slice:0:15 }}...</div>
             </td>
-            <td class="text-right font-bold">$ {{ f.total | number:'1.2-2' }}</td>
+            <td class="text-right font-bold text-dark">$ {{ f.total | number:'1.2-2' }}</td>
 
             <td class="text-right">{{ f.proFlete | number:'1.2-2' }}</td>
             <td class="text-right">{{ f.proAlmacenaje | number:'1.2-2' }}</td>
@@ -95,7 +97,7 @@
             <td class="text-right">{{ f.proGastosOperativos | number:'1.2-2' }}</td>
             <td class="text-right">{{ f.proResguardo | number:'1.2-2' }}</td>
 
-            <td class="text-right font-bold text-blue-800">{{ f.proAdv | number:'1.2-2' }}</td>
+            <td class="text-right font-bold text-tax">{{ f.proAdv | number:'1.2-2' }}</td>
             <td class="text-right">{{ f.proIgv | number:'1.2-2' }}</td>
             <td class="text-right">{{ f.proIpm | number:'1.2-2' }}</td>
             <td class="text-right">{{ f.proPercepcion | number:'1.2-2' }}</td>
@@ -110,20 +112,19 @@
         </tbody>
       </table>
     </div>
-  </mat-card>
-
+  </div>
 
   <div class="section-divider">
     <h2 class="section-title">Desglose Detallado por Producto</h2>
-    <p class="section-subtitle">Costo unitario real calculado según participación FOB. El Ad Valorem es editable manualmente.</p>
+    <p class="section-subtitle">Distribución exacta del costo de cada ítem según su participación.</p>
   </div>
 
   <div class="invoices-list">
-    <div class="invoice-card" *ngFor="let fact of importacion.facturasComerciales">
+    <div class="invoice-card soft-card" *ngFor="let fact of importacion.facturasComerciales">
       
       <div class="invoice-header">
         <div class="inv-title">
-          <mat-icon class="inv-icon">receipt</mat-icon>
+          <div class="icon-wrapper primary"><mat-icon>receipt_long</mat-icon></div>
           <div>
             <div class="inv-number">{{ fact.serie }}-{{ fact.numero }}</div>
             <div class="inv-provider">{{ fact.nombreProveedor }}</div>
@@ -137,7 +138,7 @@
         </div>
       </div>
 
-      <div class="table-responsive mt-0">
+      <div class="table-responsive no-border-top">
         <table class="items-table">
           <thead>
             <tr>
@@ -161,7 +162,7 @@
               <th class="col-val text-right">Gastos U.</th>
               <th class="col-val text-right">Resg. U.</th>
 
-              <th class="col-tax text-right" title="Ingreso Manual de Ad Valorem">AdVal U. ✏️</th>
+              <th class="col-tax text-right">AdVal U.</th>
               <th class="col-tax text-right">IGV U.</th>
               <th class="col-tax text-right">IPM U.</th>
               <th class="col-tax text-right">Percep U.</th>
@@ -175,10 +176,10 @@
           </thead>
           <tbody>
             <tr *ngFor="let item of fact.items">
-              <td class="col-prod text-left"><strong>{{ item.nombreProducto }}</strong></td>
-              <td class="text-center">{{ item.cantidad }}</td>
+              <td class="col-prod text-left"><span class="prod-name">{{ item.nombreProducto }}</span></td>
+              <td class="text-center fw-medium">{{ item.cantidad }}</td>
               <td class="text-right text-gray-600">$ {{ item.precioUnitarioFob | number:'1.2-2' }}</td>
-              <td class="text-center text-xs text-gray-400">
+              <td class="text-center">
                 <span class="pct-badge">{{ item.factorParticipacion | percent:'1.1-1' }}</span>
               </td>
 
@@ -197,14 +198,10 @@
               <td class="text-right col-val text-xs">{{ ((item.itemGastosOp||0)/item.cantidad) | number:'1.2-2' }}</td>
               <td class="text-right col-val text-xs">{{ ((item.itemResguardo||0)/item.cantidad) | number:'1.2-2' }}</td>
 
-              <td class="text-right col-tax">
-                <input type="number" 
-                       class="manual-input" 
-                       [(ngModel)]="item.adValoremUnitarioManual" 
-                       (ngModelChange)="recalcularLanded(item, fact)"
-                       min="0" step="0.01" placeholder="0.00">
+              <td class="text-right col-tax text-xs font-bold text-tax">
+                {{ ((item.itemAdv||0)/item.cantidad) | number:'1.2-2' }}
               </td>
-
+              
               <td class="text-right col-tax text-xs">{{ ((item.itemIgv||0)/item.cantidad) | number:'1.2-2' }}</td>
               <td class="text-right col-tax text-xs">{{ ((item.itemIpm||0)/item.cantidad) | number:'1.2-2' }}</td>
               <td class="text-right col-tax text-xs">{{ ((item.itemPercepcion||0)/item.cantidad) | number:'1.2-2' }}</td>
@@ -212,10 +209,10 @@
               <td class="text-right col-other text-xs">{{ ((item.itemOtros1||0)/item.cantidad) | number:'1.2-2' }}</td>
               <td class="text-right col-other text-xs">{{ ((item.itemOtros2||0)/item.cantidad) | number:'1.2-2' }}</td>
 
-              <td class="text-right col-final font-bold text-green-700">
-                $ {{ item.costoUnitarioLanded | number:'1.2-2' }}
+              <td class="text-right col-final font-bold text-green">
+                $ {{ item.costoUnitarioLanded | number:'1.2-4' }}
               </td>
-              <td class="text-right col-final font-bold text-green-700">
+              <td class="text-right col-final font-bold text-green">
                 $ {{ item.costoTotalLanded | number:'1.2-2' }}
               </td>
             </tr>
@@ -228,7 +225,7 @@
 
 <ng-template #loadingTpl>
   <div class="loading-container">
-    <mat-spinner diameter="50"></mat-spinner>
-    <p>Cargando información completa...</p>
+    <mat-spinner diameter="40"></mat-spinner>
+    <p>Calculando matriz de costos...</p>
   </div>
 </ng-template>

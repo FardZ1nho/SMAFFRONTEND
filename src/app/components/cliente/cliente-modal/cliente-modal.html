@@ -12,30 +12,22 @@
   <mat-dialog-content class="modal-content">
     <form [formGroup]="clienteForm" class="cliente-form">
       
-      <!-- Error Message -->
-      <div *ngIf="errorMessage" class="error-banner">
-        <mat-icon>error</mat-icon>
-        <span>{{ errorMessage }}</span>
-      </div>
-
-      <!-- TIPO DE CLIENTE -->
       <section class="form-section">
         <h3>Tipo de Cliente</h3>
         <mat-radio-group formControlName="tipoCliente" class="tipo-cliente-radio">
-          <mat-radio-button value="PERSONA">
-            <mat-icon>person</mat-icon>
-            Persona con Documento de Identidad
-          </mat-radio-button>
           <mat-radio-button value="EMPRESA">
             <mat-icon>business</mat-icon>
             Empresa
+          </mat-radio-button>
+          <mat-radio-button value="PERSONA">
+            <mat-icon>person</mat-icon>
+            Persona con Documento de Identidad
           </mat-radio-button>
         </mat-radio-group>
       </section>
 
       <mat-divider></mat-divider>
 
-      <!-- DATOS BÁSICOS - PERSONA -->
       <section class="form-section" *ngIf="esPersona()">
         <h3>Datos Personales</h3>
         <div class="form-row">
@@ -50,7 +42,6 @@
         </div>
       </section>
 
-      <!-- DATOS BÁSICOS - EMPRESA -->
       <section class="form-section" *ngIf="esEmpresa()">
         <h3>Datos de la Empresa</h3>
         <div class="form-row">
@@ -74,8 +65,7 @@
 
       <mat-divider></mat-divider>
 
-      <!-- DOCUMENTO DE IDENTIDAD -->
-     <section class="form-section">
+      <section class="form-section">
         <h3>Documento de Identidad</h3>
         <div class="form-row two-columns">
           
@@ -105,7 +95,6 @@
 
       <mat-divider></mat-divider>
 
-      <!-- DATOS DE CONTACTO -->
       <section class="form-section">
         <h3>Datos de Contacto</h3>
         <div class="form-row two-columns">
@@ -128,7 +117,6 @@
 
       <mat-divider></mat-divider>
 
-      <!-- DIRECCIÓN -->
       <section class="form-section">
         <h3>Dirección</h3>
         <div class="form-row">
@@ -163,7 +151,6 @@
 
       <mat-divider></mat-divider>
 
-      <!-- NOTAS -->
       <section class="form-section">
         <h3>Notas Adicionales</h3>
         <mat-form-field appearance="outline" class="full-width">

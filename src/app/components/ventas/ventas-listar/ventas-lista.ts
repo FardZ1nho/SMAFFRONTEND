@@ -88,16 +88,23 @@ export class VentasListaComponent implements OnInit {
 
     // ========== CARGA DE DATOS ==========
 
+    // ========== CARGA DE DATOS ==========
+
     cargarVentas(): void {
         this.isLoading = true;
         this.errorMessage = '';
 
         this.ventaService.listarTodas().subscribe({
             next: (data) => {
-                this.ventas = data;
+                // ✅ ORDENAR POR FECHA DESCENDENTE (Más actuales primero)
+                this.ventas = data.sort((a, b) => {
+                    const fechaA = new Date(a.fechaVenta || 0).getTime();
+                    const fechaB = new Date(b.fechaVenta || 0).getTime();
+                    return fechaB - fechaA; // Mayor (más reciente) a menor (más antigua)
+                });
                 
                 this.aplicarFiltros();     // Actualiza Tab 1
-                this.actualizarDeudas();   // ✅ Actualiza Tab 2 (Lógica corregida)
+                this.actualizarDeudas();   // Actualiza Tab 2
                 this.calcularFinanzas(); 
                 
                 this.isLoading = false;

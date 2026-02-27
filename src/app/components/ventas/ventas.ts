@@ -7,7 +7,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
+// ✅ IMPORTACIÓN ACTUALIZADA: Se agregó MAT_DATE_LOCALE
+import { MatNativeDateModule, MAT_DATE_LOCALE } from '@angular/material/core'; 
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
@@ -44,6 +45,10 @@ interface ProductoEnVenta {
     CommonModule, FormsModule, MatButtonModule, MatIconModule, MatFormFieldModule,
     MatInputModule, MatSelectModule, MatDatepickerModule, MatNativeDateModule,
     MatTooltipModule, MatProgressSpinnerModule, MatDialogModule, MatSnackBarModule
+  ],
+  // 🟢 ¡NUEVO! Configuramos la región a Perú para que acepte dd/MM/yyyy escrito a mano
+  providers: [
+    { provide: MAT_DATE_LOCALE, useValue: 'es-PE' }
   ],
   templateUrl: './ventas.html',
   styleUrls: ['./ventas.css']
@@ -406,7 +411,6 @@ export class VentasComponent implements OnInit {
     }
     return precioOriginal;
   }
-
   // --- GESTIÓN PRODUCTOS ---
   agregarProducto(producto: Producto): void {
       const esServicio = producto.tipo === 'SERVICIO';

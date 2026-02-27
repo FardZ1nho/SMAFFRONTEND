@@ -10,6 +10,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar'; // ✅ AGREGADO
 
 import { ClienteService } from '../../../services/cliente-service';
 import { ClienteRequest } from '../../../models/cliente';
@@ -28,7 +29,8 @@ import { ClienteRequest } from '../../../models/cliente';
     MatIconModule,
     MatProgressSpinnerModule,
     MatRadioModule,
-    MatDividerModule
+    MatDividerModule,
+    MatSnackBarModule // ✅ AGREGADO AL MÓDULO
   ],
   templateUrl: './cliente-modal.html',
   styleUrls: ['./cliente-modal.css']
@@ -36,7 +38,6 @@ import { ClienteRequest } from '../../../models/cliente';
 export class ClienteModalComponent implements OnInit {
   clienteForm!: FormGroup;
   isLoading = false;
-  errorMessage = '';
   modoEdicion = false;
 
   tiposDocumentoPersona = [
@@ -56,7 +57,8 @@ export class ClienteModalComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private clienteService: ClienteService,
-    private cdr: ChangeDetectorRef, // ✅ CRUCIAL: Para evitar errores de consola
+    private cdr: ChangeDetectorRef, 
+    private snackBar: MatSnackBar, // ✅ INYECTADO PARA EL MENSAJE FLOTANTE
     public dialogRef: MatDialogRef<ClienteModalComponent>,
     @Inject(MAT_DIALOG_DATA) public data: any
   ) {}
@@ -75,11 +77,11 @@ export class ClienteModalComponent implements OnInit {
 
   inicializarFormulario(): void {
     this.clienteForm = this.fb.group({
-      tipoCliente: ['PERSONA', Validators.required],
-      nombreCompleto: ['', Validators.required],
-      razonSocial: [''],
+      tipoCliente: ['EMPRESA', Validators.required], // ✅ AHORA "EMPRESA" ES EL DEFAULT
+      nombreCompleto: [''],
+      razonSocial: ['', Validators.required],
       nombreContacto: [''],
-      tipoDocumento: ['DNI'],
+      tipoDocumento: ['RUC'],
       numeroDocumento: [''],
       telefono: [''],
       email: ['', [Validators.email]],
@@ -134,7 +136,6 @@ export class ClienteModalComponent implements OnInit {
     nombreCompleto?.updateValueAndValidity();
     razonSocial?.updateValueAndValidity();
     
-    // ✅ ESTO SOLUCIONA LOS ERRORES ROJOS EN TU CONSOLA
     this.cdr.detectChanges();
   }
 
@@ -150,7 +151,6 @@ export class ClienteModalComponent implements OnInit {
     } else if (tipoDoc === 'RUC') {
       numeroDoc?.setValidators([
         Validators.required,
-        // ✅ REGEX CORRECTO: Acepta 10, 15, 17 o 20 al inicio, seguido de 9 dígitos
         Validators.pattern(/^(10|15|17|20)\d{9}$/)
       ]);
     } else {
@@ -210,7 +210,6 @@ export class ClienteModalComponent implements OnInit {
     }
 
     this.isLoading = true;
-    this.errorMessage = '';
     const formValue = this.clienteForm.value;
 
     // Preparar el objeto limpio (null en vez de string vacío)
@@ -240,8 +239,16 @@ export class ClienteModalComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error:', error);
-        // Intentar leer el mensaje del backend si existe
-        this.errorMessage = error.error?.mensaje || 'Error al guardar el cliente. Verifica el RUC (Backend).';
+        const mensajeError = error.error?.mensaje || 'Error al guardar el cliente. Verifica el RUC/DNI.';
+        
+        // ✅ USAMOS SNACKBAR EN LUGAR DE LA VARIABLE DE ERROR
+        this.snackBar.open(mensajeError, 'Cerrar', {
+          duration: 5000,
+          horizontalPosition: 'center',
+          verticalPosition: 'bottom',
+          panelClass: ['error-snackbar'] // Estilo opcional para color rojo
+        });
+        
         this.isLoading = false;
         this.cdr.detectChanges();
       }

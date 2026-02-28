@@ -119,10 +119,10 @@
                                 <th mat-header-cell *matHeaderCellDef>Pago</th>
                                 <td mat-cell *matCellDef="let venta">
                                     <div class="payment-method-tag">
-                                        <mat-icon>{{ getMetodoPagoIcon(venta.metodoPago) }}</mat-icon>
-                                        <span>{{ venta.metodoPago }}</span>
+                                        <mat-icon [style.color]="getMetodoPagoColor(venta)">{{ getMetodoPagoIcon(venta) }}</mat-icon>
+                                        <span style="font-weight: 500;">{{ getNombreMetodoPago(venta) | titlecase }}</span>
                                         <span *ngIf="venta.tipoPago === 'CREDITO'"
-                                            style="font-size: 10px; color: #dc2626; margin-left: 4px;">(CRÉDITO)</span>
+                                            style="font-size: 10px; color: #dc2626; margin-left: 4px; font-weight: 700;">(CRÉDITO)</span>
                                     </div>
                                 </td>
                             </ng-container>

@@ -13,8 +13,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatDialog } from '@angular/material/dialog';
-import { MatTabsModule } from '@angular/material/tabs'; // ✅ NUEVO
-import { MatProgressBarModule } from '@angular/material/progress-bar'; // ✅ NUEVO
+import { MatTabsModule } from '@angular/material/tabs'; 
+import { MatProgressBarModule } from '@angular/material/progress-bar'; 
 import { Router } from '@angular/router';
 
 import { VentaService } from '../../../services/venta-service';
@@ -31,18 +31,18 @@ import { AmortizarModalComponent } from '../amortizar-modal/amortizar-modal';
         CommonModule, FormsModule, MatTableModule, MatButtonModule, MatIconModule,
         MatInputModule, MatFormFieldModule, MatSelectModule, MatChipsModule,
         MatTooltipModule, MatProgressSpinnerModule, MatSnackBarModule, MatMenuModule,
-        MatTabsModule, MatProgressBarModule // ✅ Módulos agregados
+        MatTabsModule, MatProgressBarModule 
     ],
     templateUrl: './ventas-lista.html',
     styleUrls: ['./ventas-lista.css']
 })
 export class VentasListaComponent implements OnInit {
     
-    // === TAB 1: HISTORIAL (TU CÓDIGO ORIGINAL) ===
+    // === TAB 1: HISTORIAL ===
     ventas: Venta[] = [];
     ventasFiltradas = new MatTableDataSource<Venta>([]);
     
-    // === TAB 2: CUENTAS POR COBRAR (NUEVO) ===
+    // === TAB 2: CUENTAS POR COBRAR ===
     deudasFiltradas = new MatTableDataSource<Venta>([]);
     totalPorCobrar: number = 0;
     clientesDeudores: number = 0;
@@ -56,13 +56,13 @@ export class VentasListaComponent implements OnInit {
     errorMessage: string = '';
 
     // Variables Financieras
-    totalVentas: number = 0;      
+    totalVentas: number = 0;       
     totalNotasCredito: number = 0; 
     ingresoNetoReal: number = 0;    
 
     // Columnas
     displayedColumns: string[] = ['codigo', 'fechaVenta', 'cliente', 'metodoPago', 'total', 'estado', 'acciones'];
-    displayedColumnsDeudas: string[] = ['cliente', 'codigo', 'fechaVenta', 'total', 'abonado', 'saldo', 'acciones']; // ✅ Nueva columna
+    displayedColumnsDeudas: string[] = ['cliente', 'codigo', 'fechaVenta', 'total', 'abonado', 'saldo', 'acciones'];
 
     estadosVenta = [
         { value: 'TODAS', label: 'Todas' },
@@ -88,23 +88,21 @@ export class VentasListaComponent implements OnInit {
 
     // ========== CARGA DE DATOS ==========
 
-    // ========== CARGA DE DATOS ==========
-
     cargarVentas(): void {
         this.isLoading = true;
         this.errorMessage = '';
 
         this.ventaService.listarTodas().subscribe({
             next: (data) => {
-                // ✅ ORDENAR POR FECHA DESCENDENTE (Más actuales primero)
+                // Ordenar por fecha descendente (Más actuales primero)
                 this.ventas = data.sort((a, b) => {
                     const fechaA = new Date(a.fechaVenta || 0).getTime();
                     const fechaB = new Date(b.fechaVenta || 0).getTime();
-                    return fechaB - fechaA; // Mayor (más reciente) a menor (más antigua)
+                    return fechaB - fechaA; 
                 });
                 
-                this.aplicarFiltros();     // Actualiza Tab 1
-                this.actualizarDeudas();   // Actualiza Tab 2
+                this.aplicarFiltros();     
+                this.actualizarDeudas();   
                 this.calcularFinanzas(); 
                 
                 this.isLoading = false;
@@ -120,17 +118,13 @@ export class VentasListaComponent implements OnInit {
         });
     }
 
-    // ✅ LÓGICA CORREGIDA PARA DETECTAR DEUDAS
     actualizarDeudas(): void {
-        // Filtramos cualquier venta que esté PENDIENTE y tenga saldo > 0.1 (evitar errores de redondeo)
-        // No importa si dice 'EFECTIVO' o 'CREDITO', si debe saldo, es deuda.
         const deudas = this.ventas.filter(v => 
             v.estado === EstadoVenta.PENDIENTE && (v.saldoPendiente || 0) > 0.1
         );
         
         this.deudasFiltradas.data = deudas;
 
-        // Calcular Totales de Deuda
         this.totalPorCobrar = deudas.reduce((acc, v) => acc + (v.saldoPendiente || 0), 0);
         const uniqueClients = new Set(deudas.map(v => v.nombreCliente));
         this.clientesDeudores = uniqueClients.size;
@@ -149,10 +143,11 @@ export class VentasListaComponent implements OnInit {
             error: (err) => console.error('Error cargando notas de crédito', err)
         });
     }
-  editarVenta(venta: Venta): void {
-        // Navegamos directo al formulario sin importar el estado de la venta
+
+    editarVenta(venta: Venta): void {
         this.router.navigate(['/ventas', venta.id]);
     }
+
     calcularFinanzas(): void {
         let sumaCompletadas = this.ventas
             .filter(v => v.estado === EstadoVenta.COMPLETADA)
@@ -170,7 +165,7 @@ export class VentasListaComponent implements OnInit {
         this.ingresoNetoReal = this.totalVentas - this.totalNotasCredito;
     }
 
-    // ========== FILTROS (MANTENIDO) ==========
+    // ========== FILTROS ==========
 
     aplicarFiltros(): void {
         let filtradas = [...this.ventas];
@@ -182,13 +177,11 @@ export class VentasListaComponent implements OnInit {
         if (this.terminoBusqueda.trim()) {
             const termino = this.terminoBusqueda.toLowerCase();
             
-            // Filtro para Tabla Principal
             filtradas = filtradas.filter(v =>
                 v.codigo.toLowerCase().includes(termino) ||
                 (v.nombreCliente && v.nombreCliente.toLowerCase().includes(termino))
             );
 
-            // Filtro para Tabla Deudas (También permitimos buscar ahí)
             this.deudasFiltradas.filter = termino;
         }
 
@@ -199,7 +192,7 @@ export class VentasListaComponent implements OnInit {
     buscarVentas(): void { this.aplicarFiltros(); }
     limpiarBusqueda(): void { this.terminoBusqueda = ''; this.aplicarFiltros(); }
     
-    // ========== ACCIONES (TODAS TUS FUNCIONES ORIGINALES) ==========
+    // ========== ACCIONES ==========
 
     nuevaVenta(): void { this.router.navigate(['/ventas']); }
 
@@ -224,7 +217,6 @@ export class VentasListaComponent implements OnInit {
         }
     }
 
-    // ✅ ESTA FUNCIÓN SE USA EN AMBAS PESTAÑAS
     amortizarDeuda(venta: Venta): void {
         const dialogRef = this.dialog.open(AmortizarModalComponent, {
             width: '500px', 
@@ -237,7 +229,7 @@ export class VentasListaComponent implements OnInit {
                     .subscribe({
                         next: () => {
                             this.mostrarMensaje('✅ Pago registrado exitosamente', 'success');
-                            this.cargarVentas(); // Recarga todo para actualizar tablas
+                            this.cargarVentas(); 
                         },
                         error: () => this.mostrarMensaje('Error al registrar pago', 'error')
                     });
@@ -292,9 +284,8 @@ export class VentasListaComponent implements OnInit {
         });
     }
 
-    // ========== UTILIDADES ==========
+    // ========== UTILIDADES DE VISTA Y PAGO ==========
 
-    // ✅ Nuevo helper para la barra de progreso de deuda
     getPorcentajePagado(venta: Venta): number {
         if (!venta.total || venta.total === 0) return 0;
         const saldo = venta.saldoPendiente || 0;
@@ -322,13 +313,50 @@ export class VentasListaComponent implements OnInit {
         }
     }
 
-    getMetodoPagoIcon(metodoPago: string): string {
-        switch (metodoPago) {
-            case 'EFECTIVO': return 'payments';
-            case 'TARJETA': return 'credit_card';
-            case 'TRANSFERENCIA': return 'account_balance';
-            default: return 'payment';
+    // ✅ NUEVAS FUNCIONES PARA LOS PAGOS
+    getMetodoPagoIcon(venta: any): string {
+        if (venta.tipoPago === 'CREDITO' && (!venta.pagos || venta.pagos.length === 0)) {
+            return 'schedule'; 
         }
+        if (venta.pagos && venta.pagos.length > 0) {
+            const metodo = venta.pagos[0].metodoPago;
+            switch (metodo) {
+                case 'EFECTIVO': return 'payments'; 
+                case 'TARJETA': return 'credit_card'; 
+                case 'TRANSFERENCIA': return 'account_balance'; 
+                case 'YAPE': return 'qr_code_scanner'; 
+                case 'PLIN': return 'send_to_mobile'; 
+                default: return 'payment';
+            }
+        }
+        return 'payment'; 
+    }
+
+    getNombreMetodoPago(venta: any): string {
+        if (venta.tipoPago === 'CREDITO' && (!venta.pagos || venta.pagos.length === 0)) {
+            return 'Por Cobrar';
+        }
+        if (venta.pagos && venta.pagos.length > 0) {
+            if (venta.pagos.length > 1) return 'Pago Mixto';
+            return venta.pagos[0].metodoPago;
+        }
+        return 'No definido';
+    }
+
+    getMetodoPagoColor(venta: any): string {
+        if (venta.tipoPago === 'CREDITO' && (!venta.pagos || venta.pagos.length === 0)) return '#f59e0b'; 
+        if (venta.pagos && venta.pagos.length > 0) {
+            const metodo = venta.pagos[0].metodoPago;
+            switch (metodo) {
+                case 'EFECTIVO': return '#16a34a'; 
+                case 'TARJETA': return '#2563eb'; 
+                case 'TRANSFERENCIA': return '#0891b2'; 
+                case 'YAPE': return '#7c3aed'; 
+                case 'PLIN': return '#be185d'; 
+                default: return '#64748b'; 
+            }
+        }
+        return '#64748b';
     }
 
     formatearFecha(fecha: Date): string {

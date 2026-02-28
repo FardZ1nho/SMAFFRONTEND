@@ -7,7 +7,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-// ✅ IMPORTACIÓN ACTUALIZADA: Se agregó MAT_DATE_LOCALE
 import { MatNativeDateModule, MAT_DATE_LOCALE } from '@angular/material/core'; 
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -21,7 +20,7 @@ import { VentaService } from '../../services/venta-service';
 import { ProductoService } from '../../services/producto-service';
 import { ClienteService } from '../../services/cliente-service';
 import { CuentaBancariaService } from '../../services/cuenta-bancaria-service';
-import { CotizacionService } from '../../services/cotizacion-service'; // ✅ Servicio inyectado
+import { CotizacionService } from '../../services/cotizacion-service';
 
 // Modelos
 import { Producto } from '../../models/producto';
@@ -46,7 +45,6 @@ interface ProductoEnVenta {
     MatInputModule, MatSelectModule, MatDatepickerModule, MatNativeDateModule,
     MatTooltipModule, MatProgressSpinnerModule, MatDialogModule, MatSnackBarModule
   ],
-  // 🟢 ¡NUEVO! Configuramos la región a Perú para que acepte dd/MM/yyyy escrito a mano
   providers: [
     { provide: MAT_DATE_LOCALE, useValue: 'es-PE' }
   ],
@@ -54,7 +52,6 @@ interface ProductoEnVenta {
   styleUrls: ['./ventas.css']
 })
 export class VentasComponent implements OnInit {
-  // --- Búsqueda y Listas ---
   terminoBusqueda: string = '';
   productos: Producto[] = [];
   productosFiltrados: Producto[] = [];
@@ -68,18 +65,14 @@ export class VentasComponent implements OnInit {
   mostrarListaClientes: boolean = false;
   isLoadingClientes: boolean = false;
 
-  // Cuentas Bancarias
   cuentas: CuentaBancaria[] = [];
 
-  // --- Formulario de Venta ---
   nombreCliente: string = '';
   tipoCliente: TipoCliente = TipoCliente.COMUN;
   fechaVenta: Date = new Date();
     
-  // VARIABLES DE PAGO
   tipoPago: TipoPago = TipoPago.CONTADO;
     
-  // LISTA DE PAGOS Y OBJETO TEMPORAL
   listaPagos: PagoRequest[] = [];
     
   pagoActual: PagoRequest = {
@@ -90,7 +83,6 @@ export class VentasComponent implements OnInit {
     referencia: ''
   };
 
-  // Crédito
   numeroCuotas: number = 1;
   montoCuota: number = 0;      
   saldoPendiente: number = 0; 
@@ -98,7 +90,6 @@ export class VentasComponent implements OnInit {
 
   notas: string = '';
 
-  // --- Datos de Emisión ---
   tipoDocumento: string = 'FACTURA';
   numeroDocumento: string = '';
 
@@ -108,11 +99,9 @@ export class VentasComponent implements OnInit {
     { value: 'NOTA', label: 'Nota de Venta' }
   ];
 
-  // --- Configuración de Moneda VENTA ---
   moneda: string = 'PEN';
   tipoCambio: number = 3.80;
     
-  // --- Totales ---
   subtotal: number = 0;
   igv: number = 0;
   total: number = 0;
@@ -128,7 +117,6 @@ export class VentasComponent implements OnInit {
     
   public eTipoPago = TipoPago;
 
-  // --- Edición ---
   esEdicion: boolean = false;
   ventaId: number | null = null;
 
@@ -137,7 +125,7 @@ export class VentasComponent implements OnInit {
     private productoService: ProductoService,
     private clienteService: ClienteService,
     private cuentaService: CuentaBancariaService,
-    private cotizacionService: CotizacionService, // ✅ Inyectado
+    private cotizacionService: CotizacionService,
     private router: Router,
     private route: ActivatedRoute,
     private cdr: ChangeDetectorRef,
@@ -158,30 +146,23 @@ export class VentasComponent implements OnInit {
         this.productosFiltrados = listaProductos;
         this.clientes = listaClientes;
 
-        // Verificar si estamos editando una VENTA EXISTENTE
         const idParam = this.route.snapshot.paramMap.get('id');
-        
-        // Verificar si venimos desde una COTIZACIÓN en el Kanban
         const cotizacionIdParam = this.route.snapshot.queryParamMap.get('cotizacionId');
 
-        // ⭐ EL CAMBIO ESTÁ AQUÍ: Ignoramos la palabra "nueva"
         if (idParam && idParam !== 'nueva') {
-          // Modo Edición Normal
           this.ventaId = +idParam;
           this.esEdicion = true;
           this.cargarDatosVenta(this.ventaId);
         } else if (cotizacionIdParam) {
-          // Modo "Cerrar Trato" desde el CRM
           this.isLoadingProductos = false;
           this.pagoActual.moneda = this.moneda;
           this.cargarDatosCotizacion(+cotizacionIdParam);
         } else {
-          // Modo Nueva Venta Normal
           this.isLoadingProductos = false;
           this.pagoActual.moneda = this.moneda;
         }
       },
-      error: (err: any) => { // ✅ CORRECCIÓN DE TIPADO
+      error: (err: any) => { 
         console.error('Error cargando datos base:', err);
         this.isLoadingProductos = false;
         this.mostrarNotificacion('Error cargando datos iniciales', 'error');
@@ -189,7 +170,6 @@ export class VentasComponent implements OnInit {
     });
   }
 
-  // --- CARGAR DATOS DESDE LA COTIZACIÓN GANADA ---
   cargarDatosCotizacion(cotizacionId: number): void {
     this.isLoadingProductos = true;
     this.mostrarNotificacion('Cargando datos de la cotización...', 'success');
@@ -197,16 +177,11 @@ export class VentasComponent implements OnInit {
     this.cotizacionService.obtenerPorId(cotizacionId).subscribe({
       next: (cotizacion: any) => {
         
-        // ⭐ EL CHISMOSO: Abre la consola (F12) para ver qué llegó realmente
-        console.log('✅ Cotización recibida de Spring Boot:', cotizacion);
-        
-        // 1. Asignar la Moneda
         if (cotizacion.moneda) {
           this.moneda = cotizacion.moneda;
           this.pagoActual.moneda = this.moneda;
         }
 
-        // 2. Asignar el Cliente
         if (cotizacion.cliente && cotizacion.cliente.id) {
           const clienteEncontrado = this.clientes.find(c => String(c.id) === String(cotizacion.cliente.id));
           if (clienteEncontrado) {
@@ -218,12 +193,10 @@ export class VentasComponent implements OnInit {
           }
         }
 
-        // 3. Pasar los detalles de la cotización al carrito
         if (cotizacion.detalles && cotizacion.detalles.length > 0) {
           const nuevosProductos: ProductoEnVenta[] = [];
 
           cotizacion.detalles.forEach((detalle: any) => {
-            // ⭐ BLINDAJE EXTREMO: Buscamos el ID y los datos sin importar cómo los llame tu backend
             const idRealProducto = detalle.producto?.id || detalle.productoId || detalle.idProducto || detalle.id;
             const nombreRealProducto = detalle.producto?.nombre || detalle.productoNombre || 'Producto de Cotización';
             const precioReal = detalle.precioUnitario || detalle.precio || 0;
@@ -257,12 +230,10 @@ export class VentasComponent implements OnInit {
           this.calcularTotales();
 
         } else {
-          // Si entra aquí, Spring Boot te está ocultando los datos
           this.mostrarNotificacion('La cotización cargó, pero vino sin productos', 'warning');
           console.warn('⚠️ OJO: Spring Boot no envió el array "detalles". Revisa tu backend.');
         }
 
-        // 4. Agregar nota automática
         this.notas = `Venta generada a partir de la Cotización #${cotizacion.numero}`;
         
         this.isLoadingProductos = false;
@@ -277,12 +248,10 @@ export class VentasComponent implements OnInit {
     });
   }
 
-  // --- MÉTODOS DE CARGA PARA EDICIÓN ---
   cargarDatosVenta(id: number): void {
     this.isLoadingProductos = true;
     this.ventaService.obtenerVenta(id).subscribe({
       next: (venta: any) => {
-        // Cargar Cliente
         let idCliente = venta.clienteId || (venta.cliente ? venta.cliente.id : null);
         const clienteEncontrado = this.clientes.find(c => String(c.id) === String(idCliente));
         if (clienteEncontrado) this.seleccionarCliente(clienteEncontrado);
@@ -291,8 +260,9 @@ export class VentasComponent implements OnInit {
           this.clienteSeleccionado = { id: idCliente || 0, nombreCompleto: venta.nombreCliente } as any;
         }
 
-        // Cargar Datos Generales
-        this.fechaVenta = new Date(venta.fechaVenta);
+        // ✅ CORRECCIÓN CLAVE: Parseo seguro de fecha
+        this.fechaVenta = venta.fechaVenta ? new Date(venta.fechaVenta) : new Date();
+
         this.notas = venta.notas || '';
         this.moneda = venta.moneda || 'PEN';
         this.tipoCambio = venta.tipoCambio || 3.80;
@@ -301,7 +271,6 @@ export class VentasComponent implements OnInit {
         this.tipoPago = venta.tipoPago || TipoPago.CONTADO;
         this.numeroCuotas = venta.numeroCuotas || 1;
 
-        // Cargar Pagos Anteriores
         if (venta.pagos && venta.pagos.length > 0) {
             this.listaPagos = venta.pagos.map((p: any) => ({
                 metodoPago: p.metodoPago,
@@ -312,7 +281,6 @@ export class VentasComponent implements OnInit {
             }));
         }
 
-        // Cargar Detalles de Productos 
         if (venta.detalles) {
           this.productosEnVenta = venta.detalles.map((detalle: any) => {
             const productoCatalogo = this.productos.find(p => String(p.id) === String(detalle.productoId));
@@ -338,7 +306,7 @@ export class VentasComponent implements OnInit {
         this.isLoadingProductos = false;
         this.cdr.detectChanges();
       },
-      error: (err: any) => { // ✅ CORRECCIÓN DE TIPADO
+      error: (err: any) => { 
         this.isLoadingProductos = false;
         this.mostrarNotificacion('Error cargando la venta', 'error');
       }
@@ -353,7 +321,6 @@ export class VentasComponent implements OnInit {
     });
   }
 
-  // --- CLIENTE Y MODALES ---
   abrirNuevoCliente(): void {
     const dialogRef = this.dialog.open(ClienteModalComponent, { width: '700px', disableClose: true, data: { cliente: null } });
     dialogRef.afterClosed().subscribe(nuevoCliente => {
@@ -382,7 +349,6 @@ export class VentasComponent implements OnInit {
     this.mostrarListaClientes = this.clientesFiltrados.length > 0;
   } 
 
-  // --- LÓGICA MONEDA ---
   cambiarMoneda(nuevaMoneda: string) {
     this.moneda = nuevaMoneda;
     this.pagoActual.moneda = nuevaMoneda;
@@ -411,7 +377,7 @@ export class VentasComponent implements OnInit {
     }
     return precioOriginal;
   }
-  // --- GESTIÓN PRODUCTOS ---
+
   agregarProducto(producto: Producto): void {
       const esServicio = producto.tipo === 'SERVICIO';
 
@@ -471,10 +437,6 @@ export class VentasComponent implements OnInit {
     );
   }
 
-  // ============================================
-  // GESTIÓN DE PAGOS MÚLTIPLES Y HELPERS
-  // ============================================
-
   esPagoDigital(metodo: MetodoPago): boolean {
     return [MetodoPago.YAPE, MetodoPago.PLIN, MetodoPago.TRANSFERENCIA, MetodoPago.TARJETA].includes(metodo);
   }
@@ -530,10 +492,6 @@ export class VentasComponent implements OnInit {
     return Number(total.toFixed(2));
   }
 
-  // ============================================
-  // CÁLCULO DE TOTALES Y CRÉDITO
-  // ============================================
-
   calcularTotales(): void {
     this.total = Number(this.productosEnVenta.reduce((sum, p) => sum + p.subtotal, 0).toFixed(2));
     this.subtotal = Number((this.total / 1.18).toFixed(2));
@@ -565,11 +523,10 @@ export class VentasComponent implements OnInit {
     this.calcularTotales();
   }
 
-  // --- ACCIONES FINALES ---
-
   prepararRequest(): VentaRequest {
+    // ✅ CORRECCIÓN CLAVE: Enviamos la fecha tal cual está en el Datepicker
     return {
-      fechaVenta: this.fechaVenta,
+      fechaVenta: this.fechaVenta, 
       clienteId: this.clienteSeleccionado?.id,
       nombreCliente: this.nombreCliente,
       tipoCliente: this.tipoCliente,
@@ -590,7 +547,6 @@ export class VentasComponent implements OnInit {
     };
   }
 
-  // ⭐ EL CAMBIO PARA COMPLETAR LA VENTA ESTÁ AQUÍ ⭐
   completarVenta(): void {
     if (this.productosEnVenta.length === 0 || !this.clienteSeleccionado) {
       this.mostrarNotificacion('Seleccione un cliente y productos para continuar', 'warning');
@@ -637,10 +593,8 @@ export class VentasComponent implements OnInit {
     };
 
     if (this.esEdicion && this.ventaId) {
-      // 1. Primero mandamos la actualización de los datos
       this.ventaService.actualizarVenta(this.ventaId, request).subscribe({
         next: () => {
-           // 2. Si se actualizó correctamente, lanzamos la orden de COMPLETAR
            this.ventaService.completarVenta(this.ventaId!).subscribe(observer);
         },
         error: (err: any) => {
@@ -649,7 +603,6 @@ export class VentasComponent implements OnInit {
         }
       });
     } else {
-      // Si es una venta nueva, se crea y completa automáticamente
       this.ventaService.crearVenta(request).subscribe(observer);
     }
   }
@@ -665,7 +618,7 @@ export class VentasComponent implements OnInit {
             this.isSaving = false;
             this.router.navigate(['/ventas/lista']);
         },
-        error: (err: any) => { // ✅ CORRECCIÓN DE TIPADO
+        error: (err: any) => { 
             this.isSaving = false; 
             this.mostrarNotificacion('Error al guardar borrador', 'error'); 
         }

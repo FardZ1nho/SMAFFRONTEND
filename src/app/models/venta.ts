@@ -31,6 +31,10 @@ export interface Venta {
   
   tipoDocumento: string;    
   numeroDocumento?: string; 
+
+  // ✅ NUEVO: RETENCIÓN Y DETRACCIÓN
+  retencion?: number;
+  detraccion?: number;
   
   subtotal: number;
   igv: number;
@@ -93,6 +97,10 @@ export interface VentaRequest {
   tipoCambio: number;       
   tipoDocumento: string;    
   numeroDocumento?: string; 
+
+  // ✅ NUEVO: RETENCIÓN Y DETRACCIÓN
+  retencion?: number;
+  detraccion?: number;
   
   notas?: string;
   detalles: DetalleVentaRequest[];

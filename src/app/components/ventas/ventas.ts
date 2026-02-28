@@ -76,7 +76,7 @@ export class VentasComponent implements OnInit {
   listaPagos: PagoRequest[] = [];
     
   pagoActual: PagoRequest = {
-    metodoPago: MetodoPago.EFECTIVO,
+    metodoPago: MetodoPago.TRANSFERENCIA,
     monto: 0,
     moneda: 'PEN',
     cuentaBancariaId: undefined,
@@ -104,7 +104,13 @@ export class VentasComponent implements OnInit {
     
   subtotal: number = 0;
   igv: number = 0;
-  total: number = 0;
+  
+  // ✅ NUEVAS VARIABLES: Retención y Detracción (y Total Bruto)
+  retencion: number | null = null;
+  detraccion: number | null = null;
+  totalVentaBruto: number = 0; 
+  total: number = 0; // Este es el Total Real a Cobrar (Bruto - Retención - Detracción)
+
   isSaving: boolean = false;
 
   metodosPagoDisponibles = [
@@ -231,7 +237,6 @@ export class VentasComponent implements OnInit {
 
         } else {
           this.mostrarNotificacion('La cotización cargó, pero vino sin productos', 'warning');
-          console.warn('⚠️ OJO: Spring Boot no envió el array "detalles". Revisa tu backend.');
         }
 
         this.notas = `Venta generada a partir de la Cotización #${cotizacion.numero}`;
@@ -260,7 +265,6 @@ export class VentasComponent implements OnInit {
           this.clienteSeleccionado = { id: idCliente || 0, nombreCompleto: venta.nombreCliente } as any;
         }
 
-        // ✅ CORRECCIÓN CLAVE: Parseo seguro de fecha
         this.fechaVenta = venta.fechaVenta ? new Date(venta.fechaVenta) : new Date();
 
         this.notas = venta.notas || '';
@@ -270,6 +274,10 @@ export class VentasComponent implements OnInit {
         this.numeroDocumento = venta.numeroDocumento || '';
         this.tipoPago = venta.tipoPago || TipoPago.CONTADO;
         this.numeroCuotas = venta.numeroCuotas || 1;
+        
+        // ✅ Cargar Retención y Detracción si existen en el borrador
+        this.retencion = venta.retencion || null;
+        this.detraccion = venta.detraccion || null;
 
         if (venta.pagos && venta.pagos.length > 0) {
             this.listaPagos = venta.pagos.map((p: any) => ({
@@ -492,10 +500,30 @@ export class VentasComponent implements OnInit {
     return Number(total.toFixed(2));
   }
 
+  // ✅ Limpieza de campos numéricos (UX)
+  limpiarCero(campo: 'retencion' | 'detraccion') {
+    if (this[campo] === 0) {
+        this[campo] = null as unknown as number;
+    }
+  }
+
+  verificarVacio(campo: 'retencion' | 'detraccion') {
+    if (this[campo] === null || this[campo] === undefined) {
+        this[campo] = 0;
+    }
+  }
+
+  // ✅ CÁLCULO ACTUALIZADO
   calcularTotales(): void {
-    this.total = Number(this.productosEnVenta.reduce((sum, p) => sum + p.subtotal, 0).toFixed(2));
-    this.subtotal = Number((this.total / 1.18).toFixed(2));
-    this.igv = Number((this.total - this.subtotal).toFixed(2));
+    this.totalVentaBruto = Number(this.productosEnVenta.reduce((sum, p) => sum + p.subtotal, 0).toFixed(2));
+    this.subtotal = Number((this.totalVentaBruto / 1.18).toFixed(2));
+    this.igv = Number((this.totalVentaBruto - this.subtotal).toFixed(2));
+    
+    const ret = this.retencion || 0;
+    const det = this.detraccion || 0;
+
+    // Lo que realmente nos tienen que pagar
+    this.total = Number((this.totalVentaBruto - ret - det).toFixed(2));
       
     this.totalPagadoAcumulado = this.calcularTotalPagadoAcumulado();
 
@@ -514,6 +542,11 @@ export class VentasComponent implements OnInit {
     }
   }
 
+  // ✅ Recalcula si cambia la retención
+  onRetDetChange() {
+    this.calcularTotales();
+  }
+
   calcularCredito(): void {
     this.calcularTotales();
   }
@@ -524,7 +557,6 @@ export class VentasComponent implements OnInit {
   }
 
   prepararRequest(): VentaRequest {
-    // ✅ CORRECCIÓN CLAVE: Enviamos la fecha tal cual está en el Datepicker
     return {
       fechaVenta: this.fechaVenta, 
       clienteId: this.clienteSeleccionado?.id,
@@ -537,6 +569,8 @@ export class VentasComponent implements OnInit {
       tipoCambio: this.tipoCambio,
       tipoDocumento: this.tipoDocumento,
       numeroDocumento: this.numeroDocumento,
+      retencion: this.retencion || 0, // ✅ Añadido
+      detraccion: this.detraccion || 0, // ✅ Añadido
       notas: this.notas,
       detalles: this.productosEnVenta.map(p => ({
         productoId: p.producto.id,
@@ -636,9 +670,12 @@ export class VentasComponent implements OnInit {
     this.listaPagos = [];
     this.clienteSeleccionado = null;
     this.busquedaCliente = '';
+    this.totalVentaBruto = 0;
     this.total = 0;
     this.subtotal = 0;
     this.igv = 0;
+    this.retencion = null;
+    this.detraccion = null;
     this.totalPagadoAcumulado = 0;
     this.tipoPago = TipoPago.CONTADO;
     this.notas = '';

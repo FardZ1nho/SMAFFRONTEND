@@ -1,0 +1,49 @@
+<div class="modal-container">
+  <div class="modal-header">
+    <div class="title-group">
+      <mat-icon color="primary">receipt_long</mat-icon>
+      <div>
+        <h2>Detalle de Gasto Manual</h2>
+        <p>Registrado el {{ data.fechaHora | date:'dd/MM/yyyy' }}</p>
+      </div>
+    </div>
+    <button mat-icon-button mat-dialog-close><mat-icon>close</mat-icon></button>
+  </div>
+
+  <div class="modal-body" mat-dialog-content>
+    
+    <div class="info-grid">
+      <div class="info-box">
+        <span class="info-label">Comprobante</span>
+        <span class="info-value comprobante-badge">{{ comprobante }}</span>
+      </div>
+      <div class="info-box">
+        <span class="info-label">Proveedor / Destinatario</span>
+        <span class="info-value"><mat-icon class="small-icon">storefront</mat-icon> {{ data.responsable }}</span>
+      </div>
+    </div>
+
+    <div class="section-title mt-4">
+      <mat-icon>shopping_cart</mat-icon> Ítems Adquiridos
+    </div>
+    <div class="items-list">
+      <div class="item-row" *ngFor="let item of items">
+        <div class="item-cant">{{ item.cantidad }}</div>
+        <div class="item-desc">{{ item.descripcion }}</div>
+      </div>
+    </div>
+
+    <div class="observaciones-box" *ngIf="observaciones !== 'Sin observaciones'">
+      <strong>Observaciones:</strong> {{ observaciones }}
+    </div>
+
+  </div>
+
+  <div class="modal-footer" mat-dialog-actions>
+    <div class="total-box">
+      <span>Total Pagado:</span>
+      <span class="total-amount">S/ {{ data.monto | number:'1.2-2' }}</span>
+    </div>
+    <button mat-stroked-button mat-dialog-close>Cerrar Detalle</button>
+  </div>
+</div>

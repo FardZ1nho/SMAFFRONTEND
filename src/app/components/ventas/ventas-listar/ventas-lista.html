@@ -39,7 +39,7 @@
                         </label>
                         <div class="input-wrapper">
                             <input type="text" class="filter-input"
-                                placeholder="Buscar por código de ticket o nombre de cliente..."
+                                placeholder="Buscar por comprobante o nombre de cliente..."
                                 [(ngModel)]="terminoBusqueda" (keyup)="buscarVentas()">
                             <button class="btn-clear" *ngIf="terminoBusqueda" (click)="limpiarBusqueda()">
                                 <mat-icon>close</mat-icon>
@@ -91,7 +91,9 @@
                                 <th mat-header-cell *matHeaderCellDef>Comprobante</th>
                                 <td mat-cell *matCellDef="let venta">
                                     <div class="comprobante-cell">
-                                        <span class="ticket-code">#{{ venta.codigo }}</span>
+                                        <span class="ticket-code">
+                                            {{ (venta.numeroDocumento && venta.numeroDocumento !== '') ? venta.numeroDocumento : '#' + venta.codigo }}
+                                        </span>
                                     </div>
                                 </td>
                             </ng-container>
@@ -141,8 +143,8 @@
                             </ng-container>
 
                             <ng-container matColumnDef="estado">
-                                <th mat-header-cell *matHeaderCellDef>Estado</th>
-                                <td mat-cell *matCellDef="let venta">
+                                <th mat-header-cell *matHeaderCellDef class="text-center">Estado</th>
+                                <td mat-cell *matCellDef="let venta" class="text-center">
                                     <span class="status-pill" [ngClass]="getEstadoClass(venta.estado)">
                                         {{ getEstadoLabel(venta.estado) }}
                                     </span>
@@ -274,7 +276,10 @@
 
                             <ng-container matColumnDef="codigo">
                                 <th mat-header-cell *matHeaderCellDef>Factura</th>
-                                <td mat-cell *matCellDef="let row"><span class="ticket-code">#{{ row.codigo }}</span>
+                                <td mat-cell *matCellDef="let row">
+                                    <span class="ticket-code">
+                                        {{ (row.numeroDocumento && row.numeroDocumento !== '') ? row.numeroDocumento : '#' + row.codigo }}
+                                    </span>
                                 </td>
                             </ng-container>
 
@@ -284,9 +289,8 @@
                             </ng-container>
 
                             <ng-container matColumnDef="total">
-                                <th mat-header-cell *matHeaderCellDef class="text-right">Total Orig.</th>
-                                <td mat-cell *matCellDef="let row" class="text-right">S/ {{ row.total | number:'1.2-2'
-                                    }}</td>
+                                <th mat-header-cell *matHeaderCellDef>Total Orig.</th>
+                                <td mat-cell *matCellDef="let row">S/ {{ row.total | number:'1.2-2' }}</td>
                             </ng-container>
 
                             <ng-container matColumnDef="abonado">
@@ -303,8 +307,8 @@
                             </ng-container>
 
                             <ng-container matColumnDef="saldo">
-                                <th mat-header-cell *matHeaderCellDef class="text-right">Deuda Actual</th>
-                                <td mat-cell *matCellDef="let row" class="text-right">
+                                <th mat-header-cell *matHeaderCellDef>Deuda Actual</th>
+                                <td mat-cell *matCellDef="let row">
                                     <span class="debt-amount">S/ {{ row.saldoPendiente | number:'1.2-2' }}</span>
                                 </td>
                             </ng-container>

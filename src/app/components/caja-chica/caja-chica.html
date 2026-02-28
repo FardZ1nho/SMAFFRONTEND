@@ -26,6 +26,11 @@
         </button>
       </div>
 
+      <button mat-stroked-button color="warn" (click)="abrirModalGastoMenor()" style="height: 40px; border-color: #f87171;">
+        <mat-icon>receipt_long</mat-icon>
+        Registrar Gasto
+      </button>
+
       <button mat-flat-button color="primary" (click)="abrirModalAjuste()" style="height: 40px;">
         <mat-icon>add_circle_outline</mat-icon>
         Nuevo Ajuste
@@ -35,11 +40,8 @@
   </div>
 
   <div class="stats-grid">
-    
     <div class="stat-card ingresos">
-      <div class="stat-icon">
-        <mat-icon>arrow_downward</mat-icon>
-      </div>
+      <div class="stat-icon"><mat-icon>arrow_downward</mat-icon></div>
       <div class="stat-data">
         <span class="label">Ingresos Efectivo</span>
         <span class="value">S/ {{ totalIngresosEfectivo | number:'1.2-2' }}</span>
@@ -47,9 +49,7 @@
     </div>
 
     <div class="stat-card egresos">
-      <div class="stat-icon">
-        <mat-icon>arrow_upward</mat-icon>
-      </div>
+      <div class="stat-icon"><mat-icon>arrow_upward</mat-icon></div>
       <div class="stat-data">
         <span class="label">Salidas / Compras</span>
         <span class="value">S/ {{ totalEgresosEfectivo | number:'1.2-2' }}</span>
@@ -57,9 +57,7 @@
     </div>
 
     <div class="stat-card saldo" [class.negativo]="saldoEnCaja < 0">
-      <div class="stat-icon">
-        <mat-icon>account_balance_wallet</mat-icon>
-      </div>
+      <div class="stat-icon"><mat-icon>account_balance_wallet</mat-icon></div>
       <div class="stat-data">
         <span class="label">Saldo en Caja</span>
         <span class="value">S/ {{ saldoEnCaja | number:'1.2-2' }}</span>
@@ -67,77 +65,154 @@
         <span class="sub-label danger" *ngIf="saldoEnCaja < 0">Déficit</span>
       </div>
     </div>
-
   </div>
 
-  <div class="table-card">
+  <div class="table-card tabs-card">
     
     <div *ngIf="cargando" class="loading-state">
       <mat-progress-bar mode="indeterminate"></mat-progress-bar>
       <p>Calculando flujo de caja...</p>
     </div>
 
-    <div class="table-responsive" *ngIf="!cargando">
-      <table mat-table [dataSource]="dataSource">
+    <mat-tab-group animationDuration="200ms" class="custom-tabs" *ngIf="!cargando">
+      
+      <mat-tab label="Flujo General">
+        <div class="tab-body">
+          <div class="table-responsive">
+            <table mat-table [dataSource]="dataSource" style="width: 100%;">
 
-        <ng-container matColumnDef="fecha">
-          <th mat-header-cell *matHeaderCellDef> FECHA Y HORA </th>
-          <td mat-cell *matCellDef="let row">
-            <span class="date-text">{{ row.fecha | date:'dd/MM/yyyy HH:mm' }}</span>
-          </td>
-        </ng-container>
+              <ng-container matColumnDef="fecha">
+                <th mat-header-cell *matHeaderCellDef> FECHA </th>
+                <td mat-cell *matCellDef="let row">
+                  <span class="date-text">{{ row.fecha | date:'dd/MM/yyyy' }}</span>
+                </td>
+              </ng-container>
 
-        <ng-container matColumnDef="tipo">
-          <th mat-header-cell *matHeaderCellDef> TIPO </th>
-          <td mat-cell *matCellDef="let row">
-            <span class="type-badge" [class.ingreso]="row.tipo === 'INGRESO'" [class.egreso]="row.tipo === 'EGRESO'">
-              {{ row.tipo }}
-            </span>
-          </td>
-        </ng-container>
+              <ng-container matColumnDef="tipo">
+                <th mat-header-cell *matHeaderCellDef> TIPO </th>
+                <td mat-cell *matCellDef="let row">
+                  <span class="type-badge" [class.ingreso]="row.tipo === 'INGRESO'" [class.egreso]="row.tipo === 'EGRESO'">
+                    {{ row.tipo }}
+                  </span>
+                </td>
+              </ng-container>
 
-        <ng-container matColumnDef="descripcion">
-          <th mat-header-cell *matHeaderCellDef> CONCEPTO </th>
-          <td mat-cell *matCellDef="let row">
-            <div class="desc-cell">
-              <span class="main-desc" [style.color]="row.esAjuste ? '#2563eb' : 'inherit'">{{ row.descripcion }}</span>
-              
-              <span class="sub-desc" *ngIf="!row.esAjuste">Doc: {{ row.referencia }}</span>
-              <span class="sub-desc" *ngIf="row.esAjuste" style="background:#dbeafe; color:#1e40af; padding:2px 6px; border-radius:4px; display:inline-block; width:fit-content; margin-top:2px;">
-                 Movimiento Manual
-              </span>
+              <ng-container matColumnDef="comprobante">
+                <th mat-header-cell *matHeaderCellDef> COMPROBANTE </th>
+                <td mat-cell *matCellDef="let row">
+                  <div style="display: flex; flex-direction: column;">
+                     <span style="font-weight: 600; color: #1e293b; font-size: 13px;">{{ row.tipoComprobante }}</span>
+                     <span style="font-size: 11px; color: #64748b;">{{ row.referencia }}</span>
+                  </div>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="descripcion">
+                <th mat-header-cell *matHeaderCellDef> CONCEPTO </th>
+                <td mat-cell *matCellDef="let row">
+                  <div class="desc-cell">
+                    <span class="main-desc" [style.color]="row.esAjuste ? '#2563eb' : 'inherit'">{{ row.descripcion }}</span>
+                    <span class="sub-desc" *ngIf="row.esAjuste" style="background:#dbeafe; color:#1e40af; padding:2px 6px; border-radius:4px; display:inline-block; width:fit-content; margin-top:2px;">
+                       Movimiento Manual
+                    </span>
+                  </div>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="entidad">
+                <th mat-header-cell *matHeaderCellDef> RESPONSABLE / TERCERO </th>
+                <td mat-cell *matCellDef="let row">
+                  <div class="entity-cell">
+                    <mat-icon style="font-size: 16px; width: 16px; height: 16px; color: #94a3b8;">person</mat-icon>
+                    {{ row.entidad }}
+                  </div>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="monto">
+                <th mat-header-cell *matHeaderCellDef class="text-right"> MONTO </th>
+                <td mat-cell *matCellDef="let row" class="text-right">
+                  <span class="amount-text" [class.positive]="row.tipo === 'INGRESO'" [class.negative]="row.tipo === 'EGRESO'">
+                    {{ row.tipo === 'INGRESO' ? '+' : '-' }} S/ {{ row.monto | number:'1.2-2' }}
+                  </span>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="hover-row" [style.background-color]="row.esAjuste ? '#f8fafc' : 'white'"></tr>
+            </table>
+
+            <div *ngIf="dataSource.data.length === 0" class="empty-state">
+              <mat-icon>inbox</mat-icon>
+              <p>No se encontraron movimientos en efectivo para este periodo.</p>
             </div>
-          </td>
-        </ng-container>
+          </div>
+        </div>
+      </mat-tab>
 
-        <ng-container matColumnDef="entidad">
-          <th mat-header-cell *matHeaderCellDef> RESPONSABLE / TERCERO </th>
-          <td mat-cell *matCellDef="let row">
-            <div class="entity-cell">
-              <mat-icon style="font-size: 16px; width: 16px; height: 16px; color: #94a3b8;">person</mat-icon>
-              {{ row.entidad }}
+      <mat-tab label="Compras Manuales">
+        <div class="tab-body">
+          <div class="table-responsive">
+            <table mat-table [dataSource]="dataSourceGastos" style="width: 100%;">
+
+              <ng-container matColumnDef="fecha">
+                <th mat-header-cell *matHeaderCellDef> FECHA </th>
+                <td mat-cell *matCellDef="let row">
+                  <span class="date-text">{{ row.fecha | date:'dd/MM/yyyy' }}</span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="comprobante">
+                <th mat-header-cell *matHeaderCellDef> COMPROBANTE </th>
+                <td mat-cell *matCellDef="let row">
+                  <div style="display: flex; flex-direction: column;">
+                     <span style="font-weight: 600; color: #1e293b; font-size: 13px;">{{ row.tipoComprobante }}</span>
+                     <span style="font-size: 11px; color: #64748b;">{{ row.referencia }}</span>
+                  </div>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="entidad">
+                <th mat-header-cell *matHeaderCellDef> PROVEEDOR </th>
+                <td mat-cell *matCellDef="let row">
+                  <div class="entity-cell" style="font-weight: 600;">
+                    <mat-icon style="font-size: 16px; width: 16px; height: 16px; color: #94a3b8;">storefront</mat-icon>
+                    {{ row.entidad }}
+                  </div>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="monto">
+                <th mat-header-cell *matHeaderCellDef class="text-right"> MONTO </th>
+                <td mat-cell *matCellDef="let row" class="text-right">
+                  <span class="amount-text negative">
+                    S/ {{ row.monto | number:'1.2-2' }}
+                  </span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="acciones">
+                <th mat-header-cell *matHeaderCellDef class="text-center"> ACCIONES </th>
+                <td mat-cell *matCellDef="let row" class="text-center">
+                  <button mat-icon-button color="primary" matTooltip="Ver detalle de compra" (click)="verDetalleGasto(row)">
+                    <mat-icon>visibility</mat-icon>
+                  </button>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="displayedColumnsGastos"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumnsGastos;" class="hover-row"></tr>
+            </table>
+
+            <div *ngIf="dataSourceGastos.data.length === 0" class="empty-state">
+              <mat-icon>receipt_long</mat-icon>
+              <p>No se han registrado compras o gastos manuales.</p>
             </div>
-          </td>
-        </ng-container>
+          </div>
+        </div>
+      </mat-tab>
 
-        <ng-container matColumnDef="monto">
-          <th mat-header-cell *matHeaderCellDef class="text-right"> MONTO </th>
-          <td mat-cell *matCellDef="let row" class="text-right">
-            <span class="amount-text" [class.positive]="row.tipo === 'INGRESO'" [class.negative]="row.tipo === 'EGRESO'">
-              {{ row.tipo === 'INGRESO' ? '+' : '-' }} S/ {{ row.monto | number:'1.2-2' }}
-            </span>
-          </td>
-        </ng-container>
-
-        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="hover-row" [style.background-color]="row.esAjuste ? '#f8fafc' : 'white'"></tr>
-      </table>
-
-      <div *ngIf="dataSource.data.length === 0 && !cargando" class="empty-state">
-        <mat-icon>inbox</mat-icon>
-        <p>No se encontraron movimientos en efectivo para este periodo.</p>
-      </div>
-    </div>
+    </mat-tab-group>
   </div>
 </div>
 

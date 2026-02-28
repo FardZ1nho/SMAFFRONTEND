@@ -18,17 +18,16 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 24px; /* Reducido un poco por los tabs */
+    margin-bottom: 24px; 
 }
 
-/* ... (Tus estilos de Header, Search, Botones, etc. MANTENIDOS IGUAL) ... */
 .title-with-icon { display: flex; align-items: center; gap: 16px; }
 .icon-header { background: var(--white); padding: 12px; border-radius: 12px; display: flex; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); color: var(--primary); }
 .header h1 { font-size: 24px; font-weight: 700; color: var(--text-main); margin: 0; }
 .subtitle { color: var(--text-sub); font-size: 14px; margin: 0; }
 .btn-nuevo { background-color: var(--primary) !important; color: var(--white) !important; border-radius: 10px !important; padding: 8px 20px !important; font-weight: 600 !important; }
 
-/* ... (Tus estilos de búsqueda y filtros MANTENIDOS) ... */
+/* SEARCH BAR */
 .search-bar-section { display: flex; gap: 16px; margin-bottom: 24px; align-items: flex-end; flex-wrap: wrap; }
 .search-main { flex: 2; min-width: 300px; display: flex; flex-direction: column; gap: 8px; }
 .secondary-filters { flex: 1; display: flex; gap: 12px; align-items: flex-end; }
@@ -47,7 +46,7 @@ th.mat-header-cell { background: #f1f5f9; color: var(--text-sub); font-weight: 7
 td.mat-cell { padding: 16px !important; border-bottom: 1px solid var(--border-color); }
 .row-hover:hover { background-color: #f8fafc; }
 
-/* CELDAS (Mantenidas) */
+/* CELDAS */
 .ticket-code { font-family: 'Courier New', monospace; font-weight: 700; color: var(--primary); background: #eff6ff; padding: 4px 8px; border-radius: 6px; }
 .date-val { color: var(--text-sub); font-size: 13px; }
 .client-table-cell { display: flex; align-items: center; gap: 8px; font-weight: 500; }
@@ -124,6 +123,17 @@ td.mat-cell { padding: 16px !important; border-bottom: 1px solid var(--border-co
     background-color: #10b981 !important; color: white !important;
     border-radius: 8px !important; padding: 0 16px !important;
 }
+
+/* ✅ CORRECCIÓN 2: FUERZA A MATERIAL DESIGN A ALINEAR MONTOS A LA DERECHA */
+.mat-column-total, .mat-column-saldo {
+    text-align: right !important;
+    padding-right: 24px !important;
+}
+th.mat-column-total, th.mat-column-saldo {
+    justify-content: flex-end;
+    text-align: right !important;
+}
+.text-center { text-align: center !important; }
 
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(5px); }

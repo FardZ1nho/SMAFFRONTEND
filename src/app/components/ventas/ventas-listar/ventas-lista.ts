@@ -94,7 +94,7 @@ export class VentasListaComponent implements OnInit {
 
         this.ventaService.listarTodas().subscribe({
             next: (data) => {
-                // Ordenar por fecha descendente (Más actuales primero)
+                // Ordenar por fecha descendente
                 this.ventas = data.sort((a, b) => {
                     const fechaA = new Date(a.fechaVenta || 0).getTime();
                     const fechaB = new Date(b.fechaVenta || 0).getTime();
@@ -179,6 +179,7 @@ export class VentasListaComponent implements OnInit {
             
             filtradas = filtradas.filter(v =>
                 v.codigo.toLowerCase().includes(termino) ||
+                (v.numeroDocumento && v.numeroDocumento.toLowerCase().includes(termino)) ||
                 (v.nombreCliente && v.nombreCliente.toLowerCase().includes(termino))
             );
 
@@ -206,7 +207,7 @@ export class VentasListaComponent implements OnInit {
 
     completarVenta(venta: Venta): void {
         if (venta.estado !== EstadoVenta.BORRADOR) return;
-        if (confirm(`¿Deseas completar la venta ${venta.codigo}?`)) {
+        if (confirm(`¿Deseas completar la venta ${venta.numeroDocumento ? venta.numeroDocumento : venta.codigo}?`)) {
             this.ventaService.completarVenta(venta.id).subscribe({
                 next: () => {
                     this.mostrarMensaje('✅ Venta completada exitosamente', 'success');
@@ -238,7 +239,7 @@ export class VentasListaComponent implements OnInit {
     }
 
     cancelarVenta(venta: Venta): void {
-        if (confirm(`¿Estás seguro de cancelar la venta ${venta.codigo}?`)) {
+        if (confirm(`¿Estás seguro de cancelar la venta ${venta.numeroDocumento ? venta.numeroDocumento : venta.codigo}?`)) {
             this.ventaService.cancelarVenta(venta.id).subscribe({
                 next: () => {
                     this.mostrarMensaje('✅ Venta cancelada exitosamente', 'success');
@@ -250,7 +251,7 @@ export class VentasListaComponent implements OnInit {
     }
 
     eliminarVenta(venta: Venta): void {
-        if (confirm(`¿Estás seguro de eliminar la venta ${venta.codigo}?`)) {
+        if (confirm(`¿Estás seguro de eliminar la venta ${venta.numeroDocumento ? venta.numeroDocumento : venta.codigo}?`)) {
             this.ventaService.eliminarVenta(venta.id).subscribe({
                 next: () => {
                     this.mostrarMensaje('✅ Venta eliminada exitosamente', 'success');
@@ -313,7 +314,6 @@ export class VentasListaComponent implements OnInit {
         }
     }
 
-    // ✅ NUEVAS FUNCIONES PARA LOS PAGOS
     getMetodoPagoIcon(venta: any): string {
         if (venta.tipoPago === 'CREDITO' && (!venta.pagos || venta.pagos.length === 0)) {
             return 'schedule'; 
@@ -361,7 +361,8 @@ export class VentasListaComponent implements OnInit {
 
     formatearFecha(fecha: Date): string {
         return new Date(fecha).toLocaleDateString('es-PE', { 
-            day: '2-digit', month: '2-digit', year: 'numeric' 
+            day: '2-digit', month: '2-digit', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
         });
     }
 

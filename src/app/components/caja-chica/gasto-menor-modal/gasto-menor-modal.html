@@ -1,0 +1,130 @@
+<div class="modal-container">
+  <div class="modal-header">
+    <div class="title-group">
+      <mat-icon color="warn">receipt_long</mat-icon>
+      <div>
+        <h2>Registro de Gasto / Compra Menor</h2>
+        <p>Ingrese gastos que no afectan el inventario (Ej: Útiles, Combustible, Pasajes)</p>
+      </div>
+    </div>
+    <button mat-icon-button mat-dialog-close><mat-icon>close</mat-icon></button>
+  </div>
+
+  <div class="modal-body" mat-dialog-content>
+    
+    <div class="section-card">
+      <div class="section-title">
+        <mat-icon>receipt</mat-icon> DATOS DEL COMPROBANTE
+      </div>
+      
+      <div class="grid-4">
+        <mat-form-field appearance="outline">
+          <mat-label>Tipo Comprobante</mat-label>
+          <mat-select [(ngModel)]="gasto.tipoComprobante">
+            <mat-option *ngFor="let tipo of tiposComprobante" [value]="tipo">{{ tipo }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Serie</mat-label>
+          <input matInput [(ngModel)]="gasto.serie" placeholder="Ej: F001">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Número</mat-label>
+          <input matInput [(ngModel)]="gasto.numero" placeholder="Ej: 000123">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Fecha Emisión</mat-label>
+          <input matInput [matDatepicker]="picker" [(ngModel)]="gasto.fechaEmision">
+          <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+          <mat-datepicker #picker></mat-datepicker>
+        </mat-form-field>
+      </div>
+
+      <div class="grid-3">
+        <mat-form-field appearance="outline" class="col-span-2">
+          <mat-label>Proveedor / Destinatario (Texto Libre)</mat-label>
+          <mat-icon matPrefix style="margin-right: 8px; color: #64748b;">storefront</mat-icon>
+          <input matInput [(ngModel)]="gasto.proveedor" placeholder="Escriba el nombre del grifo, tienda o persona..." required>
+        </mat-form-field>
+
+        <div class="flex-row">
+          <mat-form-field appearance="outline" style="flex: 2;">
+            <mat-label>Moneda</mat-label>
+            <mat-select [(ngModel)]="gasto.moneda">
+              <mat-option value="PEN">Soles (S/)</mat-option>
+              <mat-option value="USD">Dólares ($)</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline" style="flex: 1;" *ngIf="gasto.moneda === 'USD'">
+            <mat-label>T. Cambio</mat-label>
+            <input matInput type="number" [(ngModel)]="gasto.tipoCambio">
+          </mat-form-field>
+        </div>
+      </div>
+
+      <mat-form-field appearance="outline" style="width: 100%; margin-top: 10px;">
+        <mat-label>Observaciones</mat-label>
+        <textarea matInput [(ngModel)]="gasto.observaciones" rows="2" placeholder="Información adicional..."></textarea>
+      </mat-form-field>
+    </div>
+
+    <div class="section-card mt-3">
+      <div class="section-title flex-between">
+        <div><mat-icon>shopping_cart</mat-icon> DETALLE DE ÍTEMS</div>
+        <button mat-stroked-button color="primary" (click)="agregarItem()">
+          <mat-icon>add</mat-icon> Nuevo Ítem
+        </button>
+      </div>
+
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th style="width: 50%;">DESCRIPCIÓN (Libre)</th>
+            <th style="width: 15%; text-align: center;">CANT.</th>
+            <th style="width: 20%; text-align: right;">PRECIO UNIT.</th>
+            <th style="width: 15%; text-align: right;">SUBTOTAL</th>
+            <th style="width: 5%;"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of items; let i = index">
+            <td>
+              <input type="text" class="table-input" [(ngModel)]="item.descripcion" placeholder="Ej: Gasolina 90, Papel Bond...">
+            </td>
+            <td>
+              <input type="number" class="table-input text-center" [(ngModel)]="item.cantidad" min="1">
+            </td>
+            <td>
+              <input type="number" class="table-input text-right" [(ngModel)]="item.precioUnitario" placeholder="0.00">
+            </td>
+            <td class="text-right font-bold" style="color: #0f172a;">
+              {{ getSubtotalItem(item) | number:'1.2-2' }}
+            </td>
+            <td class="text-center">
+              <button mat-icon-button color="warn" (click)="eliminarItem(i)" [disabled]="items.length === 1">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <div class="modal-footer" mat-dialog-actions>
+    <div class="total-box">
+      <span>Total a Pagar:</span>
+      <span class="total-amount">{{ gasto.moneda === 'PEN' ? 'S/' : '$' }} {{ getTotalPagar() | number:'1.2-2' }}</span>
+    </div>
+    <div style="display: flex; gap: 10px;">
+      <button mat-stroked-button mat-dialog-close>Cancelar</button>
+      <button mat-flat-button color="primary" (click)="guardar()" [disabled]="!esValido()">
+        <mat-icon>save</mat-icon> Guardar Gasto
+      </button>
+    </div>
+  </div>
+</div>

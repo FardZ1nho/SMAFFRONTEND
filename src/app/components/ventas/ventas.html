@@ -196,15 +196,15 @@
           <label class="section-label-small">Registrar Pagos</label>
           
           <div class="add-pago-form">
-            <div class="pago-row">
-              <mat-form-field appearance="outline" class="dense-input" style="flex: 1;">
+         <div class="pago-row">
+              <mat-form-field appearance="outline" class="dense-input" style="flex: 3;">
                 <mat-label>Método</mat-label>
                 <mat-select [(ngModel)]="pagoActual.metodoPago">
                   <mat-option *ngFor="let m of metodosPagoDisponibles" [value]="m.value">{{ m.label }}</mat-option>
                 </mat-select>
               </mat-form-field>
 
-              <mat-form-field appearance="outline" class="dense-input" style="width: 80px;">
+              <mat-form-field appearance="outline" class="dense-input" style="flex: 2; min-width: 100px;">
                 <mat-label>Moneda</mat-label>
                 <mat-select [(ngModel)]="pagoActual.moneda">
                   <mat-option value="PEN">PEN</mat-option>
@@ -251,7 +251,7 @@
                   {{ pago.moneda === 'PEN' ? 'S/' : '$' }} {{ pago.monto | number:'1.2-2' }}
                 </span>
               </div>
-              <button mat-icon-button color="warn" class="btn-tiny" (click)="eliminarPagoDeLista(i)">
+              <button mat-icon-button color="warn" class="btn-tiny btn-remove-pago" (click)="eliminarPagoDeLista(i)">
                 <mat-icon>close</mat-icon>
               </button>
             </div>
@@ -266,7 +266,7 @@
         <div *ngIf="tipoPago === eTipoPago.CREDITO" class="credito-panel animate-fade-in">
           <div class="credito-header">Plan de Financiamiento</div>
           
-          <mat-form-field appearance="outline" class="dense-input bg-white full-width">
+          <mat-form-field appearance="outline" class="dense-input bg-white full-width" style="margin-top: 10px;">
             <mat-label>N° Cuotas</mat-label>
             <input matInput type="number" [(ngModel)]="numeroCuotas" (input)="calcularCredito()" min="1">
           </mat-form-field>
@@ -290,7 +290,23 @@
 
         <div class="divider"></div>
 
-        <div class="resumen-row">
+        <div class="impuestos-extra">
+          <mat-form-field appearance="outline" class="dense-input">
+            <mat-label>Retención (-)</mat-label>
+            <span matPrefix>{{ moneda === 'PEN' ? 'S/' : '$' }}&nbsp;</span>
+            <input matInput type="number" [(ngModel)]="retencion" (input)="onRetDetChange()"
+                   (focus)="limpiarCero('retencion')" (blur)="verificarVacio('retencion')" min="0">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="dense-input">
+            <mat-label>Detracción (-)</mat-label>
+            <span matPrefix>{{ moneda === 'PEN' ? 'S/' : '$' }}&nbsp;</span>
+            <input matInput type="number" [(ngModel)]="detraccion" (input)="onRetDetChange()"
+                   (focus)="limpiarCero('detraccion')" (blur)="verificarVacio('detraccion')" min="0">
+          </mat-form-field>
+        </div>
+
+        <div class="resumen-row mt-2">
           <span>Subtotal:</span>
           <strong>{{ moneda === 'PEN' ? 'S/' : '$' }} {{ subtotal | number:'1.2-2' }}</strong>
         </div>
@@ -298,8 +314,14 @@
           <span>IGV (18%):</span>
           <strong>{{ moneda === 'PEN' ? 'S/' : '$' }} {{ igv | number:'1.2-2' }}</strong>
         </div>
+        
+        <div class="resumen-row" style="color: #475569; font-size: 13px;" *ngIf="retencion || detraccion">
+          <span>Total Venta Bruto:</span>
+          <strong>{{ moneda === 'PEN' ? 'S/' : '$' }} {{ totalVentaBruto | number:'1.2-2' }}</strong>
+        </div>
+
         <div class="resumen-row total">
-          <span>Total a Pagar:</span>
+          <span>Total a Cobrar:</span>
           <strong>{{ moneda === 'PEN' ? 'S/' : '$' }} {{ total | number:'1.2-2' }}</strong>
         </div>
 

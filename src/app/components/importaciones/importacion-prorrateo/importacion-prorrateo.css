@@ -96,3 +96,25 @@
 
 /* LOADING */
 .loading-container { height: 80vh; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 20px; color: #64748b; }
+
+/* ✅ ESTILOS PARA LOS BADGES DE PORCENTAJE */
+.pct-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.pct-badge.local {
+  background-color: #e0f2fe; /* Fondo celeste suave */
+  color: #0369a1;            /* Texto azul fuerte */
+  border: 1px solid #bae6fd;
+}
+
+.pct-badge.global {
+  background-color: #f1f5f9; /* Fondo gris claro */
+  color: #475569;            /* Texto gris oscuro */
+  border: 1px solid #e2e8f0;
+}

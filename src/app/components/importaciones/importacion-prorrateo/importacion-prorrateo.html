@@ -129,7 +129,11 @@
             <div class="inv-provider">{{ fact.nombreProveedor }}</div>
           </div>
         </div>
-        <div class="inv-stats">
+        <div class="inv-stats" style="display: flex; gap: 12px; align-items: center;">
+          <div class="stat-pill" style="background-color: #f1f5f9; color: #334155; border: 1px solid #cbd5e1;">
+            <span class="label">Peso Global:</span> 
+            <strong>{{ (importacion.sumaFobTotal ? fact.total / importacion.sumaFobTotal : 0) | percent:'1.1-1' }}</strong>
+          </div>
           <div class="stat-pill highlight">
             <span class="label">Total Factura:</span> 
             <strong>$ {{ fact.costoTotalImportacion | number:'1.2-2' }}</strong>
@@ -144,7 +148,7 @@
               <th class="col-prod">Producto</th>
               <th class="text-center">Cant.</th>
               <th class="text-right">Unit. FOB</th>
-              <th class="text-center">% Part.</th>
+              <th class="text-center" style="min-width: 80px;">% Part.</th>
               
               <th class="col-vol text-right">Flete U.</th>
               <th class="col-vol text-right">Almacén U.</th>
@@ -178,8 +182,16 @@
               <td class="col-prod text-left"><strong>{{ item.nombreProducto }}</strong></td>
               <td class="text-center">{{ item.cantidad }}</td>
               <td class="text-right text-gray-600">$ {{ item.precioUnitarioFob | number:'1.2-2' }}</td>
-              <td class="text-center text-xs text-gray-400">
-                <span class="pct-badge">{{ item.factorParticipacion | percent:'1.1-1' }}</span>
+              
+              <td class="text-center text-xs">
+                <div style="display: flex; flex-direction: column; gap: 4px; align-items: center;">
+                  <span class="pct-badge local" matTooltip="% de participación en ESTA Factura">
+                    {{ item.factorParticipacion | percent:'1.1-1' }} Fact.
+                  </span>
+                  <span class="pct-badge global" matTooltip="% de participación en TODA la Importación">
+                    {{ (importacion.sumaFobTotal ? item.importeFob / importacion.sumaFobTotal : 0) | percent:'1.1-1' }} Glob.
+                  </span>
+                </div>
               </td>
 
               <td class="text-right col-vol text-xs">{{ ((item.itemFlete||0)/item.cantidad) | number:'1.2-2' }}</td>

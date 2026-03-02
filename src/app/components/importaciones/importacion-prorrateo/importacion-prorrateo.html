@@ -112,7 +112,6 @@
     </div>
   </mat-card>
 
-
   <div class="section-divider">
     <h2 class="section-title">Desglose Detallado por Producto</h2>
     <p class="section-subtitle">Costo unitario real calculado según participación FOB. El Ad Valorem es editable manualmente.</p>
@@ -186,10 +185,10 @@
               <td class="text-center text-xs">
                 <div style="display: flex; flex-direction: column; gap: 4px; align-items: center;">
                   <span class="pct-badge local" matTooltip="% de participación en ESTA Factura">
-                    {{ item.factorParticipacion | percent:'1.1-1' }} Fact.
+                    {{ (fact.total ? (item.cantidad * item.precioUnitarioFob) / fact.total : 0) | percent:'1.1-1' }} Fact.
                   </span>
                   <span class="pct-badge global" matTooltip="% de participación en TODA la Importación">
-                    {{ (importacion.sumaFobTotal ? item.importeFob / importacion.sumaFobTotal : 0) | percent:'1.1-1' }} Glob.
+                    {{ (importacion.sumaFobTotal ? (item.cantidad * item.precioUnitarioFob) / importacion.sumaFobTotal : 0) | percent:'1.1-1' }} Glob.
                   </span>
                 </div>
               </td>

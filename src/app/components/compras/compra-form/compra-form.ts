@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { forkJoin } from 'rxjs'; // ✅ IMPORTANTE PARA SINCRONIZAR
+import { forkJoin } from 'rxjs'; 
 
 // MATERIAL
 import { MatIconModule } from '@angular/material/icon';
@@ -64,6 +64,7 @@ export class CompraFormComponent implements OnInit {
   ];
 
   listaComprobantes = this.comprobantesBien;
+  tipoComprobanteAnterior: string = 'FACTURA_ELECTRONICA';
 
   tipoPago: TipoPago = TipoPago.CONTADO;
   porcentajeIgv: number = 18;
@@ -109,7 +110,13 @@ export class CompraFormComponent implements OnInit {
     pagos: []
   };
 
+  // ✅ VARIABLES PARA PROVEEDOR LIBRE
+  busquedaProveedor: string = '';
+  proveedoresFiltrados: Proveedor[] = [];
+  proveedorSeleccionado: Proveedor | null = null;
+  mostrarListaProveedores: boolean = false;
   proveedores: Proveedor[] = [];
+  
   almacenes: Almacen[] = [];
   cuentasBancarias: CuentaBancaria[] = [];
 
@@ -133,7 +140,6 @@ export class CompraFormComponent implements OnInit {
     this.pagoActual.moneda = this.compra.moneda;
     const id = this.route.snapshot.paramMap.get('id');
 
-    // ✅ LÓGICA CORREGIDA: Descargar todos los catálogos en paralelo ANTES de cargar los datos de edición
     forkJoin({
       proveedores: this.proveedorService.listarActivos(),
       almacenes: this.almacenService.listarAlmacenesActivos(),
@@ -144,11 +150,13 @@ export class CompraFormComponent implements OnInit {
         this.almacenes = res.almacenes;
         this.cuentasBancarias = res.cuentas;
 
-        // Una vez que tenemos las listas llenas, recién mapeamos la compra a editar
         if (id) {
           this.modoEdicion = true;
           this.idCompraEditar = Number(id);
           this.cargarDatosEdicion(this.idCompraEditar);
+        } else {
+          this.compra.tipoComprobante = 'FACTURA_ELECTRONICA' as any;
+          this.tipoComprobanteAnterior = 'FACTURA_ELECTRONICA';
         }
       },
       error: (err) => console.error("Error cargando catálogos", err)
@@ -158,11 +166,8 @@ export class CompraFormComponent implements OnInit {
   cargarDatosEdicion(id: number) {
     this.compraService.obtenerPorId(id).subscribe({
       next: (data) => {
-        
-        // 1. Configuramos el tipo de compra PRIMERO para cargar la lista de comprobantes correcta
         this.cambiarTipoCompra(data.tipoCompra as any);
 
-        // 2. Asignamos los datos a la cabecera
         this.compra = {
           ...this.compra, 
           tipoCompra: data.tipoCompra as any,
@@ -187,31 +192,32 @@ export class CompraFormComponent implements OnInit {
           cbm: data.cbm || 0
         };
 
-        // 3. Calculamos IGV si aplica
+        this.tipoComprobanteAnterior = this.compra.tipoComprobante;
+
         if (data.tipoComprobante !== 'FACTURA_COMERCIAL' && data.igv > 0 && data.subTotal > 0) {
             this.porcentajeIgv = Math.round((data.igv / data.subTotal) * 100);
         } else {
             this.porcentajeIgv = 18;
         }
 
-        // 4. Asignamos Proveedor
+        // ✅ RECONSTRUIR PROVEEDOR
         if ((data as any).proveedorId) {
-             this.compra.proveedorId = (data as any).proveedorId;
-        } else {
-            const provEncontrado = this.proveedores.find(p => p.ruc === data.rucProveedor);
-            if(provEncontrado) this.compra.proveedorId = provEncontrado.id!;
+             const provEncontrado = this.proveedores.find(p => p.id === (data as any).proveedorId);
+             if (provEncontrado) this.seleccionarProveedor(provEncontrado);
+        } else if (data.nombreProveedor) {
+             this.busquedaProveedor = data.nombreProveedor;
+             this.usarProveedorLibre();
         }
 
         this.tipoPago = this.compra.tipoPago;
 
-        // ✅ 5. Asignamos Detalles y Almacén (Ahora funcionará siempre)
         if (data.detalles) {
           this.itemsAgregados = data.detalles.map(d => {
             const almacenEncontrado = this.almacenes.find(a => a.nombre === d.nombreAlmacen);
             return {
-              productoId: d.productoId,
+              productoId: d.productoId || 0, // 0 si era libre
               nombre: d.nombreProducto,
-              codigo: d.codigoProducto,
+              codigo: d.codigoProducto || 'LIBRE',
               cantidad: d.cantidad,
               precioUnitario: d.precioUnitario,
               almacenId: almacenEncontrado ? almacenEncontrado.id : undefined
@@ -220,7 +226,7 @@ export class CompraFormComponent implements OnInit {
         }
 
         this.recalcularTotales();
-        this.cdr.detectChanges(); // Forzamos actualización de vista
+        this.cdr.detectChanges();
       },
       error: (e) => {
         alert("Error al cargar la compra: " + e.message);
@@ -234,8 +240,10 @@ export class CompraFormComponent implements OnInit {
 
     if (tipo === 'BIEN') {
       this.listaComprobantes = this.comprobantesBien;
-      if (!this.modoEdicion) this.compra.tipoComprobante = 'FACTURA_COMERCIAL' as any; 
-      
+      if (!this.modoEdicion) {
+        this.compra.tipoComprobante = 'FACTURA_ELECTRONICA' as any; 
+        this.tipoComprobanteAnterior = 'FACTURA_ELECTRONICA';
+      }
       this.compra.detraccionPorcentaje = 0;
       this.compra.detraccionMonto = 0;
       if (this.almacenes.length > 0) {
@@ -245,14 +253,30 @@ export class CompraFormComponent implements OnInit {
       }
     } else {
       this.listaComprobantes = this.comprobantesServicio;
-      if (!this.modoEdicion) this.compra.tipoComprobante = 'RECIBO_HONORARIOS' as any;
+      if (!this.modoEdicion) {
+        this.compra.tipoComprobante = 'RECIBO_HONORARIOS' as any;
+        this.tipoComprobanteAnterior = 'RECIBO_HONORARIOS';
+      }
       this.compra.percepcion = 0;
       this.itemsAgregados.forEach(i => i.almacenId = null);
     }
     this.recalcularTotales();
   }
 
-  onTipoComprobanteChange() {
+  onTipoComprobanteChange(nuevoTipo: string) {
+    if (nuevoTipo === 'FACTURA_COMERCIAL') {
+      const tieneItemLibre = this.itemsAgregados.some(i => i.productoId === 0);
+      const tieneProvLibre = this.proveedorSeleccionado && this.proveedorSeleccionado.id === 0;
+
+      if (tieneItemLibre || tieneProvLibre) {
+        alert('❌ La Factura Comercial (Importación) NO permite Proveedores ni Productos de texto libre por temas contables.');
+        setTimeout(() => this.compra.tipoComprobante = this.tipoComprobanteAnterior as any, 0);
+        return;
+      }
+    }
+
+    this.tipoComprobanteAnterior = nuevoTipo;
+
     if (this.compra.tipoComprobante !== 'FACTURA_COMERCIAL') {
       this.compra.codImportacion = '';
       this.compra.pesoNetoKg = 0;
@@ -278,6 +302,46 @@ export class CompraFormComponent implements OnInit {
     this.recalcularTotales();
   }
 
+  // ========================================================
+  // LÓGICA DE PROVEEDORES
+  // ========================================================
+
+  buscarProveedores() {
+    if (!this.busquedaProveedor.trim()) {
+      this.proveedoresFiltrados = [];
+      this.mostrarListaProveedores = false;
+      return;
+    }
+    const termino = this.busquedaProveedor.toLowerCase();
+    this.proveedoresFiltrados = this.proveedores.filter(p =>
+      p.nombre.toLowerCase().includes(termino) || (p.ruc && p.ruc.includes(termino))
+    );
+    this.mostrarListaProveedores = true;
+  }
+
+  seleccionarProveedor(proveedor: Proveedor) {
+    this.proveedorSeleccionado = proveedor;
+    this.busquedaProveedor = proveedor.nombre;
+    this.compra.proveedorId = proveedor.id!;
+    this.mostrarListaProveedores = false;
+  }
+
+  usarProveedorLibre() {
+    this.proveedorSeleccionado = {
+      id: 0,
+      nombre: this.busquedaProveedor,
+      ruc: 'S/D'
+    } as Proveedor;
+    this.compra.proveedorId = 0; 
+    this.mostrarListaProveedores = false;
+  }
+
+  limpiarProveedor() {
+    this.proveedorSeleccionado = null;
+    this.busquedaProveedor = '';
+    this.compra.proveedorId = 0;
+  }
+
   nuevoProveedor(): void {
     const dialogRef = this.dialog.open(ProveedorFormComponent, {
       width: '700px', disableClose: true, data: { idProveedor: null }
@@ -287,13 +351,17 @@ export class CompraFormComponent implements OnInit {
         this.proveedorService.listarActivos().subscribe(data => {
           this.proveedores = data;
           if (this.proveedores.length > 0) {
-            this.compra.proveedorId = this.proveedores[this.proveedores.length - 1].id!;
+            this.seleccionarProveedor(this.proveedores[this.proveedores.length - 1]);
           }
           this.cdr.detectChanges();
         });
       }
     });
   }
+
+  // ========================================================
+  // LÓGICA DE PRODUCTOS
+  // ========================================================
 
   nuevoProducto(): void {
     const dialogRef = this.dialog.open(ProductoModalComponent, {
@@ -317,14 +385,31 @@ export class CompraFormComponent implements OnInit {
     const almacenDefault = (this.compra.tipoCompra === 'BIEN' && this.almacenes.length > 0)
       ? this.almacenes[0].id : undefined;
 
-    const precioBase = prod.precioVenta || 0;
-
     const nuevoItem = {
       productoId: prod.id,
       nombre: prod.nombre,
       codigo: prod.codigo,
       cantidad: 1,
-      precioUnitario: precioBase,
+      precioUnitario: prod.precioVenta || 0,
+      almacenId: almacenDefault
+    };
+
+    this.itemsAgregados.push(nuevoItem);
+    this.busquedaProducto = '';
+    this.productosFiltrados = [];
+    this.recalcularTotales();
+  }
+
+  agregarProductoLibre() {
+    const almacenDefault = (this.compra.tipoCompra === 'BIEN' && this.almacenes.length > 0)
+      ? this.almacenes[0].id : undefined;
+
+    const nuevoItem = {
+      productoId: 0, 
+      nombre: this.busquedaProducto,
+      codigo: 'LIBRE',
+      cantidad: 1,
+      precioUnitario: 0,
       almacenId: almacenDefault
     };
 
@@ -378,7 +463,7 @@ export class CompraFormComponent implements OnInit {
   }
 
   guardarCompra() {
-    if (this.compra.proveedorId === 0) return alert("⚠️ Seleccione un proveedor.");
+    if (!this.proveedorSeleccionado) return alert("⚠️ Seleccione un proveedor válido o de texto libre.");
     if (!this.compra.serie || !this.compra.numero) return alert("⚠️ Ingrese Serie y Número del comprobante.");
     if (this.itemsAgregados.length === 0) return alert("⚠️ Agregue productos.");
 
@@ -395,13 +480,9 @@ export class CompraFormComponent implements OnInit {
       this.compra.tipoPago = TipoPago.CONTADO;
     }
 
-    if (this.compra.tipoComprobante === 'FACTURA_COMERCIAL') {
-      if (!this.compra.codImportacion) {
-        if (!confirm("⚠️ Estás registrando una Factura de Importación SIN Código (ID).\n\nSe guardará como 'SIN_AGRUPAR'. ¿Estás seguro?")) {
-          return;
-        }
-      }
-    }
+    // ✅ ENVIAR PROVEEDOR Y DETALLES PROTEGIENDO EL ID 0 PARA EVITAR ERROR DEL BACKEND
+    this.compra.proveedorId = this.proveedorSeleccionado.id === 0 ? null as any : this.proveedorSeleccionado.id;
+    (this.compra as any).nombreProveedor = this.proveedorSeleccionado.nombre;
 
     this.compra.pagos = [];
     if (!this.modoEdicion) {
@@ -413,7 +494,8 @@ export class CompraFormComponent implements OnInit {
     }
 
     this.compra.detalles = this.itemsAgregados.map(item => ({
-      productoId: item.productoId,
+      productoId: item.productoId === 0 ? null as any : item.productoId,
+      nombreProducto: item.nombre,
       almacenId: item.almacenId ? Number(item.almacenId) : undefined,
       cantidad: item.cantidad,
       precioUnitario: item.precioUnitario

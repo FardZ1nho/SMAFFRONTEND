@@ -26,7 +26,7 @@
       <div class="config-row four-cols">
         <div class="grid-input">
           <label class="section-title">Tipo Comprobante</label>
-          <select class="form-control-smaf full-width" [(ngModel)]="compra.tipoComprobante" (change)="onTipoComprobanteChange()">
+          <select class="form-control-smaf full-width" [(ngModel)]="compra.tipoComprobante" (ngModelChange)="onTipoComprobanteChange($event)">
             <option *ngFor="let c of listaComprobantes" [value]="c.valor">{{ c.texto }}</option>
           </select>
         </div>
@@ -84,18 +84,46 @@
       </div>
 
       <div class="config-row custom-grid-2">
-        <div class="grid-input">
+        
+        <div class="grid-input" style="position: relative;">
           <div class="label-with-action">
-            <label class="section-title">Proveedor</label>
-            <button type="button" class="btn-text-action" (click)="nuevoProveedor()">
+            <label class="section-title">Proveedor <span class="text-danger">*</span></label>
+            <button type="button" class="btn-text-action" (click)="nuevoProveedor()" *ngIf="!proveedorSeleccionado">
               <mat-icon>add</mat-icon> Nuevo
             </button>
           </div>
-          <select class="form-control-smaf full-width" [(ngModel)]="compra.proveedorId">
-            <option value="0">Seleccionar proveedor...</option>
-            <option *ngFor="let p of proveedores" [value]="p.id">{{p.nombre}}</option>
-          </select>
+
+          <div class="search-input-wrapper" style="position: relative;">
+            <input type="text" class="form-control-smaf full-width"
+                   [(ngModel)]="busquedaProveedor" (input)="buscarProveedores()"
+                   placeholder="RUC o Nombre..." autocomplete="off"
+                   [disabled]="proveedorSeleccionado !== null"
+                   style="height: 38px;">
+            
+            <button type="button" class="btn-clear-abs" *ngIf="proveedorSeleccionado" (click)="limpiarProveedor()">
+              <mat-icon>close</mat-icon>
+            </button>
+
+            <div class="dropdown-absolute" *ngIf="mostrarListaProveedores && (proveedoresFiltrados.length > 0 || busquedaProveedor)">
+              <div class="item-lista" *ngFor="let p of proveedoresFiltrados" (click)="seleccionarProveedor(p)">
+                <mat-icon>storefront</mat-icon>
+                <div>
+                  <div class="fw-bold text-main">{{ p.nombre }}</div>
+                  <div class="text-sub">{{ p.ruc || 'Sin RUC' }}</div>
+                </div>
+              </div>
+
+              <div class="item-lista item-libre" *ngIf="busquedaProveedor && compra.tipoComprobante !== 'FACTURA_COMERCIAL'" (click)="usarProveedorLibre()">
+                <mat-icon style="color: #2563eb;">edit_note</mat-icon>
+                <div>
+                  <div class="fw-bold" style="color: #2563eb;">Usar "{{ busquedaProveedor }}"</div>
+                  <div class="text-sub">Como Proveedor Libre / Sin Registrar</div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
+
         <div class="grid-input">
           <label class="section-title">Moneda</label>
           <select class="form-control-smaf full-width" [(ngModel)]="compra.moneda" (change)="onMonedaChange()">
@@ -143,15 +171,27 @@
       </button>
     </div>
 
-    <div class="search-section mb-4">
+    <div class="search-section mb-4" style="position: relative;">
       <div class="search-wrapper">
         <mat-icon class="search-icon">search</mat-icon>
         <input type="text" class="search-input-lg" placeholder="Buscar item para agregar..."
           [(ngModel)]="busquedaProducto" (ngModelChange)="buscarProducto()">
-        <ul class="search-results shadow-sm" *ngIf="productosFiltrados.length > 0">
-          <li *ngFor="let p of productosFiltrados" (click)="agregarProducto(p)">
-            <div class="result-name">{{p.nombre}}</div>
-            <div class="result-code">{{p.codigo}}</div>
+        
+        <ul class="search-results shadow-sm dropdown-absolute" *ngIf="busquedaProducto && (productosFiltrados.length > 0 || compra.tipoComprobante !== 'FACTURA_COMERCIAL')">
+          <li class="item-lista" *ngFor="let p of productosFiltrados" (click)="agregarProducto(p)">
+            <div style="flex: 1;">
+              <div class="result-name">{{p.nombre}}</div>
+              <div class="result-code">{{p.codigo}}</div>
+            </div>
+            <div style="text-align: right; color: #64748b; font-size: 12px;">Stock: {{ p.stockActual }}</div>
+          </li>
+          
+          <li class="item-lista item-libre-producto" *ngIf="busquedaProducto && compra.tipoComprobante !== 'FACTURA_COMERCIAL'" (click)="agregarProductoLibre()">
+            <mat-icon style="color: #10b981;">add_circle_outline</mat-icon>
+            <div>
+              <div class="result-name" style="color: #10b981; font-weight: 600;">Añadir "{{ busquedaProducto }}"</div>
+              <div class="result-code" style="font-size: 11px; margin-top: 2px;">Como ítem de texto libre</div>
+            </div>
           </li>
         </ul>
       </div>
@@ -163,19 +203,23 @@
           <tr>
             <th class="ps-4">Descripción</th>
             <th width="80">Cant.</th>
-            
             <th width="150" title="Precio que pagas al proveedor">Precio Compra</th>
-            
             <th width="180" *ngIf="compra.tipoCompra === 'BIEN'">Almacén</th>
             <th width="120">Subtotal</th>
             <th width="50"></th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let item of itemsAgregados; let i = index">
+          <tr *ngFor="let item of itemsAgregados; let i = index" [class.border-libre]="item.productoId === 0">
             <td class="ps-4">
-              <div class="fw-bold text-main">{{item.nombre}}</div>
-              <small class="text-sub">{{item.codigo}}</small>
+              <div *ngIf="item.productoId !== 0">
+                <div class="fw-bold text-main">{{item.nombre}}</div>
+                <small class="text-sub">{{item.codigo}}</small>
+              </div>
+              <div *ngIf="item.productoId === 0">
+                <input type="text" class="form-control-smaf sm-input fw-bold text-main" [(ngModel)]="item.nombre" style="border: 1px dashed #10b981; background: #ecfdf5; width: 90%;">
+                <span class="badge-libre">LIBRE</span>
+              </div>
             </td>
             <td>
               <input type="number" class="form-control-smaf sm-input" [(ngModel)]="item.cantidad" (change)="recalcularTotales()" min="1">

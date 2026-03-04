@@ -85,56 +85,69 @@
 
       <div class="config-row custom-grid-2">
         
-        <div class="grid-input" style="position: relative;">
-          <div class="label-with-action">
-            <label class="section-title">Proveedor <span class="text-danger">*</span></label>
-            <button type="button" class="btn-text-action" (click)="nuevoProveedor()" *ngIf="!proveedorSeleccionado">
-              <mat-icon>add</mat-icon> Nuevo
-            </button>
-          </div>
-
-          <div class="search-input-wrapper" style="position: relative;">
-            <input type="text" class="form-control-smaf full-width"
-                   [(ngModel)]="busquedaProveedor" (input)="buscarProveedores()"
-                   placeholder="RUC o Nombre..." autocomplete="off"
-                   [disabled]="proveedorSeleccionado !== null"
-                   style="height: 38px;">
-            
-            <button type="button" class="btn-clear-abs" *ngIf="proveedorSeleccionado" (click)="limpiarProveedor()">
-              <mat-icon>close</mat-icon>
-            </button>
-
-            <div class="dropdown-absolute" *ngIf="mostrarListaProveedores && (proveedoresFiltrados.length > 0 || busquedaProveedor)">
-              <div class="item-lista" *ngFor="let p of proveedoresFiltrados" (click)="seleccionarProveedor(p)">
-                <mat-icon>storefront</mat-icon>
-                <div>
-                  <div class="fw-bold text-main">{{ p.nombre }}</div>
-                  <div class="text-sub">{{ p.ruc || 'Sin RUC' }}</div>
-                </div>
+        <div style="display: flex; gap: 15px;">
+            <div class="grid-input" style="flex: 2; position: relative;">
+              <div class="label-with-action">
+                <label class="section-title">Proveedor <span class="text-danger">*</span></label>
+                <button type="button" class="btn-text-action" (click)="nuevoProveedor()" *ngIf="!proveedorSeleccionado">
+                  <mat-icon>add</mat-icon> Nuevo
+                </button>
               </div>
 
-              <div class="item-lista item-libre" *ngIf="busquedaProveedor && compra.tipoComprobante !== 'FACTURA_COMERCIAL'" (click)="usarProveedorLibre()">
-                <mat-icon style="color: #2563eb;">edit_note</mat-icon>
-                <div>
-                  <div class="fw-bold" style="color: #2563eb;">Usar "{{ busquedaProveedor }}"</div>
-                  <div class="text-sub">Como Proveedor Libre / Sin Registrar</div>
+              <div class="search-input-wrapper" style="position: relative;">
+                <input type="text" class="form-control-smaf full-width"
+                       [(ngModel)]="busquedaProveedor" (input)="buscarProveedores()"
+                       placeholder="RUC o Nombre..." autocomplete="off"
+                       [disabled]="proveedorSeleccionado !== null && proveedorSeleccionado.id !== 0"
+                       style="height: 38px;">
+                
+                <button type="button" class="btn-clear-abs" *ngIf="proveedorSeleccionado" (click)="limpiarProveedor()">
+                  <mat-icon>close</mat-icon>
+                </button>
+
+                <div class="dropdown-absolute" *ngIf="mostrarListaProveedores && (proveedoresFiltrados.length > 0 || busquedaProveedor)">
+                  <div class="item-lista" *ngFor="let p of proveedoresFiltrados" (click)="seleccionarProveedor(p)">
+                    <mat-icon>storefront</mat-icon>
+                    <div>
+                      <div class="fw-bold text-main">{{ p.nombre }}</div>
+                      <div class="text-sub">{{ p.ruc || 'Sin RUC' }}</div>
+                    </div>
+                  </div>
+
+                  <div class="item-lista item-libre" *ngIf="busquedaProveedor && compra.tipoComprobante !== 'FACTURA_COMERCIAL'" (click)="usarProveedorLibre()">
+                    <mat-icon style="color: #2563eb;">edit_note</mat-icon>
+                    <div>
+                      <div class="fw-bold" style="color: #2563eb;">Usar "{{ busquedaProveedor }}"</div>
+                      <div class="text-sub">Como Proveedor Libre / Sin Registrar</div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+
+            <div class="grid-input" style="flex: 1;" *ngIf="proveedorSeleccionado && proveedorSeleccionado.id === 0">
+              <label class="section-title text-danger">RUC (Obligatorio)</label>
+              <input type="text" class="form-control-smaf full-width" 
+                     [(ngModel)]="rucProveedorLibre" 
+                     placeholder="Ej: 20123456789"
+                     style="height: 38px; border-color: #ef4444; background-color: #fef2f2;">
+            </div>
         </div>
 
-        <div class="grid-input">
-          <label class="section-title">Moneda</label>
-          <select class="form-control-smaf full-width" [(ngModel)]="compra.moneda" (change)="onMonedaChange()">
-            <option value="PEN">Soles (S/)</option>
-            <option value="USD">Dólares ($)</option>
-          </select>
+        <div style="display: flex; gap: 15px;">
+            <div class="grid-input" style="flex: 1;">
+            <label class="section-title">Moneda</label>
+            <select class="form-control-smaf full-width" [(ngModel)]="compra.moneda" (change)="onMonedaChange()">
+                <option value="PEN">Soles (S/)</option>
+                <option value="USD">Dólares ($)</option>
+            </select>
+            </div>
+            <div class="grid-input" style="flex: 1;">
+            <label class="section-title">T. Cambio</label>
+            <input type="number" class="form-control-smaf full-width" [(ngModel)]="compra.tipoCambio">
+            </div>
         </div>
-        <div class="grid-input">
-          <label class="section-title">T. Cambio</label>
-          <input type="number" class="form-control-smaf full-width" [(ngModel)]="compra.tipoCambio">
-        </div>
+
       </div>
 
       <div class="config-row four-cols impuesto-row">
@@ -203,9 +216,11 @@
           <tr>
             <th class="ps-4">Descripción</th>
             <th width="80">Cant.</th>
-            <th width="150" title="Precio que pagas al proveedor">Precio Compra</th>
-            <th width="180" *ngIf="compra.tipoCompra === 'BIEN'">Almacén</th>
-            <th width="120">Subtotal</th>
+            <th width="150" title="Precio total incluyendo IGV">Precio Unit. (Inc. IGV)</th>
+            
+            <th width="180" *ngIf="requiereAlmacen()">Almacén</th>
+            
+            <th width="120">Total Ítem</th>
             <th width="50"></th>
           </tr>
         </thead>
@@ -231,11 +246,14 @@
                        [(ngModel)]="item.precioUnitario" (ngModelChange)="recalcularTotales()" placeholder="0.00">
               </div>
             </td>
-            <td *ngIf="compra.tipoCompra === 'BIEN'">
-              <select class="form-control-smaf sm-input" [(ngModel)]="item.almacenId">
+            
+            <td *ngIf="requiereAlmacen()">
+              <select *ngIf="item.productoId !== 0" class="form-control-smaf sm-input" [(ngModel)]="item.almacenId">
                 <option *ngFor="let a of almacenes" [value]="a.id">{{a.nombre}}</option>
               </select>
+              <span *ngIf="item.productoId === 0" style="color: #94a3b8; font-size: 11px; font-style: italic;">No aplica (Gasto)</span>
             </td>
+
             <td class="fw-bold text-main text-end pe-3">
               {{ (item.cantidad * item.precioUnitario) | number:'1.2-2' }}
             </td>
@@ -246,13 +264,19 @@
         </tbody>
         <tfoot *ngIf="itemsAgregados.length > 0">
           <tr>
-            <td [attr.colspan]="compra.tipoCompra === 'BIEN' ? 4 : 3" class="text-end label-total">SUBTOTAL:</td>
-            <td class="amount-sub">{{ compra.subTotal | number:'1.2-2' }}</td>
+            <td [attr.colspan]="requiereAlmacen() ? 4 : 3" class="text-end label-total" style="font-weight: 500;">SUBTOTAL BASE:</td>
+            <td class="amount-sub" style="font-weight: 500;">{{ compra.subTotal | number:'1.2-2' }}</td>
             <td></td>
           </tr>
           
+          <tr *ngIf="compra.tipoComprobante !== 'FACTURA_COMERCIAL'">
+            <td [attr.colspan]="requiereAlmacen() ? 4 : 3" class="text-end label-total" style="font-weight: 500; color: #64748b;">IGV ({{ porcentajeIgv }}%):</td>
+            <td class="amount-sub" style="font-weight: 500; color: #64748b;">{{ compra.igv | number:'1.2-2' }}</td>
+            <td></td>
+          </tr>
+
           <tr *ngIf="compra.tipoComprobante === 'FACTURA_COMERCIAL'">
-             <td [attr.colspan]="compra.tipoCompra === 'BIEN' ? 4 : 3" class="text-end label-total" style="color: #2563eb;">FOB/FLETE:</td>
+             <td [attr.colspan]="requiereAlmacen() ? 4 : 3" class="text-end label-total" style="color: #2563eb;">FOB/FLETE:</td>
              <td>
                 <div class="input-group-sm" style="justify-content: flex-end;">
                     <span class="currency-symbol">{{ getSimboloMoneda() }}</span>
@@ -267,12 +291,12 @@
           </tr>
 
           <tr *ngIf="(compra.percepcion || 0) > 0">
-            <td [attr.colspan]="compra.tipoCompra === 'BIEN' ? 4 : 3" class="text-end label-total">PERCEPCIÓN:</td>
+            <td [attr.colspan]="requiereAlmacen() ? 4 : 3" class="text-end label-total">PERCEPCIÓN:</td>
             <td class="amount-sub">{{ compra.percepcion | number:'1.2-2' }}</td>
             <td></td>
           </tr>
           <tr class="total-row-final">
-            <td [attr.colspan]="compra.tipoCompra === 'BIEN' ? 4 : 3" class="text-end label-total-lg">TOTAL A PAGAR:</td>
+            <td [attr.colspan]="requiereAlmacen() ? 4 : 3" class="text-end label-total-lg">TOTAL A PAGAR:</td>
             <td class="amount-total-lg">{{ getSimboloMoneda() }} {{ compra.total | number:'1.2-2' }}</td>
             <td></td>
           </tr>

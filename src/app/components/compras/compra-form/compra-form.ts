@@ -72,7 +72,7 @@ export class CompraFormComponent implements OnInit {
   pagoActual: PagoCompraRequest = {
     metodoPago: MetodoPago.TRANSFERENCIA,
     monto: 0,
-    moneda: 'USD', 
+    moneda: 'PEN', 
     cuentaOrigenId: undefined,
     referencia: ''
   };
@@ -86,7 +86,7 @@ export class CompraFormComponent implements OnInit {
 
   compra: CompraRequest = {
     tipoCompra: 'BIEN',
-    tipoComprobante: 'FACTURA_COMERCIAL' as any, 
+    tipoComprobante: 'FACTURA_ELECTRONICA' as any, 
     tipoPago: TipoPago.CONTADO,
     serie: '',
     numero: '',
@@ -95,7 +95,7 @@ export class CompraFormComponent implements OnInit {
     cbm: 0,
     fechaEmision: new Date().toISOString().split('T')[0] as any, 
     proveedorId: 0,
-    moneda: 'USD', 
+    moneda: 'PEN', 
     tipoCambio: 3.75,
     observaciones: '',
     subTotal: 0,
@@ -110,8 +110,8 @@ export class CompraFormComponent implements OnInit {
     pagos: []
   };
 
-  // ✅ VARIABLES PARA PROVEEDOR LIBRE
   busquedaProveedor: string = '';
+  rucProveedorLibre: string = ''; 
   proveedoresFiltrados: Proveedor[] = [];
   proveedorSeleccionado: Proveedor | null = null;
   mostrarListaProveedores: boolean = false;
@@ -200,12 +200,12 @@ export class CompraFormComponent implements OnInit {
             this.porcentajeIgv = 18;
         }
 
-        // ✅ RECONSTRUIR PROVEEDOR
-        if ((data as any).proveedorId) {
+        if ((data as any).proveedorId && (data as any).proveedorId !== 0) {
              const provEncontrado = this.proveedores.find(p => p.id === (data as any).proveedorId);
              if (provEncontrado) this.seleccionarProveedor(provEncontrado);
         } else if (data.nombreProveedor) {
              this.busquedaProveedor = data.nombreProveedor;
+             this.rucProveedorLibre = (data as any).rucProveedor && (data as any).rucProveedor !== 'S/D' ? (data as any).rucProveedor : '';
              this.usarProveedorLibre();
         }
 
@@ -215,7 +215,7 @@ export class CompraFormComponent implements OnInit {
           this.itemsAgregados = data.detalles.map(d => {
             const almacenEncontrado = this.almacenes.find(a => a.nombre === d.nombreAlmacen);
             return {
-              productoId: d.productoId || 0, // 0 si era libre
+              productoId: d.productoId || 0, 
               nombre: d.nombreProducto,
               codigo: d.codigoProducto || 'LIBRE',
               cantidad: d.cantidad,
@@ -246,11 +246,6 @@ export class CompraFormComponent implements OnInit {
       }
       this.compra.detraccionPorcentaje = 0;
       this.compra.detraccionMonto = 0;
-      if (this.almacenes.length > 0) {
-        this.itemsAgregados.forEach(i => {
-          if (!i.almacenId) i.almacenId = this.almacenes[0].id;
-        });
-      }
     } else {
       this.listaComprobantes = this.comprobantesServicio;
       if (!this.modoEdicion) {
@@ -273,9 +268,13 @@ export class CompraFormComponent implements OnInit {
         setTimeout(() => this.compra.tipoComprobante = this.tipoComprobanteAnterior as any, 0);
         return;
       }
+      this.compra.moneda = 'USD';
+    } else {
+      this.compra.moneda = 'PEN';
     }
 
     this.tipoComprobanteAnterior = nuevoTipo;
+    this.onMonedaChange();
 
     if (this.compra.tipoComprobante !== 'FACTURA_COMERCIAL') {
       this.compra.codImportacion = '';
@@ -324,13 +323,14 @@ export class CompraFormComponent implements OnInit {
     this.busquedaProveedor = proveedor.nombre;
     this.compra.proveedorId = proveedor.id!;
     this.mostrarListaProveedores = false;
+    this.rucProveedorLibre = ''; 
   }
 
   usarProveedorLibre() {
     this.proveedorSeleccionado = {
       id: 0,
       nombre: this.busquedaProveedor,
-      ruc: 'S/D'
+      ruc: this.rucProveedorLibre || 'S/D' 
     } as Proveedor;
     this.compra.proveedorId = 0; 
     this.mostrarListaProveedores = false;
@@ -340,6 +340,7 @@ export class CompraFormComponent implements OnInit {
     this.proveedorSeleccionado = null;
     this.busquedaProveedor = '';
     this.compra.proveedorId = 0;
+    this.rucProveedorLibre = '';
   }
 
   nuevoProveedor(): void {
@@ -360,7 +361,7 @@ export class CompraFormComponent implements OnInit {
   }
 
   // ========================================================
-  // LÓGICA DE PRODUCTOS
+  // LÓGICA DE PRODUCTOS E INVENTARIO
   // ========================================================
 
   nuevoProducto(): void {
@@ -401,16 +402,13 @@ export class CompraFormComponent implements OnInit {
   }
 
   agregarProductoLibre() {
-    const almacenDefault = (this.compra.tipoCompra === 'BIEN' && this.almacenes.length > 0)
-      ? this.almacenes[0].id : undefined;
-
     const nuevoItem = {
       productoId: 0, 
       nombre: this.busquedaProducto,
       codigo: 'LIBRE',
       cantidad: 1,
       precioUnitario: 0,
-      almacenId: almacenDefault
+      almacenId: undefined // ✅ Un gasto libre NO pide almacén nunca
     };
 
     this.itemsAgregados.push(nuevoItem);
@@ -424,26 +422,38 @@ export class CompraFormComponent implements OnInit {
     this.recalcularTotales();
   }
 
+  // ✅ LOGICA INTELIGENTE: Si agregas un producto real de la BD, sí pide almacén. 
+  // Si solo agregaste "Lapiz" como libre, oculta la columna de almacén entera.
+  requiereAlmacen(): boolean {
+    if (this.compra.tipoCompra !== 'BIEN') return false;
+    return this.itemsAgregados.some(item => item.productoId !== 0);
+  }
+
   recalcularTotales() {
-    const sumaItems = this.itemsAgregados.reduce((acc, item) => acc + (item.cantidad * item.precioUnitario), 0);
-    this.compra.subTotal = sumaItems;
-    
+    const sumaTotalItemsConIgv = this.itemsAgregados.reduce((acc, item) => acc + (item.cantidad * (Number(item.precioUnitario) || 0)), 0);
     const fobAdicional = Number(this.compra.fob) || 0;
-    const baseImponible = this.compra.subTotal + fobAdicional;
 
     if (this.compra.tipoComprobante !== 'FACTURA_COMERCIAL') {
-        this.compra.igv = baseImponible * (this.porcentajeIgv / 100);
+        const totalConIgv = sumaTotalItemsConIgv + fobAdicional;
+        this.compra.subTotal = totalConIgv / (1 + (this.porcentajeIgv / 100));
+        this.compra.igv = totalConIgv - this.compra.subTotal;
+        
+        let totalDoc = totalConIgv;
+        if (this.compra.tipoCompra === 'BIEN' && this.compra.percepcion) {
+          totalDoc += Number(this.compra.percepcion);
+        }
+        this.compra.total = totalDoc;
+
     } else {
+        this.compra.subTotal = sumaTotalItemsConIgv;
         this.compra.igv = 0;
+        
+        let totalDoc = this.compra.subTotal + fobAdicional;
+        if (this.compra.tipoCompra === 'BIEN' && this.compra.percepcion) {
+          totalDoc += Number(this.compra.percepcion);
+        }
+        this.compra.total = totalDoc;
     }
-
-    let totalDoc = baseImponible + this.compra.igv;
-
-    if (this.compra.tipoCompra === 'BIEN' && this.compra.percepcion) {
-      totalDoc += Number(this.compra.percepcion);
-    }
-
-    this.compra.total = totalDoc;
 
     if (this.compra.tipoCompra === 'SERVICIO' && this.compra.detraccionPorcentaje) {
       this.compra.detraccionMonto = (this.compra.total * this.compra.detraccionPorcentaje) / 100;
@@ -464,12 +474,13 @@ export class CompraFormComponent implements OnInit {
 
   guardarCompra() {
     if (!this.proveedorSeleccionado) return alert("⚠️ Seleccione un proveedor válido o de texto libre.");
+    
+    if (this.proveedorSeleccionado.id === 0 && (!this.rucProveedorLibre || this.rucProveedorLibre.trim() === '')) {
+       return alert("⚠️ Si usa un proveedor libre, debe ingresar su RUC para temas contables.");
+    }
+
     if (!this.compra.serie || !this.compra.numero) return alert("⚠️ Ingrese Serie y Número del comprobante.");
     if (this.itemsAgregados.length === 0) return alert("⚠️ Agregue productos.");
-
-    if (this.compra.tipoCompra === 'BIEN' && this.itemsAgregados.some(i => !i.almacenId)) {
-      return alert("⚠️ Todos los bienes deben tener almacén destino.");
-    }
 
     if (!this.modoEdicion && this.esPagoBancarizado() && !this.pagoActual.cuentaOrigenId) {
       return alert("⚠️ Para transferencias o Yape, debe seleccionar la Cuenta de Origen.");
@@ -480,9 +491,9 @@ export class CompraFormComponent implements OnInit {
       this.compra.tipoPago = TipoPago.CONTADO;
     }
 
-    // ✅ ENVIAR PROVEEDOR Y DETALLES PROTEGIENDO EL ID 0 PARA EVITAR ERROR DEL BACKEND
     this.compra.proveedorId = this.proveedorSeleccionado.id === 0 ? null as any : this.proveedorSeleccionado.id;
-    (this.compra as any).nombreProveedor = this.proveedorSeleccionado.nombre;
+    (this.compra as any).nombreProveedor = this.proveedorSeleccionado.id === 0 ? this.busquedaProveedor : null;
+    (this.compra as any).rucProveedor = this.proveedorSeleccionado.id === 0 ? this.rucProveedorLibre : null;
 
     this.compra.pagos = [];
     if (!this.modoEdicion) {

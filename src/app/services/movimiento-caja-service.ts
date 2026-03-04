@@ -2,14 +2,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment'; 
-import { MovimientoCajaRequest, MovimientoCajaResponse } from '../models/movimiento-caja'; // Ajusta la ruta
+import { MovimientoCajaRequest, MovimientoCajaResponse } from '../models/movimiento-caja';
 
 @Injectable({
   providedIn: 'root'
 })
 export class MovimientoCajaService {
 
-  // Fíjate que le puse /api/cajachica porque así lo definimos en el Controller de Java
   private apiUrl = `${environment.base}/cajachica`;
 
   constructor(private http: HttpClient) { }
@@ -20,5 +19,10 @@ export class MovimientoCajaService {
 
   listar(): Observable<MovimientoCajaResponse[]> {
     return this.http.get<MovimientoCajaResponse[]>(this.apiUrl);
+  }
+
+  // ✅ NUEVO MÉTODO PARA GUARDAR LA EDICIÓN DEL GASTO MENOR
+  actualizar(id: number, movimiento: MovimientoCajaRequest): Observable<MovimientoCajaResponse> {
+    return this.http.put<MovimientoCajaResponse>(`${this.apiUrl}/${id}`, movimiento);
   }
 }

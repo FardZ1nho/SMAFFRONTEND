@@ -1,14 +1,13 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, Inject, Optional } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MatDialogRef, MatDialogModule } from '@angular/material/dialog';
+import { MatDialogRef, MatDialogModule, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-// ✅ IMPORTAMOS LAS HERRAMIENTAS DE FECHA
 import { MatNativeDateModule, MAT_DATE_LOCALE, DateAdapter, NativeDateAdapter, MAT_DATE_FORMATS } from '@angular/material/core';
 
 interface ItemGasto {
@@ -17,7 +16,6 @@ interface ItemGasto {
   precioUnitario: number;
 }
 
-// ✅ DEFINIMOS EL FORMATO DD/MM/YYYY PARA ESTE MODAL
 export const MY_DATE_FORMATS = {
   parse: { dateInput: 'DD/MM/YYYY' },
   display: {
@@ -28,7 +26,6 @@ export const MY_DATE_FORMATS = {
   },
 };
 
-// ✅ CREAMOS EL TRADUCTOR DE FECHAS PARA EL MODAL
 export class CustomDateAdapter extends NativeDateAdapter {
   override parse(value: any): Date | null {
     if ((typeof value === 'string') && (value.indexOf('/') > -1)) {
@@ -64,7 +61,6 @@ export class CustomDateAdapter extends NativeDateAdapter {
     MatButtonModule, MatIconModule, MatDatepickerModule, MatNativeDateModule
   ],
   providers: [
-    // ✅ ACTIVAMOS EL TRADUCTOR AQUÍ
     { provide: MAT_DATE_LOCALE, useValue: 'es-PE' },
     { provide: DateAdapter, useClass: CustomDateAdapter },
     { provide: MAT_DATE_FORMATS, useValue: MY_DATE_FORMATS }
@@ -72,26 +68,56 @@ export class CustomDateAdapter extends NativeDateAdapter {
   templateUrl: './gasto-menor-modal.html',
   styleUrls: ['./gasto-menor-modal.css']
 })
-export class GastoMenorModalComponent {
+export class GastoMenorModalComponent implements OnInit {
 
   gasto = {
     tipoComprobante: 'BOLETA',
     serie: '',
     numero: '',
-    fechaEmision: new Date(), // Inicializa en hoy, pero puedes cambiarlo
+    fechaEmision: new Date(), 
     proveedor: '', 
     moneda: 'PEN',
     tipoCambio: 1.00,
     observaciones: ''
   };
 
-  tiposComprobante = ['BOLETA', 'FACTURA', 'TICKET', 'RECIBO DE HONORARIOS', 'NOTA DE VENTA'];
+  tiposComprobante = ['BOLETA', 'FACTURA', 'TICKET', 'RECIBO DE HONORARIOS', 'NOTA DE VENTA', 'AJUSTE MANUAL'];
 
   items: ItemGasto[] = [
     { descripcion: '', cantidad: 1, precioUnitario: 0 }
   ];
 
-  constructor(public dialogRef: MatDialogRef<GastoMenorModalComponent>) {}
+  constructor(
+    public dialogRef: MatDialogRef<GastoMenorModalComponent>,
+    @Optional() @Inject(MAT_DIALOG_DATA) public dataAEditar: any // ✅ RECIBE LA FILA A EDITAR
+  ) {}
+
+  ngOnInit(): void {
+    // ✅ SI ESTAMOS EDITANDO, PRE-LLENAMOS EL FORMULARIO
+    if (this.dataAEditar) {
+      this.gasto.tipoComprobante = this.dataAEditar.tipoComprobante;
+      this.gasto.proveedor = this.dataAEditar.entidad;
+      this.gasto.fechaEmision = new Date(this.dataAEditar.fecha);
+
+      // Extraemos serie y número
+      if (this.dataAEditar.referencia && this.dataAEditar.referencia.includes('-')) {
+         const partes = this.dataAEditar.referencia.split('-');
+         this.gasto.serie = partes[0];
+         this.gasto.numero = partes[1];
+      } else {
+         this.gasto.numero = this.dataAEditar.referencia;
+      }
+
+      // Reconstruimos el ítem (como se guardó como un texto gigante, lo ponemos en la descripción)
+      const textoOriginal = this.dataAEditar.rawData?.motivo || 'Gasto registrado';
+      
+      this.items = [{ 
+         descripcion: textoOriginal, 
+         cantidad: 1, 
+         precioUnitario: this.dataAEditar.monto 
+      }];
+    }
+  }
 
   agregarItem(): void {
     this.items.push({ descripcion: '', cantidad: 1, precioUnitario: 0 });

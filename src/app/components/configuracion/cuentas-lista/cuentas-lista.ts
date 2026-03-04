@@ -10,6 +10,7 @@ import { ChangeDetectorRef } from '@angular/core';
 import { CuentaBancaria } from '../../../models/cuenta-bancaria';
 import { CuentaBancariaService } from '../../../services/cuenta-bancaria-service'; 
 import { CuentaModalComponent } from '../cuenta-modal/cuenta-modal';
+
 @Component({
   selector: 'app-cuentas-lista',
   standalone: true,
@@ -26,7 +27,7 @@ export class CuentasListaComponent implements OnInit {
   constructor(
     private cuentaService: CuentaBancariaService,
     private dialog: MatDialog,
-    private cdr: ChangeDetectorRef // <--- AGREGAR ESTO
+    private cdr: ChangeDetectorRef 
   ) {}
 
   ngOnInit(): void {
@@ -36,7 +37,7 @@ export class CuentasListaComponent implements OnInit {
   cargarCuentas() {
     this.cuentaService.listarTodas().subscribe(data => {
       this.cuentas = data;
-      this.cdr.detectChanges(); // <--- AGREGAR ESTA LÍNEA MÁGICA
+      this.cdr.detectChanges(); 
     });
   }
 
@@ -51,9 +52,20 @@ export class CuentasListaComponent implements OnInit {
     });
   }
 
+  // ✅ SOLUCIÓN: Eliminación con actualización local inmediata y manejo de errores
   eliminar(id: number) {
     if (confirm('¿Seguro de eliminar esta cuenta?')) {
-      this.cuentaService.eliminar(id).subscribe(() => this.cargarCuentas());
+      this.cuentaService.eliminar(id).subscribe({
+        next: () => {
+          // Filtramos la lista localmente para que desaparezca al instante en la pantalla
+          this.cuentas = this.cuentas.filter(c => c.id !== id);
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          console.error('Error al eliminar la cuenta:', err);
+          alert('❌ No se pudo eliminar. Es posible que esta cuenta ya tenga pagos o movimientos asociados en el sistema.');
+        }
+      });
     }
   }
 

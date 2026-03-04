@@ -22,7 +22,6 @@ export class FinanzasComponent implements OnInit {
   fechaFin: string = '';
   cargando: boolean = true;
   
-  // ✅ NUEVO: Variable para controlar el filtro actual
   filtroActual: 'TODOS' | 'INGRESO' | 'EGRESO' = 'TODOS';
 
   constructor(
@@ -55,7 +54,6 @@ export class FinanzasComponent implements OnInit {
     });
   }
 
-  // ✅ NUEVO: Función que retorna solo los datos según el filtro seleccionado
   get transaccionesFiltradas(): TransaccionFinanciera[] {
     if (this.filtroActual === 'TODOS') return this.transacciones;
     return this.transacciones.filter(t => t.tipo === this.filtroActual);
@@ -71,7 +69,6 @@ export class FinanzasComponent implements OnInit {
 
     const doc = new jsPDF('landscape'); 
     
-    // ✅ Determinamos el título del PDF según el filtro
     let tituloPDF = 'Reporte Contable General - SMAF';
     let nombreArchivo = `Reporte_General_${this.fechaInicio}.pdf`;
 
@@ -91,29 +88,32 @@ export class FinanzasComponent implements OnInit {
     doc.setTextColor(100, 116, 139); 
     doc.text(`Periodo: ${this.fechaInicio} al ${this.fechaFin}`, 14, 22);
 
-    // Usamos 'datosParaExportar' en lugar de 'this.transacciones'
+    // ✅ AHORA INCLUIMOS DET, RET Y PERC EN EL PDF
     const bodyData = datosParaExportar.map(t => [
       new Date(t.fechaHora).toLocaleDateString(),
       t.tipo === 'INGRESO' ? 'ING' : 'EGR',
       `${t.tipoComprobante}\n${t.comprobante}`,
       t.ruc || 'S/D',
       t.entidad || '',
-      t.descripcion?.substring(0, 45) || '', 
       t.moneda,
       Number(t.subTotal || 0).toFixed(2),
       Number(t.igv || 0).toFixed(2),
+      Number(t.detraccion || 0).toFixed(2), // Nvo
+      Number(t.retencion || 0).toFixed(2),  // Nvo
+      Number(t.percepcion || 0).toFixed(2), // Nvo
       Number(t.montoTotal || 0).toFixed(2),
       Number(t.tipoCambio || 1).toFixed(3)
     ]);
 
     autoTable(doc, {
       startY: 28,
-      head: [['Fecha', 'Tipo', 'Comprobante', 'RUC', 'Razón Social', 'Descripción', 'Mon', 'SubTotal', 'IGV', 'Total', 'TC']],
+      // ✅ ACTUALIZAMOS LAS CABECERAS
+      head: [['Fecha', 'Tipo', 'Comprobante', 'RUC', 'Razón Social', 'Mon', 'SubTotal', 'IGV', 'Detrac.', 'Reten.', 'Percep.', 'Total', 'TC']],
       body: bodyData,
       theme: 'striped',
       styles: { 
-        fontSize: 8,            
-        cellPadding: 3,         
+        fontSize: 7, // Bajamos a 7pt para que todo entre bien horizontalmente
+        cellPadding: 2,         
         textColor: [40, 40, 40], 
         lineColor: [215, 220, 225], 
         lineWidth: 0.1 
@@ -128,10 +128,13 @@ export class FinanzasComponent implements OnInit {
       },
       columnStyles: {
         1: { fontStyle: 'bold' }, 
-        7: { halign: 'right' },
-        8: { halign: 'right' },
-        9: { halign: 'right', fontStyle: 'bold', textColor: [0, 0, 0] }, 
-        10: { halign: 'center' }
+        6: { halign: 'right' }, // SubTotal
+        7: { halign: 'right' }, // IGV
+        8: { halign: 'right', textColor: [153, 27, 27] }, // Detraccion (Rojo)
+        9: { halign: 'right', textColor: [153, 27, 27] }, // Retencion (Rojo)
+        10: { halign: 'right', textColor: [22, 101, 52] }, // Percepcion (Verde)
+        11: { halign: 'right', fontStyle: 'bold', textColor: [0, 0, 0] }, // Total
+        12: { halign: 'center' } // TC
       }
     });
 

@@ -14,6 +14,9 @@ export interface TransaccionFinanciera {
   subTotal?: number;
   igv?: number;
   tipoCambio?: number;
+  retencion: number;
+  detraccion: number;
+  percepcion: number;
 }
 
 export interface FinanzasDashboard {

@@ -7,6 +7,13 @@ export interface TransaccionFinanciera {
   entidad: string;
   moneda: string;
   montoTotal: number;
+
+  // ✅ NUEVOS CAMPOS PARA EL REPORTE CONTABLE
+  ruc?: string;
+  descripcion?: string;
+  subTotal?: number;
+  igv?: number;
+  tipoCambio?: number;
 }
 
 export interface FinanzasDashboard {

@@ -25,6 +25,9 @@ export class ComprasListComponent implements OnInit {
   comprasFiltradas: CompraResponse[] = [];
   filtroTexto: string = '';
   cargando: boolean = true;
+  
+  // ✅ NUEVO: Variable para controlar la pestaña activa
+  tabActual: 'ACTIVAS' | 'ANULADAS' = 'ACTIVAS';
 
   constructor(
     private compraService: CompraService,
@@ -48,11 +51,10 @@ export class ComprasListComponent implements OnInit {
             console.warn('⚠️ El backend devolvió una lista vacía.');
         }
 
-        // Filtro de seguridad para datos nulos
         const dataLimpia = data.filter(item => item && item.id !== null);
         
         this.compras = dataLimpia.sort((a, b) => b.id - a.id);
-        this.filtrar();
+        this.filtrar(); // Aplica tab y texto
         this.cargando = false;
         this.cdr.detectChanges();
       },
@@ -64,14 +66,30 @@ export class ComprasListComponent implements OnInit {
     });
   }
 
+  // ✅ NUEVO: Función para cambiar de pestaña
+  cambiarTab(tab: 'ACTIVAS' | 'ANULADAS') {
+    this.tabActual = tab;
+    this.filtrar();
+  }
+
   filtrar() {
+    // 1. Primero filtramos por Pestaña (Estado)
+    let baseFiltro = this.compras.filter(c => {
+      if (this.tabActual === 'ACTIVAS') {
+        return c.estado !== 'ANULADA'; // Muestra REGISTRADA, COMPLETADA, etc.
+      } else {
+        return c.estado === 'ANULADA'; // Muestra solo ANULADAS
+      }
+    });
+
+    // 2. Luego filtramos por Texto (Búsqueda)
     if (!this.filtroTexto.trim()) {
-      this.comprasFiltradas = this.compras;
+      this.comprasFiltradas = baseFiltro;
       return;
     }
 
     const texto = this.filtroTexto.toLowerCase();
-    this.comprasFiltradas = this.compras.filter(c => 
+    this.comprasFiltradas = baseFiltro.filter(c => 
       (c.nombreProveedor && c.nombreProveedor.toLowerCase().includes(texto)) ||
       (c.serie && c.serie.toLowerCase().includes(texto)) ||
       (c.numero && c.numero.toLowerCase().includes(texto)) ||
@@ -94,10 +112,8 @@ export class ComprasListComponent implements OnInit {
     this.router.navigate(['/compras/detalle', id]);
   }
 
-  // ✅ ESTA ES LA FUNCIÓN QUE TE FALTABA
   editarCompra(id: number | null | undefined) {
     if (!id) return;
-    // Navega a la ruta de edición pasando el ID
     this.router.navigate(['/compras/editar', id]); 
   }
 
@@ -106,10 +122,10 @@ export class ComprasListComponent implements OnInit {
   }
 
   anularCompra(id: number) {
-    if (confirm('¿Está seguro de anular esta compra? Esto revertirá el stock.')) {
+    if (confirm('¿Está seguro de anular esta compra? Esto revertirá el stock y pasará al historial de Anuladas.')) {
       this.compraService.anular(id).subscribe({
         next: () => {
-          this.cargarCompras();
+          this.cargarCompras(); // Recarga los datos para actualizar las pestañas
         },
         error: (e) => alert('Error al anular: ' + e.message)
       });

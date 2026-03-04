@@ -238,26 +238,43 @@ export class CajaChicaComponent implements OnInit {
     });
   }
 
-  // ✅ INTELIGENCIA DEL BOTÓN EDITAR
   editarMovimiento(row: MovimientoCaja): void {
     if (row.origen === 'COMPRA') {
       this.router.navigate(['/compras/editar', row.idRegistro]);
     } else if (row.origen === 'CAJA_CHICA') {
-      // Abrimos el mismo modal pero le pasamos los datos a editar
       this.abrirModalGastoMenor(row);
     } else if (row.origen === 'VENTA') {
       this.snackBar.open('Las ventas se editan desde el Módulo de Ventas.', 'Cerrar', { duration: 3000 });
     }
   }
 
-  // ✅ AHORA EL MODAL ACEPTA UN PARÁMETRO OPCIONAL (rowAEditar)
+  // ✅ NUEVO MÉTODO INTELIGENTE PARA ELIMINAR
+  eliminarMovimiento(row: MovimientoCaja): void {
+    if (row.origen === 'CAJA_CHICA' && row.idRegistro) {
+      if (confirm('¿Estás seguro de eliminar este movimiento? El saldo en caja se recalculará automáticamente.')) {
+        this.movimientoManualService.eliminar(row.idRegistro).subscribe({
+          next: () => {
+            this.snackBar.open('Movimiento eliminado correctamente', 'Cerrar', { duration: 3000, panelClass: ['snackbar-success'] });
+            this.cargarFlujoCaja(); // Recarga la tabla y el saldo
+          },
+          error: (err) => {
+            console.error(err);
+            this.snackBar.open('Error al eliminar el movimiento', 'Cerrar', { duration: 3000, panelClass: ['snackbar-error'] });
+          }
+        });
+      }
+    } else {
+      this.snackBar.open('Las compras/ventas deben anularse desde su propio módulo (Inventario o Ventas).', 'Entendido', { duration: 5000 });
+    }
+  }
+
   abrirModalGastoMenor(rowAEditar?: MovimientoCaja): void {
     const dialogRef = this.dialog.open(GastoMenorModalComponent, {
       width: '1200px', 
       maxWidth: '95vw', 
       height: '85vh', 
       disableClose: true,
-      data: rowAEditar || null // Pasamos los datos si estamos editando
+      data: rowAEditar || null 
     });
 
     dialogRef.afterClosed().subscribe(resultado => {
@@ -281,9 +298,7 @@ export class CajaChicaComponent implements OnInit {
             fechaHora: fechaPerfectaParaJava 
           };
 
-          // DECIDIMOS SI ACTUALIZAR O REGISTRAR NUEVO
           if (rowAEditar && rowAEditar.idRegistro) {
-            // 🔄 ACTUALIZAR (Asegúrate que tu service tenga el método actualizar)
             this.movimientoManualService.actualizar(rowAEditar.idRegistro, request).subscribe({
               next: () => {
                 this.snackBar.open('Gasto actualizado correctamente', 'Cerrar', { duration: 3000, panelClass: ['snackbar-success'] });
@@ -295,7 +310,6 @@ export class CajaChicaComponent implements OnInit {
               }
             });
           } else {
-            // ➕ REGISTRAR NUEVO
             this.movimientoManualService.registrar(request).subscribe({
               next: () => {
                 this.snackBar.open('Gasto registrado correctamente', 'Cerrar', { duration: 3000, panelClass: ['snackbar-success'] });

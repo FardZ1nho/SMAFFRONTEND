@@ -13,6 +13,15 @@
     </button>
   </div>
 
+  <div class="tabs-container">
+    <button class="tab-btn" [class.active]="tabActual === 'ACTIVAS'" (click)="cambiarTab('ACTIVAS')">
+      <mat-icon>check_circle</mat-icon> Activas
+    </button>
+    <button class="tab-btn" [class.active]="tabActual === 'ANULADAS'" (click)="cambiarTab('ANULADAS')">
+      <mat-icon>cancel</mat-icon> Anuladas
+    </button>
+  </div>
+
   <div class="filters-container">
     <div class="search-box">
       <mat-icon>search</mat-icon>
@@ -48,7 +57,7 @@
       </thead>
       <tbody>
         
-        <tr *ngFor="let item of comprasFiltradas">
+        <tr *ngFor="let item of comprasFiltradas" [class.row-anulada]="item.estado === 'ANULADA'">
           <td>{{ item.fechaEmision | date:'dd/MM/yyyy' }}</td>
           
           <td>
@@ -78,7 +87,7 @@
             <span class="badge-moneda">{{ item.moneda }}</span>
           </td>
 
-          <td class="text-right font-bold">
+          <td class="text-right font-bold" [class.text-tachado]="item.estado === 'ANULADA'">
             {{ getMonedaSymbol(item.moneda) }} {{ item.total | number:'1.2-2' }}
           </td>
 
@@ -93,11 +102,11 @@
               <mat-icon>visibility</mat-icon>
             </button>
             
-            <button class="btn-icon edit" (click)="editarCompra(item.id)" title="Editar" style="color: #f59e0b;">
+            <button *ngIf="item.estado !== 'ANULADA'" class="btn-icon edit" (click)="editarCompra(item.id)" title="Editar" style="color: #f59e0b;">
                 <mat-icon>edit</mat-icon>
             </button>
 
-            <button class="btn-icon delete" (click)="anularCompra(item.id)" title="Anular">
+            <button *ngIf="item.estado !== 'ANULADA'" class="btn-icon delete" (click)="anularCompra(item.id!)" title="Anular">
               <mat-icon>delete</mat-icon>
             </button>
           </td>
@@ -107,7 +116,7 @@
           <td colspan="7">
             <div class="empty-state">
               <mat-icon>receipt</mat-icon>
-              <p>No se encontraron registros de compras.</p>
+              <p>No se encontraron registros en esta sección.</p>
               <button class="btn-link" (click)="limpiarFiltro()" *ngIf="filtroTexto">Limpiar filtros</button>
             </div>
           </td>

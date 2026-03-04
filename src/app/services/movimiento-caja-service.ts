@@ -21,8 +21,12 @@ export class MovimientoCajaService {
     return this.http.get<MovimientoCajaResponse[]>(this.apiUrl);
   }
 
-  // ✅ NUEVO MÉTODO PARA GUARDAR LA EDICIÓN DEL GASTO MENOR
   actualizar(id: number, movimiento: MovimientoCajaRequest): Observable<MovimientoCajaResponse> {
     return this.http.put<MovimientoCajaResponse>(`${this.apiUrl}/${id}`, movimiento);
+  }
+
+  // ✅ NUEVO MÉTODO PARA ELIMINAR
+  eliminar(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/${id}`);
   }
 }

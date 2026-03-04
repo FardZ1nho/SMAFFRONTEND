@@ -50,6 +50,48 @@
 .btn-primary:hover { background-color: #1d4ed8; transform: translateY(-1px); }
 
 /* =========================
+   ✅ TABS (PESTAÑAS)
+   ========================= */
+.tabs-container {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  border-bottom: 2px solid var(--border-color);
+  padding-bottom: 0px;
+}
+
+.tab-btn {
+  background: none;
+  border: none;
+  padding: 12px 16px;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-sub);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s ease;
+  margin-bottom: -2px; /* Superpone el borde activo sobre la línea gris */
+}
+
+.tab-btn mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.tab-btn:hover {
+  color: var(--primary);
+}
+
+.tab-btn.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+/* =========================
    FILTROS & TOOLBAR
    ========================= */
 .filters-container {
@@ -110,6 +152,20 @@
 }
 .data-table tr:hover td { background-color: #f8fafc; }
 
+/* ESTILOS PARA FILAS ANULADAS */
+.row-anulada td {
+  background-color: #fef2f2 !important;
+  color: #94a3b8;
+}
+.row-anulada .comprobante-info .tipo-text, 
+.row-anulada .prov-name {
+  color: #94a3b8 !important;
+}
+.text-tachado {
+  text-decoration: line-through;
+  color: #94a3b8 !important;
+}
+
 /* COLUMNAS ESPECÍFICAS */
 .text-right { text-align: right !important; }
 .text-center { text-align: center !important; }
@@ -119,11 +175,11 @@
 .comprobante-cell { display: flex; align-items: center; gap: 12px; }
 
 .icon-tiny { font-size: 18px; width: 18px; height: 18px; color: #94a3b8; }
-.icon-import { color: var(--primary); } /* Azul si es importación */
+.icon-import { color: var(--primary); } 
 
 .comprobante-info { display: flex; flex-direction: column; }
 .tipo-text { font-weight: 600; font-size: 12px; text-transform: uppercase; color: #334155; }
-.text-import { color: var(--primary); } /* Azul si es importación */
+.text-import { color: var(--primary); } 
 .serie-text { font-family: 'Roboto Mono', monospace; font-size: 11px; color: #64748b; }
 
 /* COMPONENTE: PROVEEDOR */
@@ -143,7 +199,7 @@
   font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
 }
 .status-badge.COMPLETADA { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
-.status-badge.REGISTRADA { background: #fff7ed; color: #ea580c; border: 1px solid #ffedd5; } /* Pendiente de pago */
+.status-badge.REGISTRADA { background: #fff7ed; color: #ea580c; border: 1px solid #ffedd5; } 
 .status-badge.ANULADA    { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
 
 /* ACCIONES */

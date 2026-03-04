@@ -211,6 +211,22 @@ export class CompraFormComponent implements OnInit {
 
         this.tipoPago = this.compra.tipoPago;
 
+        // ✅ CARGA DE PAGOS CORREGIDA (Evitando errores estrictos de TypeScript)
+        if (data.pagos && data.pagos.length > 0) {
+            const pagoBd = data.pagos[0] as any; // Convertimos a 'any' para saltar el error de TS
+            
+            this.pagoActual = {
+                metodoPago: pagoBd.metodoPago,
+                monto: pagoBd.monto,
+                moneda: pagoBd.moneda,
+                cuentaOrigenId: pagoBd.cuentaOrigenId, 
+                referencia: pagoBd.referencia || ''
+            };
+            
+            // Le inyectamos el ID por debajo de la mesa para que actualice correctamente
+            (this.pagoActual as any).id = pagoBd.id; 
+        }
+
         if (data.detalles) {
           this.itemsAgregados = data.detalles.map(d => {
             const almacenEncontrado = this.almacenes.find(a => a.nombre === d.nombreAlmacen);
@@ -264,7 +280,7 @@ export class CompraFormComponent implements OnInit {
       const tieneProvLibre = this.proveedorSeleccionado && this.proveedorSeleccionado.id === 0;
 
       if (tieneItemLibre || tieneProvLibre) {
-        alert('❌ La Factura Comercial (Importación) NO permite Proveedores ni Productos de texto libre por temas contables.');
+        alert('❌ La Factura Comercial NO permite Proveedores ni Productos de texto libre.');
         setTimeout(() => this.compra.tipoComprobante = this.tipoComprobanteAnterior as any, 0);
         return;
       }
@@ -300,10 +316,6 @@ export class CompraFormComponent implements OnInit {
     this.pagoActual.moneda = this.compra.moneda;
     this.recalcularTotales();
   }
-
-  // ========================================================
-  // LÓGICA DE PROVEEDORES
-  // ========================================================
 
   buscarProveedores() {
     if (!this.busquedaProveedor.trim()) {
@@ -360,10 +372,6 @@ export class CompraFormComponent implements OnInit {
     });
   }
 
-  // ========================================================
-  // LÓGICA DE PRODUCTOS E INVENTARIO
-  // ========================================================
-
   nuevoProducto(): void {
     const dialogRef = this.dialog.open(ProductoModalComponent, {
       width: '90%', height: '90vh', disableClose: true, data: { modo: 'crear' }
@@ -408,7 +416,7 @@ export class CompraFormComponent implements OnInit {
       codigo: 'LIBRE',
       cantidad: 1,
       precioUnitario: 0,
-      almacenId: undefined // ✅ Un gasto libre NO pide almacén nunca
+      almacenId: undefined 
     };
 
     this.itemsAgregados.push(nuevoItem);
@@ -422,8 +430,6 @@ export class CompraFormComponent implements OnInit {
     this.recalcularTotales();
   }
 
-  // ✅ LOGICA INTELIGENTE: Si agregas un producto real de la BD, sí pide almacén. 
-  // Si solo agregaste "Lapiz" como libre, oculta la columna de almacén entera.
   requiereAlmacen(): boolean {
     if (this.compra.tipoCompra !== 'BIEN') return false;
     return this.itemsAgregados.some(item => item.productoId !== 0);
@@ -432,10 +438,11 @@ export class CompraFormComponent implements OnInit {
   recalcularTotales() {
     const sumaTotalItemsConIgv = this.itemsAgregados.reduce((acc, item) => acc + (item.cantidad * (Number(item.precioUnitario) || 0)), 0);
     const fobAdicional = Number(this.compra.fob) || 0;
+    const valorIgv = Number(this.porcentajeIgv) || 0;
 
     if (this.compra.tipoComprobante !== 'FACTURA_COMERCIAL') {
         const totalConIgv = sumaTotalItemsConIgv + fobAdicional;
-        this.compra.subTotal = totalConIgv / (1 + (this.porcentajeIgv / 100));
+        this.compra.subTotal = totalConIgv / (1 + (valorIgv / 100));
         this.compra.igv = totalConIgv - this.compra.subTotal;
         
         let totalDoc = totalConIgv;
@@ -461,13 +468,11 @@ export class CompraFormComponent implements OnInit {
       this.compra.detraccionMonto = 0;
     }
 
-    if (!this.modoEdicion) {
-      if (this.tipoPago === TipoPago.CONTADO) {
-        this.pagoActual.monto = Number(this.compra.total.toFixed(2));
-      } else {
-        if (this.pagoActual.monto > this.compra.total) {
-          this.pagoActual.monto = 0; 
-        }
+    if (this.tipoPago === TipoPago.CONTADO) {
+      this.pagoActual.monto = Number(this.compra.total.toFixed(2));
+    } else {
+      if (!this.modoEdicion && this.pagoActual.monto > this.compra.total) {
+        this.pagoActual.monto = 0; 
       }
     }
   }
@@ -482,10 +487,6 @@ export class CompraFormComponent implements OnInit {
     if (!this.compra.serie || !this.compra.numero) return alert("⚠️ Ingrese Serie y Número del comprobante.");
     if (this.itemsAgregados.length === 0) return alert("⚠️ Agregue productos.");
 
-    if (!this.modoEdicion && this.esPagoBancarizado() && !this.pagoActual.cuentaOrigenId) {
-      return alert("⚠️ Para transferencias o Yape, debe seleccionar la Cuenta de Origen.");
-    }
-
     if (this.tipoPago === TipoPago.CREDITO && this.pagoActual.monto >= this.compra.total) {
       if(!confirm("⚠️ El monto inicial cubre todo el total. ¿Desea cambiar a CONTADO?")) return;
       this.compra.tipoPago = TipoPago.CONTADO;
@@ -496,12 +497,10 @@ export class CompraFormComponent implements OnInit {
     (this.compra as any).rucProveedor = this.proveedorSeleccionado.id === 0 ? this.rucProveedorLibre : null;
 
     this.compra.pagos = [];
-    if (!this.modoEdicion) {
-        if (this.pagoActual.monto > 0) {
-           this.compra.pagos.push({ ...this.pagoActual });
-        } else if (this.tipoPago === TipoPago.CONTADO) {
-           return alert("⚠️ Una compra al CONTADO debe tener un monto de pago.");
-        }
+    if (this.pagoActual.monto > 0) {
+       this.compra.pagos.push({ ...this.pagoActual });
+    } else if (this.tipoPago === TipoPago.CONTADO) {
+       return alert("⚠️ Una compra al CONTADO debe tener un monto de pago.");
     }
 
     this.compra.detalles = this.itemsAgregados.map(item => ({

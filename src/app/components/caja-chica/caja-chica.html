@@ -123,6 +123,10 @@
                   <button mat-icon-button color="accent" matTooltip="Editar" (click)="editarMovimiento(row)">
                     <mat-icon>edit</mat-icon>
                   </button>
+                  
+                  <button mat-icon-button matTooltip="Eliminar" (click)="eliminarMovimiento(row)" style="color: #ef4444;">
+                    <mat-icon>delete</mat-icon>
+                  </button>
                 </td>
               </ng-container>
 
@@ -177,6 +181,10 @@
                   </button>
                   <button mat-icon-button color="accent" matTooltip="Editar Compra" (click)="editarMovimiento(row)">
                     <mat-icon>edit</mat-icon>
+                  </button>
+
+                  <button mat-icon-button matTooltip="Eliminar Compra" (click)="eliminarMovimiento(row)" style="color: #ef4444;">
+                    <mat-icon>delete</mat-icon>
                   </button>
                 </td>
               </ng-container>

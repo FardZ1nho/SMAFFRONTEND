@@ -34,6 +34,7 @@ import { CrmTableroComponent } from './components/crm/crm-tablero/crm-tablero';
 import { CrmClientePerfilComponent } from './components/crm/crm-cliente-perfil/crm-cliente-perfil';
 import { CrmDashboardComponent } from './components/crm/crm-dashboard/crm-dashboard';
 import { CrmClienteListComponent } from './components/crm/crm-cliente-list/crm-cliente-list';
+import { FinanzasComponent } from './components/finanzas/finanzas';
 
 export const routes: Routes = [
   // ========== RUTAS BASE ==========
@@ -194,6 +195,12 @@ export const routes: Routes = [
     path: 'caja-chica',
     loadComponent: () => import('./components/caja-chica/caja-chica').then(m => m.CajaChicaComponent),
     canActivate: [seguridadGuard]
+  },
+  // ========== FINANZAS ==========
+
+  { 
+    path: 'finanzas', 
+    component: FinanzasComponent 
   },
 
   // ========== CONFIGURACIÓN ==========

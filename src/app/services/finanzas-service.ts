@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { FinanzasDashboard } from '../models/finanzas';
-import { environment } from '../../environments/environment.prod';
+import { environment } from '../../environments/environment'; // Asegúrate de la ruta de tu enviroment
 
 @Injectable({
   providedIn: 'root'

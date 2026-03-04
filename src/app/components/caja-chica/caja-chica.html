@@ -8,18 +8,31 @@
         <p class="subtitle">Movimientos y flujo de efectivo diario</p>
       </div>
     </div>
-    <div class="header-actions" style="display: flex; gap: 16px; align-items: center;">
+    
+    <div class="header-actions" style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+      
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="dense-datepicker filter-comprobante">
+        <mat-label>Tipo Comprobante</mat-label>
+        <mat-select multiple [(ngModel)]="comprobantesSeleccionados" (selectionChange)="aplicarFiltros()">
+          <mat-option *ngFor="let tipo of tiposComprobanteDisponibles" [value]="tipo">
+            {{ formatearTipoComprobante(tipo) | titlecase }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
       <div class="date-filter">
         <mat-form-field appearance="outline" subscriptSizing="dynamic" class="dense-datepicker">
           <mat-label>Filtrar por día</mat-label>
-          <input matInput [matDatepicker]="picker" [(ngModel)]="filtroFecha" (dateChange)="aplicarFiltroFecha()" readonly>
+          <input matInput [matDatepicker]="picker" [(ngModel)]="filtroFecha" (dateChange)="aplicarFiltros()" readonly>
           <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
           <mat-datepicker #picker></mat-datepicker>
         </mat-form-field>
-        <button mat-icon-button *ngIf="filtroFecha" (click)="limpiarFiltro()" matTooltip="Ver todo el historial">
+        
+        <button mat-icon-button *ngIf="filtroFecha || comprobantesSeleccionados.length > 0" (click)="limpiarFiltro()" matTooltip="Limpiar filtros">
           <mat-icon>close</mat-icon>
         </button>
       </div>
+
       <button mat-stroked-button color="warn" (click)="abrirModalGastoMenor()" style="height: 40px; border-color: #f87171;">
         <mat-icon>receipt_long</mat-icon> Registrar Gasto
       </button>
@@ -81,7 +94,7 @@
                 <th mat-header-cell *matHeaderCellDef> COMPROBANTE </th>
                 <td mat-cell *matCellDef="let row">
                   <div style="display: flex; flex-direction: column;">
-                     <span style="font-weight: 600; color: #1e293b; font-size: 13px;">{{ row.tipoComprobante }}</span>
+                     <span style="font-weight: 600; color: #1e293b; font-size: 13px;">{{ formatearTipoComprobante(row.tipoComprobante) }}</span>
                      <span style="font-size: 11px; color: #64748b;">{{ row.referencia }}</span>
                   </div>
                 </td>
@@ -123,7 +136,6 @@
                   <button mat-icon-button color="accent" matTooltip="Editar" (click)="editarMovimiento(row)">
                     <mat-icon>edit</mat-icon>
                   </button>
-                  
                   <button mat-icon-button matTooltip="Eliminar" (click)="eliminarMovimiento(row)" style="color: #ef4444;">
                     <mat-icon>delete</mat-icon>
                   </button>
@@ -135,7 +147,7 @@
             </table>
             <div *ngIf="dataSource.data.length === 0" class="empty-state">
               <mat-icon>inbox</mat-icon>
-              <p>No se encontraron movimientos en efectivo para este periodo.</p>
+              <p>No se encontraron movimientos para los filtros seleccionados.</p>
             </div>
           </div>
         </div>
@@ -153,7 +165,7 @@
                 <th mat-header-cell *matHeaderCellDef> COMPROBANTE </th>
                 <td mat-cell *matCellDef="let row">
                   <div style="display: flex; flex-direction: column;">
-                     <span style="font-weight: 600; color: #1e293b; font-size: 13px;">{{ row.tipoComprobante }}</span>
+                     <span style="font-weight: 600; color: #1e293b; font-size: 13px;">{{ formatearTipoComprobante(row.tipoComprobante) }}</span>
                      <span style="font-size: 11px; color: #64748b;">{{ row.referencia }}</span>
                   </div>
                 </td>
@@ -182,7 +194,6 @@
                   <button mat-icon-button color="accent" matTooltip="Editar Compra" (click)="editarMovimiento(row)">
                     <mat-icon>edit</mat-icon>
                   </button>
-
                   <button mat-icon-button matTooltip="Eliminar Compra" (click)="eliminarMovimiento(row)" style="color: #ef4444;">
                     <mat-icon>delete</mat-icon>
                   </button>
@@ -194,7 +205,7 @@
             </table>
             <div *ngIf="dataSourceGastos.data.length === 0" class="empty-state">
               <mat-icon>receipt_long</mat-icon>
-              <p>No se han registrado compras o gastos manuales.</p>
+              <p>No se han registrado compras o gastos para los filtros seleccionados.</p>
             </div>
           </div>
         </div>

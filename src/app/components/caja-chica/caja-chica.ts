@@ -14,6 +14,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog'; 
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar'; 
 import { MatTabsModule } from '@angular/material/tabs'; 
+import { MatSelectModule } from '@angular/material/select'; // ✅ NUEVO
 import { forkJoin } from 'rxjs';
 import { Router, RouterLink } from '@angular/router'; 
 
@@ -55,6 +56,7 @@ export interface MovimientoCaja {
     MatIconModule, MatCardModule, MatProgressBarModule,
     MatDatepickerModule, MatNativeDateModule, MatFormFieldModule, MatInputModule,
     MatTooltipModule, MatDialogModule, MatSnackBarModule, MatTabsModule,
+    MatSelectModule, // ✅ NUEVO
     NuevoMovimientoModalComponent,
     RouterLink
   ],
@@ -72,9 +74,12 @@ export class CajaChicaComponent implements OnInit {
   saldoEnCaja: number = 0;
 
   cargando: boolean = true;
-  filtroFecha: Date | null = null; 
-
   mostrarModalAjuste: boolean = false;
+
+  // ✅ VARIABLES PARA FILTROS
+  filtroFecha: Date | null = null; 
+  comprobantesSeleccionados: string[] = [];
+  tiposComprobanteDisponibles: string[] = [];
 
   displayedColumns: string[] = ['fecha', 'tipo', 'comprobante', 'descripcion', 'entidad', 'monto', 'acciones'];
   displayedColumnsGastos: string[] = ['fecha', 'comprobante', 'entidad', 'monto', 'acciones'];
@@ -188,9 +193,11 @@ export class CajaChicaComponent implements OnInit {
         });
 
         this.movimientos = [...ingresos, ...egresos].sort((a, b) => b.fecha.getTime() - a.fecha.getTime());
-        this.dataSource.data = this.movimientos;
-        this.dataSourceGastos.data = this.movimientos.filter(m => m.esAjuste && m.tipo === 'EGRESO');
-        this.calcularTotales();
+        
+        // ✅ Extraer tipos de comprobantes únicos para el filtro
+        this.tiposComprobanteDisponibles = [...new Set(this.movimientos.map(m => m.tipoComprobante))].sort();
+
+        this.aplicarFiltros(); // Esto cargará las tablas y los totales inicialmente
         this.cargando = false;
         this.cdr.detectChanges();
       },
@@ -201,6 +208,38 @@ export class CajaChicaComponent implements OnInit {
     });
   }
 
+  // ✅ NUEVA LÓGICA DE FILTROS COMBINADOS (Fecha + Comprobante)
+  aplicarFiltros(): void {
+    let filtrados = this.movimientos;
+
+    // 1. Filtrar por fecha
+    if (this.filtroFecha) {
+      const fechaSel = this.filtroFecha.toDateString();
+      filtrados = filtrados.filter(m => m.fecha.toDateString() === fechaSel);
+    }
+
+    // 2. Filtrar por comprobantes seleccionados
+    if (this.comprobantesSeleccionados && this.comprobantesSeleccionados.length > 0) {
+      filtrados = filtrados.filter(m => this.comprobantesSeleccionados.includes(m.tipoComprobante));
+    }
+
+    this.dataSource.data = filtrados;
+    this.dataSourceGastos.data = filtrados.filter(m => m.esAjuste && m.tipo === 'EGRESO');
+    this.calcularTotales();
+  }
+
+  limpiarFiltro(): void {
+    this.filtroFecha = null;
+    this.comprobantesSeleccionados = [];
+    this.aplicarFiltros();
+  }
+
+  // Utilidad para mostrar "FACTURA_ELECTRONICA" como "Factura Electronica"
+  formatearTipoComprobante(tipo: string): string {
+    if (!tipo) return '';
+    return tipo.replace(/_/g, ' ');
+  }
+
   calcularTotales(): void {
     const datos = this.dataSource.data;
     this.totalIngresosEfectivo = datos.filter(m => m.tipo === 'INGRESO').reduce((acc, m) => acc + (Number(m.monto) || 0), 0);
@@ -208,34 +247,11 @@ export class CajaChicaComponent implements OnInit {
     this.saldoEnCaja = this.totalIngresosEfectivo - this.totalEgresosEfectivo;
   }
 
-  aplicarFiltroFecha(): void {
-    if (!this.filtroFecha) {
-      this.dataSource.data = this.movimientos;
-      this.dataSourceGastos.data = this.movimientos.filter(m => m.esAjuste && m.tipo === 'EGRESO');
-    } else {
-      const fechaSel = this.filtroFecha.toDateString();
-      const filtrados = this.movimientos.filter(m => m.fecha.toDateString() === fechaSel);
-      this.dataSource.data = filtrados;
-      this.dataSourceGastos.data = filtrados.filter(m => m.esAjuste && m.tipo === 'EGRESO');
-    }
-    this.calcularTotales();
-  }
-
-  limpiarFiltro(): void {
-    this.filtroFecha = null;
-    this.dataSource.data = this.movimientos;
-    this.dataSourceGastos.data = this.movimientos.filter(m => m.esAjuste && m.tipo === 'EGRESO');
-    this.calcularTotales();
-  }
-
   abrirModalAjuste(): void { this.mostrarModalAjuste = true; }
   onAjusteCreado(): void { this.mostrarModalAjuste = false; this.cargarFlujoCaja(); }
 
   verDetalleGasto(gasto: MovimientoCaja): void {
-    this.dialog.open(GastoMenorDetalleModalComponent, {
-      width: '600px',
-      data: gasto.rawData 
-    });
+    this.dialog.open(GastoMenorDetalleModalComponent, { width: '600px', data: gasto.rawData });
   }
 
   editarMovimiento(row: MovimientoCaja): void {
@@ -248,14 +264,13 @@ export class CajaChicaComponent implements OnInit {
     }
   }
 
-  // ✅ NUEVO MÉTODO INTELIGENTE PARA ELIMINAR
   eliminarMovimiento(row: MovimientoCaja): void {
     if (row.origen === 'CAJA_CHICA' && row.idRegistro) {
       if (confirm('¿Estás seguro de eliminar este movimiento? El saldo en caja se recalculará automáticamente.')) {
         this.movimientoManualService.eliminar(row.idRegistro).subscribe({
           next: () => {
             this.snackBar.open('Movimiento eliminado correctamente', 'Cerrar', { duration: 3000, panelClass: ['snackbar-success'] });
-            this.cargarFlujoCaja(); // Recarga la tabla y el saldo
+            this.cargarFlujoCaja(); 
           },
           error: (err) => {
             console.error(err);
@@ -270,11 +285,7 @@ export class CajaChicaComponent implements OnInit {
 
   abrirModalGastoMenor(rowAEditar?: MovimientoCaja): void {
     const dialogRef = this.dialog.open(GastoMenorModalComponent, {
-      width: '1200px', 
-      maxWidth: '95vw', 
-      height: '85vh', 
-      disableClose: true,
-      data: rowAEditar || null 
+      width: '1200px', maxWidth: '95vw', height: '85vh', disableClose: true, data: rowAEditar || null 
     });
 
     dialogRef.afterClosed().subscribe(resultado => {
@@ -291,11 +302,7 @@ export class CajaChicaComponent implements OnInit {
           const fechaPerfectaParaJava = new Date(fechaObj.getTime() - tzOffset).toISOString().split('.')[0]; 
 
           const request: any = {
-            tipo: 'EGRESO', 
-            monto: Number(resultado.total), 
-            motivo: motivoCompleto,
-            responsable: resultado.proveedor.trim(), 
-            fechaHora: fechaPerfectaParaJava 
+            tipo: 'EGRESO', monto: Number(resultado.total), motivo: motivoCompleto, responsable: resultado.proveedor.trim(), fechaHora: fechaPerfectaParaJava 
           };
 
           if (rowAEditar && rowAEditar.idRegistro) {

@@ -29,14 +29,30 @@ h1 { margin: 0; font-size: 24px; font-weight: 700; color: var(--text-main); }
 
 .date-filter { display: flex; align-items: center; gap: 8px; }
 
-/* Datepicker ajustado */
+/* Datepicker y Select ajustado */
 ::ng-deep .dense-datepicker .mat-mdc-text-field-wrapper {
   background-color: white !important; border-radius: 8px; border: 1px solid var(--border);
   padding: 0 12px; height: 40px;
 }
 ::ng-deep .dense-datepicker .mat-mdc-form-field-flex { height: 40px; align-items: center; }
 ::ng-deep .dense-datepicker .mdc-line-ripple { display: none; }
+
+/* Infix general (mantiene centrado el Datepicker) */
 ::ng-deep .dense-datepicker .mat-mdc-form-field-infix { padding: 8px 0 !important; min-height: unset; width: 140px; }
+
+/* ✅ CORRECCIÓN: Ajuste específico para que el texto del Select suba y se centre */
+::ng-deep .filter-comprobante .mat-mdc-form-field-infix { 
+  padding: 0 !important; 
+  display: flex;
+  align-items: center;
+  width: 200px !important; 
+  height: 40px;
+}
+::ng-deep .filter-comprobante .mat-mdc-select {
+  display: flex;
+  align-items: center;
+  margin-top: -4px; 
+}
 
 /* DASHBOARD CARDS */
 .stats-grid {
@@ -116,9 +132,7 @@ td.mat-cell { padding: 14px 24px; border-bottom: 1px solid var(--border); font-s
   .date-filter { width: 100%; }
 }
 
-
-/* ✅ CORRECCIÓN DE LAS PESTAÑAS (TABS) PARA QUE LA TABLA OCUPE EL 100% DEL ESPACIO */
-
+/* ✅ PESTAÑAS Y TABLAS A LO ANCHO */
 .tabs-card {
   padding: 0 !important; 
   overflow: hidden; 
@@ -133,23 +147,15 @@ td.mat-cell { padding: 14px 24px; border-bottom: 1px solid var(--border); font-s
   padding: 0 24px;
 }
 
-/* El contenedor del contenido de cada pestaña */
 .tab-body {
-  padding: 0; /* 👈 AQUÍ ESTÁ LA MAGIA: Cambiamos 24px por 0 */
+  padding: 0; 
   box-sizing: border-box; 
   width: 100%;
   animation: fadeIn 0.3s ease-out;
 }
 
-.table-responsive {
-  width: 100%;
-  overflow-x: auto;
-}
-
-table {
-  width: 100%;
-}
-
+.table-responsive { width: 100%; overflow-x: auto; }
+table { width: 100%; }
 .text-center { text-align: center !important; }
 
 @keyframes fadeIn {

@@ -1,8 +1,25 @@
 <div class="inicio-container">
 
-  <div class="inicio-header">
-    <h1>Bienvenido al Sistema de SMAF</h1>
-    <p class="subtitle">Dashboard de Métricas</p>
+  <div class="inicio-header-container">
+    <div class="inicio-header">
+      <h1>Bienvenido 👋</h1>
+      <p class="subtitle">Este es el resumen de tu negocio de hoy.</p>
+    </div>
+    
+    <div class="quick-actions">
+      <button class="btn-action primary" (click)="irANuevaVenta()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        Nueva Venta
+      </button>
+      <button class="btn-action secondary" (click)="irACotizacion()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+        Cotizar
+      </button>
+      <button class="btn-action danger" (click)="irANuevoGasto()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+        Registrar Gasto
+      </button>
+    </div>
   </div>
 
   <div *ngIf="cargando" class="loading-container">
@@ -22,17 +39,16 @@
         <div class="icono-container" [style.background-color]="metrica.colorFondo">
           <span class="icono" [style.color]="metrica.colorIcono">
              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-               <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" *ngIf="metrica.titulo.toLowerCase().includes('venta')"></path>
-               <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" *ngIf="metrica.titulo.toLowerCase().includes('cliente')"></path>
-               <circle cx="8.5" cy="7" r="4" *ngIf="metrica.titulo.toLowerCase().includes('cliente')"></circle>
-               <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" *ngIf="metrica.titulo.toLowerCase().includes('stock')"></path>
-               <polyline points="3.27 6.96 12 12.01 20.73 6.96" *ngIf="metrica.titulo.toLowerCase().includes('stock')"></polyline>
-               <line x1="12" y1="22.08" x2="12" y2="12" *ngIf="metrica.titulo.toLowerCase().includes('stock')"></line>
+               <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" *ngIf="metrica.titulo.includes('Ventas')"></path>
+               <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" *ngIf="metrica.titulo.includes('Inventario')"></path>
+               <polyline points="3.27 6.96 12 12.01 20.73 6.96" *ngIf="metrica.titulo.includes('Inventario')"></polyline>
+               <line x1="12" y1="22.08" x2="12" y2="12" *ngIf="metrica.titulo.includes('Inventario')"></line>
+               <path d="M20.42 4.58a5.4 5.4 0 0 0-7.65 0l-.77.78-.77-.78a5.4 5.4 0 0 0-7.65 0C1.46 6.7 1.33 10.28 4 13l8 8 8-8c2.67-2.72 2.54-6.3.42-8.42z" *ngIf="metrica.titulo.includes('Efectivo')"></path>
              </svg>
           </span>
         </div>
 
-        <div class="badge-porcentaje" [ngClass]="obtenerClasePorcentaje(metrica.porcentaje)">
+        <div class="badge-porcentaje" [ngClass]="obtenerClasePorcentaje(metrica.porcentaje)" *ngIf="metrica.porcentaje !== 0">
           <span class="icono-flecha">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"
                  [style.transform]="metrica.porcentaje < 0 ? 'rotate(180deg)' : 'rotate(0deg)'">
@@ -49,43 +65,57 @@
       </div>
     </div>
 
-    <div *ngIf="metricas" class="info-adicional">
-      <div class="info-card">
-        <span class="info-label">Productos con stock bajo:</span>
-        <span class="info-valor" [class.alerta]="(metricas?.productosStockBajo || 0) > 0">
-          {{ metricas?.productosStockBajo }}
-        </span>
-      </div>
-      <div class="info-card">
-        <span class="info-label">Valor total inventario:</span>
-        <span class="info-valor">
-          {{ metricas?.valorInventario !== undefined ? formatearMoneda(metricas!.valorInventario) : 'S/ 0.00' }}
-        </span>
-      </div>
-      <div class="info-card">
-        <span class="info-label">Total ventas mes:</span>
-        <span class="info-valor">{{ metricas?.cantidadVentasMes }} transacciones</span>
-      </div>
-    </div>
-
     <div class="dashboard-grid">
       
-      <div class="grafico-section">
-        <app-grafico-ventas-semana></app-grafico-ventas-semana>
+      <div class="main-section">
+        <div class="widget-wrapper chart-wrapper">
+          <app-grafico-ventas-semana></app-grafico-ventas-semana>
+        </div>
+        
+        <div class="widget-wrapper">
+          <app-productos-mas-vendidos></app-productos-mas-vendidos>
+        </div>
       </div>
       
       <div class="side-section">
         
+        <div class="action-center-card">
+          <div class="ac-header">
+            <h3>Centro de Tareas</h3>
+            <span class="ac-badge">{{ (metricas?.productosStockBajo || 0) + (metricas?.cotizacionesPendientes || 0) }}</span>
+          </div>
+          <div class="ac-body">
+            
+            <div class="ac-item" *ngIf="(metricas?.productosStockBajo || 0) > 0" routerLink="/inventario">
+              <div class="ac-icon danger"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></div>
+              <div class="ac-text">
+                <strong>{{ metricas?.productosStockBajo }} Productos</strong> con stock bajo
+              </div>
+              <svg class="ac-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </div>
+
+            <div class="ac-item" *ngIf="(metricas?.cotizacionesPendientes || 0) > 0" routerLink="/cotizaciones">
+              <div class="ac-icon warning"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></div>
+              <div class="ac-text">
+                <strong>{{ metricas?.cotizacionesPendientes }} Cotizaciones</strong> por cerrar
+              </div>
+              <svg class="ac-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </div>
+
+            <div class="ac-item empty" *ngIf="(metricas?.productosStockBajo || 0) === 0 && (metricas?.cotizacionesPendientes || 0) === 0">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+              <p>¡Todo al día! Buen trabajo.</p>
+            </div>
+
+          </div>
+        </div>
+
         <div class="widget-wrapper">
           <app-metodos-pago-widget></app-metodos-pago-widget>
         </div>
 
         <div class="widget-wrapper">
           <app-llegadas-widget></app-llegadas-widget>
-        </div>
-
-        <div class="widget-wrapper">
-          <app-productos-mas-vendidos></app-productos-mas-vendidos>
         </div>
 
       </div>

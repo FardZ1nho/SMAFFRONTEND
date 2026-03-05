@@ -1,18 +1,33 @@
 /* src/styles.css */
 
 html {
-    /* El tamaño por defecto es 16px. */
-    /* 14.4px es exactamente el 90% de 16px. */
-    font-size: 14.4px; 
+    /* 16px * 0.85 = 13.6px. Esto simula un zoom del 85% en todo el sistema. */
+    font-size: 13.6px; 
     
-    height: 100%; /* Asegura que ocupe todo el alto */
+    height: 100%;
+    scroll-behavior: smooth;
 }
 
 body {
     height: 100%;
     margin: 0;
-    font-family: Roboto, "Helvetica Neue", sans-serif;
+    font-family: 'Inter', Roboto, "Helvetica Neue", sans-serif; /* Inter se ve mejor en tamaños pequeños */
+    background-color: #f8fafc; /* Color base para que no canse la vista */
     
-    /* ELIMINA el zoom que pusiste antes */
-    /* zoom: 0.9;  <-- Bórralo */
+    /* Aseguramos que el zoom esté limpio */
+    zoom: 1 !important; 
+    -moz-transform: scale(1);
+}
+
+/* ✅ AJUSTE EXTRA: Reducimos márgenes internos para que quepa más contenido */
+.inicio-container, 
+.ventas-lista-container, 
+.caja-chica-container,
+.page-container {
+    padding: 20px !important; 
+}
+
+/* ✅ AJUSTE DE TABLAS: Para que los textos no se vean minúsculos */
+.mat-mdc-table {
+    font-size: 13px !important;
 }

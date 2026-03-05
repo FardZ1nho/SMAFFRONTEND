@@ -78,10 +78,12 @@ export class GastoMenorModalComponent implements OnInit {
     proveedor: '', 
     moneda: 'PEN',
     tipoCambio: 1.00,
-    observaciones: ''
+    observaciones: '',
+    categoria: 'OTROS'
   };
 
   tiposComprobante = ['BOLETA', 'FACTURA', 'TICKET', 'RECIBO DE HONORARIOS', 'NOTA DE VENTA', 'AJUSTE MANUAL'];
+  categorias = ['ALIMENTACIÓN', 'PASAJES Y MOVILIDAD', 'COMBUSTIBLE', 'ÚTILES Y OFICINA', 'MANTENIMIENTO', 'SERVICIOS BÁSICOS', 'OTROS'];
 
   items: ItemGasto[] = [
     { descripcion: '', cantidad: 1, precioUnitario: 0 }
@@ -89,17 +91,16 @@ export class GastoMenorModalComponent implements OnInit {
 
   constructor(
     public dialogRef: MatDialogRef<GastoMenorModalComponent>,
-    @Optional() @Inject(MAT_DIALOG_DATA) public dataAEditar: any // ✅ RECIBE LA FILA A EDITAR
+    @Optional() @Inject(MAT_DIALOG_DATA) public dataAEditar: any
   ) {}
 
   ngOnInit(): void {
-    // ✅ SI ESTAMOS EDITANDO, PRE-LLENAMOS EL FORMULARIO
     if (this.dataAEditar) {
       this.gasto.tipoComprobante = this.dataAEditar.tipoComprobante;
       this.gasto.proveedor = this.dataAEditar.entidad;
       this.gasto.fechaEmision = new Date(this.dataAEditar.fecha);
+      this.gasto.categoria = this.dataAEditar.rawData?.categoria || 'OTROS';
 
-      // Extraemos serie y número
       if (this.dataAEditar.referencia && this.dataAEditar.referencia.includes('-')) {
          const partes = this.dataAEditar.referencia.split('-');
          this.gasto.serie = partes[0];
@@ -108,7 +109,6 @@ export class GastoMenorModalComponent implements OnInit {
          this.gasto.numero = this.dataAEditar.referencia;
       }
 
-      // Reconstruimos el ítem (como se guardó como un texto gigante, lo ponemos en la descripción)
       const textoOriginal = this.dataAEditar.rawData?.motivo || 'Gasto registrado';
       
       this.items = [{ 
@@ -138,6 +138,18 @@ export class GastoMenorModalComponent implements OnInit {
   verificarVacioPrecio(index: number): void {
     if (!this.items[index].precioUnitario) {
       this.items[index].precioUnitario = 0;
+    }
+  }
+
+  limpiarCantidad(index: number): void {
+    if (this.items[index].cantidad === 1 || this.items[index].cantidad === 0) {
+      this.items[index].cantidad = null as unknown as number;
+    }
+  }
+
+  verificarVacioCantidad(index: number): void {
+    if (!this.items[index].cantidad || this.items[index].cantidad <= 0) {
+      this.items[index].cantidad = 1;
     }
   }
 

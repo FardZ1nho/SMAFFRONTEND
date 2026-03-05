@@ -16,14 +16,14 @@ export interface DashboardResponseDTO {
   cantidadVentasHoy: number;
   cantidadVentasMes: number;
   valorInventario: number;
+
+  // ✅ NUEVAS: Alertas y Finanzas (Coinciden con Backend)
+  cotizacionesPendientes: number;
+  comprasPorPagar: number;
+  saldoCajaChica: number;
+  saldoBancos: number;
 }
-export interface ProductoVendidoDTO {
-    id: number;
-    nombreProducto: string; // Antes seguro tenías 'nombre'
-    codigo: string;
-    cantidad: number;
-    total: number;
-}
+
 export interface MetricaCard {
   titulo: string;
   valor: string | number;
@@ -31,20 +31,20 @@ export interface MetricaCard {
   icono: string;
   colorIcono: string;
   colorFondo: string;
+  tendencia?: 'sube' | 'baja' | 'neutro'; // Útil para poner flechitas
+  subtitulo?: string; // Ej: "vs mes anterior"
 }
 
 export interface GraficoVentasDTO {
-  label: string;    // Ej: "Lunes", "24/01", "Enero"
+  label: string;    // Ej: "LUNES", "S1", "ENE"
   total: number;
   cantidad: number;
 }
 
 export interface ProductoVendidoDTO {
-  id: number;
-  nombre: string;
-  codigo: string;
-  cantidadVendida: number;
-  totalVentas: number;
+  nombreProducto: string; // ✅ Coincide con backend
+  cantidad: number;       // ✅ Coincide con backend
+  total: number;          // ✅ Coincide con backend
 }
 
 export interface ReporteMetodoPagoDTO {
@@ -53,12 +53,11 @@ export interface ReporteMetodoPagoDTO {
   cantidad: number;
 }
 
-// ✅ NUEVO: Interfaz para el Widget de Alertas (Próximas Llegadas)
+// ✅ CORREGIDO: Mapeo exacto a DashboardAlertaDTO.java
 export interface DashboardAlerta {
   idImportacion: number;
-  codigoImportacion: string; // Ej: "IMP-2026-01"
-  proveedor: string;
-  fechaEta: string;          // Fecha en formato string (ISO)
-  diasRestantes: number;     // Días que faltan (o atraso si es negativo)
-  estado: string;            // TRANSITO / ADUANAS
+  codigoImportacion: string; 
+  fechaLlegada: string; 
+  estado: string;       
+  proveedores: string; 
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, NavigationEnd, Event } from '@angular/router'; 
@@ -18,6 +18,8 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select'; 
 import { MatOptionModule } from '@angular/material/core';
+// ✅ NUEVO: Importaciones del paginador
+import { MatPaginatorModule, MatPaginator } from '@angular/material/paginator'; 
 
 import { ProductoService } from '../../services/producto-service';
 import { ProductoAlmacenService } from '../../services/producto-almacen-service';
@@ -30,11 +32,12 @@ import { StockModalComponent } from './stock-modal/stock-modal';
 @Component({
   selector: 'app-inventario',
   standalone: true,
+  // ✅ NUEVO: Agregado MatPaginatorModule en los imports
   imports: [
     CommonModule, FormsModule, MatTableModule, MatButtonModule, MatIconModule,
     MatInputModule, MatFormFieldModule, MatTooltipModule, MatProgressSpinnerModule,
     MatDialogModule, MatSnackBarModule, MatDividerModule, MatMenuModule,
-    MatSelectModule, MatOptionModule
+    MatSelectModule, MatOptionModule, MatPaginatorModule
   ],
   templateUrl: './inventario.html',
   styleUrl: './inventario.css'
@@ -58,6 +61,11 @@ export class InventarioComponent implements OnInit, OnDestroy {
   filtroPrecioMax: number | null = null;
   
   displayedColumns: string[] = [];
+
+  // ✅ NUEVO: Vinculación dinámica del paginador (soporta el *ngIf del HTML)
+  @ViewChild(MatPaginator) set matPaginator(paginator: MatPaginator) {
+    this.productosFiltrados.paginator = paginator;
+  }
 
   constructor(
     private productoService: ProductoService,
@@ -173,12 +181,21 @@ export class InventarioComponent implements OnInit, OnDestroy {
       resultado = resultado.filter(p => (p.precioVenta || 0) <= (this.filtroPrecioMax as number));
     }
 
-    // Obliga a Angular a repintar la tabla instantáneamente
     this.productosFiltrados.data = [...resultado];
+    
+    // ✅ NUEVO: Regresar a la página 1 cada vez que se aplica un filtro
+    if (this.productosFiltrados.paginator) {
+      this.productosFiltrados.paginator.firstPage();
+    }
   }
 
-  toggleFiltros(): void { this.mostrarFiltros = !this.mostrarFiltros; }
-
+  toggleFiltros(): void { 
+    this.mostrarFiltros = !this.mostrarFiltros; 
+    if (!this.mostrarFiltros) {
+      this.resetearFiltros();
+    }
+  }
+  
   limpiarBusqueda(): void {
     this.terminoBusqueda = '';
     this.aplicarFiltros();
@@ -235,7 +252,6 @@ export class InventarioComponent implements OnInit, OnDestroy {
       data: { productoId: producto.id }
     });
 
-    // Siempre recargar la data fresca del backend al cerrar
     dialogRef.afterClosed().subscribe(() => { 
        this.cargarDatos(); 
     });
@@ -275,13 +291,11 @@ export class InventarioComponent implements OnInit, OnDestroy {
   exportarDatos(): void { console.log(`Exportando ${this.vistaActual}...`); }
 
   sincronizarStockGeneral(): void {
-
-
     this.isLoading = true;
     this.productoService.sincronizarStockReal().subscribe({
       next: (res) => {
         this.mostrarMensaje('✅ Stock general sincronizado y corregido', 'success');
-        this.cargarDatos(); // Recarga la tabla con la verdad
+        this.cargarDatos();
       },
       error: (err) => {
         console.error(err);

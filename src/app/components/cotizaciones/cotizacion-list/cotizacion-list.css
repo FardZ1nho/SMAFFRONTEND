@@ -1,22 +1,162 @@
-.container { padding: 24px; }
-
-.header {
-  display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
+/* ================= VARIABLES ================= */
+:host {
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --bg-body: #f8fafc;
+    --text-main: #1e293b;
+    --text-sub: #64748b;
+    --border: #e2e8f0;
+    --white: #ffffff;
+    
+    display: block;
+    width: 100%;
+    min-height: 100vh;
+    background-color: var(--bg-body);
 }
 
-.codigo-badge {
-  font-family: monospace; font-weight: bold; background: #f1f5f9; padding: 4px 8px; border-radius: 4px; color: #475569;
+.coti-container {
+    padding: 24px;
+    box-sizing: border-box;
+    max-width: 1600px;
+    margin: 0 auto;
 }
+
+/* ================= HEADER ================= */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.header-content { display: flex; gap: 16px; align-items: center; }
+
+.icon-box {
+    width: 48px; height: 48px;
+    background: white; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--primary);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.page-header h1 { font-size: 24px; font-weight: 700; color: var(--text-main); margin: 0; }
+.subtitle { color: var(--text-sub); margin: 0; font-size: 14px; }
+
+.btn-primary-custom {
+    background-color: var(--primary) !important; color: white !important;
+    padding: 8px 24px !important; border-radius: 8px !important; font-weight: 600 !important;
+    display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3) !important;
+}
+
+/* ================= KPIs (TARJETAS SUPERIORES) ================= */
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+.kpi-card {
+    background: white; padding: 20px; border-radius: 12px;
+    border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    display: flex; align-items: center; gap: 16px;
+}
+
+.kpi-card mat-icon { font-size: 32px; width: 32px; height: 32px; }
+.kpi-info { display: flex; flex-direction: column; }
+.kpi-label { font-size: 12px; color: var(--text-sub); font-weight: 600; text-transform: uppercase; margin-bottom: 4px; }
+.kpi-value { font-size: 22px; font-weight: 800; color: var(--text-main); }
+
+/* Colores específicos para KPIs */
+.kpi-card.total mat-icon { color: #3b82f6; }
+.kpi-card.total { border-left: 4px solid #3b82f6; }
+
+.kpi-card.ganadas mat-icon { color: #10b981; }
+.kpi-card.ganadas { border-left: 4px solid #10b981; }
+
+.kpi-card.negociacion mat-icon { color: #f59e0b; }
+.kpi-card.negociacion { border-left: 4px solid #f59e0b; }
+
+.kpi-card.perdidas mat-icon { color: #ef4444; }
+.kpi-card.perdidas { border-left: 4px solid #ef4444; }
+
+
+/* ================= TOOLBAR & BUSCADOR ================= */
+.toolbar-section {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 24px;
+    background: white;
+    padding: 16px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    flex-wrap: wrap;
+}
+
+.search-wrapper {
+    position: relative; flex: 2; min-width: 300px; display: flex; align-items: center;
+}
+.search-icon { position: absolute; left: 12px; color: #94a3b8; font-size: 20px; }
+.custom-input {
+    width: 100%; height: 42px; padding: 0 40px;
+    border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; outline: none; transition: border 0.2s;
+}
+.custom-input:focus { border-color: var(--primary); }
+.clear-btn { position: absolute; right: 8px; background: none; border: none; color: #94a3b8; cursor: pointer; display: flex; }
+
+.filters-wrapper { flex: 1; min-width: 200px; }
+.custom-select {
+    width: 100%; height: 42px; padding: 0 16px;
+    border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; font-weight: 500; color: var(--text-main);
+    background-color: #f8fafc; outline: none; cursor: pointer;
+}
+
+
+/* ================= TABLA ================= */
+.table-card {
+    background: white; border-radius: 12px; border: 1px solid var(--border);
+    overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+table { width: 100%; border-collapse: collapse; }
+th.mat-header-cell {
+    background: #f8fafc; color: var(--text-sub); font-weight: 700;
+    font-size: 11px; text-transform: uppercase; padding: 16px !important; letter-spacing: 0.5px;
+}
+td.mat-cell { padding: 16px !important; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.row-hover:hover { background-color: #f1f5f9; }
+
+/* Celdas personalizadas */
+.codigo-badge { font-family: 'Courier New', monospace; font-weight: bold; background: #eff6ff; color: #1e40af; padding: 4px 8px; border-radius: 6px; }
 
 .cliente-row { display: flex; flex-direction: column; }
-.cliente-row .nombre { font-weight: 500; }
-.cliente-row .doc { font-size: 11px; color: #64748b; }
+.cliente-row .nombre { font-weight: 600; color: #0f172a; display: flex; align-items: center; gap: 4px; }
+.tiny-icon { font-size: 14px; width: 14px; height: 14px; color: #94a3b8; }
+.cliente-row .doc { font-size: 11px; color: #64748b; margin-top: 2px; }
 
-.monto { font-weight: 700; color: #0f172a; }
+.fecha-cell { color: #475569; font-weight: 500; }
 
-/* Badges de Estado */
-.badge { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; }
-.badge.ENVIADA { background: #dbeafe; color: #1e40af; }
-.badge.APROBADA { background: #dcfce7; color: #166534; }
-.badge.RECHAZADA { background: #fee2e2; color: #991b1b; }
-.badge.BORRADOR { background: #f3f4f6; color: #374151; }
+.monto-text { font-weight: 800; font-size: 15px; color: #0f172a; }
+.moneda-sm { font-size: 12px; color: #64748b; font-weight: 600; margin-right: 2px; }
+
+.text-right { text-align: right !important; }
+.text-center { text-align: center !important; }
+
+/* ================= STATUS PILLS (ESTADOS) ================= */
+.status-pill {
+    padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 800;
+    text-transform: uppercase; display: inline-block; letter-spacing: 0.5px;
+}
+.status-pill.EN_NEGOCIACION { background: #fef3c7; color: #d97706; border: 1px solid #fde68a; }
+.status-pill.GANADA { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+.status-pill.PERDIDA { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+
+/* Botones de Acción en tabla */
+.btn-pdf { color: #dc2626 !important; background: #fef2f2 !important; border-radius: 8px !important; width: 36px !important; height: 36px !important; margin-right: 8px; }
+.btn-menu { color: #64748b !important; width: 36px !important; height: 36px !important; }
+
+/* ================= EMPTY STATE ================= */
+.empty-state { text-align: center; padding: 60px 20px; color: #94a3b8; }
+.empty-state mat-icon { font-size: 48px; width: 48px; height: 48px; margin-bottom: 16px; opacity: 0.5; }
+.empty-state p { margin: 0; font-size: 15px; font-weight: 500; }

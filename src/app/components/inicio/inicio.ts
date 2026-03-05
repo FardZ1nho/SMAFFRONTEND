@@ -1,5 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule, Router } from '@angular/router'; // ✅ NUEVO
 import { DashboardService } from '../../services/dashboard-service'; 
 import { DashboardResponseDTO, MetricaCard } from '../../models/dashboard';
 
@@ -14,6 +15,7 @@ import { LlegadasWidgetComponent } from '../llegadas-widget/llegadas-widget';
   standalone: true,
   imports: [
     CommonModule,
+    RouterModule, // ✅ NUEVO para los botones de acción rápida
     GraficoVentasSemanaComponent,
     ProductosMasVendidosComponent,
     MetodosPagoWidgetComponent,
@@ -31,7 +33,8 @@ export class InicioComponent implements OnInit {
 
   constructor(
     private dashboardService: DashboardService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private router: Router
   ) { }
 
   ngOnInit(): void {
@@ -39,15 +42,13 @@ export class InicioComponent implements OnInit {
   }
 
   cargarMetricas(): void {
-    this.cargando = true; // Asegurar estado de carga
+    this.cargando = true; 
     this.dashboardService.obtenerMetricas().subscribe({
       next: (data) => {
-        // ✅ PROTECCIÓN CRÍTICA: Si data es null, asignamos un objeto vacío para evitar crashes
         this.metricas = data || {} as DashboardResponseDTO;
-        
         this.generarMetricasCards();
         this.cargando = false;
-        this.cdr.detectChanges(); // Forzar actualización de vista
+        this.cdr.detectChanges(); 
       },
       error: (err) => {
         console.error('Error cargando dashboard:', err);
@@ -61,65 +62,59 @@ export class InicioComponent implements OnInit {
   generarMetricasCards(): void {
       if (!this.metricas) return;
       
-      // ✅ USO DE '|| 0' EN TODO: Si algo viene null, se pone 0.
       this.metricasCards = [
-        {
-          titulo: 'Ventas Hoy',
-          valor: this.formatearMoneda(this.metricas.ventasHoy),
-          porcentaje: this.metricas.porcentajeCambioVentasHoy || 0,
-          icono: 'trending_up',
-          colorIcono: '#10b981', // Verde
-          colorFondo: '#d1fae5'
-        },
         {
           titulo: 'Ventas Mes',
           valor: this.formatearMoneda(this.metricas.ventasMes),
           porcentaje: this.metricas.porcentajeCambioVentasMes || 0,
-          icono: 'calendar_today',
-          colorIcono: '#3b82f6', // Azul
+          icono: 'trending_up',
+          colorIcono: '#10b981', 
+          colorFondo: '#dcfce7'
+        },
+        {
+          titulo: 'Ventas Hoy',
+          valor: this.formatearMoneda(this.metricas.ventasHoy),
+          porcentaje: this.metricas.porcentajeCambioVentasHoy || 0,
+          icono: 'point_of_sale',
+          colorIcono: '#3b82f6', 
           colorFondo: '#dbeafe'
         },
         {
-          titulo: 'Clientes Activos',
-          // Usamos String() o || 0 para evitar errores si viene null
-          valor: (this.metricas.clientesActivos || 0).toString(), 
-          porcentaje: this.metricas.porcentajeCambioClientes || 0,
-          icono: 'users', // Asegúrate de que 'users' o 'group' exista en tu librería de iconos (MatIcon usa 'group')
-          colorIcono: '#f59e0b', // Naranja
+          titulo: 'Efectivo en Caja',
+          valor: this.formatearMoneda(this.metricas.saldoCajaChica),
+          porcentaje: 0, // Podrías poner variación si lo calculas luego
+          icono: 'savings', 
+          colorIcono: '#f59e0b', 
           colorFondo: '#fef3c7'
         },
         {
-          titulo: 'Productos Stock',
-          valor: (this.metricas.productosStock || 0).toString(),
-          porcentaje: this.metricas.porcentajeCambioProductos || 0,
-          icono: 'inventory_2', // 'package' no existe en Material Icons, usa 'inventory_2' o 'local_shipping'
-          colorIcono: '#6366f1', // Indigo
+          titulo: 'Valor Inventario',
+          valor: this.formatearMoneda(this.metricas.valorInventario),
+          porcentaje: 0, 
+          icono: 'inventory_2',
+          colorIcono: '#6366f1', 
           colorFondo: '#e0e7ff'
         }
       ];
   }
 
-  // ✅ FUNCIÓN BLINDADA PARA MONEDA
   formatearMoneda(valor: number | null | undefined): string {
-    if (valor === null || valor === undefined) {
-      return 'S/ 0.00';
-    }
-    return valor.toLocaleString('es-PE', { 
-      style: 'currency', 
-      currency: 'PEN',
-      minimumFractionDigits: 2 
-    });
+    if (valor === null || valor === undefined) return 'S/ 0.00';
+    return valor.toLocaleString('es-PE', { style: 'currency', currency: 'PEN', minimumFractionDigits: 2 });
   }
 
-  // ✅ FUNCIÓN BLINDADA PARA CLASES CSS
   obtenerClasePorcentaje(porcentaje: number | undefined | null): string { 
       if (porcentaje === undefined || porcentaje === null) return 'neutro';
       return porcentaje >= 0 ? 'positivo' : 'negativo'; 
   }
 
-  // ✅ FUNCIÓN BLINDADA PARA TEXTO PORCENTAJE
   formatearPorcentaje(porcentaje: number | undefined | null): string { 
       if (porcentaje === undefined || porcentaje === null) return '0.0%';
       return `${Math.abs(porcentaje).toFixed(1)}%`; 
   }
+
+  // Funciones para botones de acción
+  irANuevaVenta(): void { this.router.navigate(['/ventas/nueva']); }
+  irANuevoGasto(): void { this.router.navigate(['/caja-chica']); }
+  irACotizacion(): void { this.router.navigate(['/cotizaciones/nueva']); }
 }

@@ -30,6 +30,26 @@
 
         <mat-tab label="Historial Completo">
             <div class="tab-content">
+                
+                <div *ngIf="!isLoading && ventas.length > 0" class="footer-stats">
+                    <div class="stat-card">
+                        <div class="stat-icon blue"><mat-icon>receipt_long</mat-icon></div>
+                        <div class="stat-data">
+                            <span class="stat-label">Documentos (Filtro Actual)</span>
+                            <span class="stat-value">{{ ventasFiltradas.data.length }}</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon green"><mat-icon>payments</mat-icon></div>
+                        <div class="stat-data">
+                            <span class="stat-label">Ingreso Neto (Filtro Actual)</span>
+                            <span class="stat-value">S/ {{ ingresoNetoReal.toFixed(2) }}</span>
+                            <div style="font-size: 10px; color: #64748b; margin-top: 2px;">
+                                Bruto: {{ totalVentas | number:'1.0-0' }} | Devoluciones: -{{ totalNotasCredito | number:'1.0-0' }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 <div class="search-bar-section">
                     <div class="filter-group search-main">
@@ -49,8 +69,31 @@
 
                     <div class="secondary-filters">
                         <div class="filter-item">
+                            <label class="search-label">Desde:</label>
+                            <input type="date" class="filter-input" [(ngModel)]="fechaInicio" (change)="aplicarFiltros()">
+                        </div>
+
+                        <div class="filter-item">
+                            <label class="search-label">Hasta:</label>
+                            <input type="date" class="filter-input" [(ngModel)]="fechaFin" (change)="aplicarFiltros()">
+                        </div>
+
+                        <div class="filter-item">
+                            <label class="search-label">Método Pago:</label>
+                            <select class="filter-select" [(ngModel)]="metodoPagoFiltro" (change)="aplicarFiltros()">
+                                <option value="TODOS">Todos los Métodos</option>
+                                <option value="EFECTIVO">Efectivo</option>
+                                <option value="TRANSFERENCIA">Transferencia / Depósito</option>
+                                <option value="YAPE">Yape</option>
+                                <option value="PLIN">Plin</option>
+                                <option value="TARJETA">Tarjeta</option>
+                                <option value="CREDITO">Al Crédito (Pendiente)</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-item">
                             <label class="search-label">Estado:</label>
-                            <select class="filter-select" [(ngModel)]="estadoFiltro" (change)="onEstadoChange()">
+                            <select class="filter-select" [(ngModel)]="estadoFiltro" (change)="aplicarFiltros()">
                                 <option *ngFor="let estado of estadosVenta" [value]="estado.value">
                                     {{ estado.label }}
                                 </option>
@@ -78,13 +121,12 @@
 
                     <div *ngIf="!isLoading && !errorMessage && ventasFiltradas.data.length === 0"
                         class="state-container empty">
-                        <mat-icon>receipt</mat-icon>
+                        <mat-icon>search_off</mat-icon>
                         <h3>No se encontraron ventas</h3>
-                        <p>Ajusta los filtros o crea una nueva transacción</p>
+                        <p>Ajusta los filtros de fecha, pago o estado para ver más resultados.</p>
                     </div>
 
-                    <div class="table-responsive"
-                        *ngIf="!isLoading && !errorMessage && ventasFiltradas.data.length > 0">
+                    <div class="table-responsive" *ngIf="!isLoading && !errorMessage && ventasFiltradas.data.length > 0">
                         <table mat-table [dataSource]="ventasFiltradas">
 
                             <ng-container matColumnDef="codigo">
@@ -182,17 +224,6 @@
                                             <span>Editar Borrador</span>
                                         </button>
 
-                                        <button mat-menu-item (click)="editarVenta(venta)">
-                                            <mat-icon style="color: #f59e0b;">edit</mat-icon>
-                                            <span>Editar Venta</span>
-                                        </button>
-
-                                        <button mat-menu-item (click)="completarVenta(venta)"
-                                            *ngIf="venta.estado === 'BORRADOR'">
-                                            <mat-icon style="color: #059669;">check_circle</mat-icon>
-                                            <span>Emitir Venta</span>
-                                        </button>
-
                                         <button mat-menu-item (click)="cancelarVenta(venta)"
                                             *ngIf="venta.estado !== 'CANCELADA'">
                                             <mat-icon color="warn">cancel</mat-icon>
@@ -213,27 +244,13 @@
                             <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="row-hover"></tr>
                         </table>
                     </div>
-                </div>
+                    
+                    <mat-paginator #paginatorVentas 
+                                   [pageSize]="15" 
+                                   [pageSizeOptions]="[10, 15, 25, 50, 100]" 
+                                   showFirstLastButtons>
+                    </mat-paginator>
 
-                <div *ngIf="!isLoading && ventasFiltradas.data.length > 0" class="footer-stats">
-                    <div class="stat-card">
-                        <div class="stat-icon blue"><mat-icon>receipt_long</mat-icon></div>
-                        <div class="stat-data">
-                            <span class="stat-label">Total Documentos</span>
-                            <span class="stat-value">{{ ventasFiltradas.data.length }}</span>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon green"><mat-icon>payments</mat-icon></div>
-                        <div class="stat-data">
-                            <span class="stat-label">Ingreso Neto</span>
-                            <span class="stat-value">S/ {{ ingresoNetoReal.toFixed(2) }}</span>
-                            <div style="font-size: 10px; color: #64748b; margin-top: 2px;">
-                                Bruto: {{ totalVentas | number:'1.0-0' }} | Devoluciones: -{{ totalNotasCredito |
-                                number:'1.0-0' }}
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </mat-tab>
@@ -254,8 +271,7 @@
 
                 <div class="table-card">
                     <div *ngIf="deudasFiltradas.data.length === 0" class="state-container empty">
-                        <mat-icon
-                            style="color: #10b981; font-size: 48px; width: 48px; height: 48px;">check_circle</mat-icon>
+                        <mat-icon style="color: #10b981; font-size: 48px; width: 48px; height: 48px;">check_circle</mat-icon>
                         <h3>¡Todo al día!</h3>
                         <p>No tienes cuentas pendientes de cobro.</p>
                     </div>
@@ -327,6 +343,13 @@
                             <tr mat-row *matRowDef="let row; columns: displayedColumnsDeudas;" class="row-hover"></tr>
                         </table>
                     </div>
+
+                    <mat-paginator #paginatorDeudas 
+                                   [pageSize]="15" 
+                                   [pageSizeOptions]="[10, 15, 25, 50]" 
+                                   showFirstLastButtons>
+                    </mat-paginator>
+
                 </div>
             </div>
         </mat-tab>

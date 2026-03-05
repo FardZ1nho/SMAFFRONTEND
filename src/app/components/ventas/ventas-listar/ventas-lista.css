@@ -27,24 +27,52 @@
 .subtitle { color: var(--text-sub); font-size: 14px; margin: 0; }
 .btn-nuevo { background-color: var(--primary) !important; color: var(--white) !important; border-radius: 10px !important; padding: 8px 20px !important; font-weight: 600 !important; }
 
-/* SEARCH BAR */
+/* =========================================================================
+   SEARCH BAR & NUEVOS FILTROS
+   ========================================================================= */
 .search-bar-section { display: flex; gap: 16px; margin-bottom: 24px; align-items: flex-end; flex-wrap: wrap; }
-.search-main { flex: 2; min-width: 300px; display: flex; flex-direction: column; gap: 8px; }
-.secondary-filters { flex: 1; display: flex; gap: 12px; align-items: flex-end; }
-.filter-item { display: flex; flex-direction: column; gap: 8px; flex: 1; }
-.search-label { font-size: 13px; font-weight: 700; color: #475569; display: flex; align-items: center; gap: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
-.input-wrapper { position: relative; display: flex; align-items: center; }
-.filter-input, .filter-select { width: 100%; padding: 11px 16px; border: 1.5px solid var(--border-color); border-radius: 10px; font-size: 14px; background: var(--white); transition: all 0.2s; height: 45px; }
+.search-main { flex: 2; min-width: 250px; display: flex; flex-direction: column; gap: 8px; }
+.secondary-filters { flex: 4; display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; } /* Flex-wrap clave para pantallas pequeñas */
+.filter-item { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 130px; }
+.search-label { font-size: 12px; font-weight: 700; color: #475569; display: flex; align-items: center; gap: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+.input-wrapper { position: relative; display: flex; align-items: center; width: 100%;}
+
+/* Casillas de búsqueda y fechas estandarizadas */
+.filter-input, .filter-select { 
+    width: 100%; 
+    height: 40px; 
+    padding: 0 12px; 
+    box-sizing: border-box; 
+    border: 1.5px solid var(--border-color); 
+    border-radius: 8px; 
+    font-size: 13px; 
+    background: var(--white); 
+    color: var(--text-main);
+    transition: all 0.2s; 
+    font-family: inherit;
+}
 .filter-input:focus, .filter-select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); }
-.btn-export { height: 45px !important; border-radius: 10px !important; border: 1.5px solid var(--border-color) !important; background: white !important; color: var(--text-main) !important; }
-.btn-clear { position: absolute; right: 12px; background: none; border: none; cursor: pointer; color: var(--text-sub); }
+
+/* Para que el icono de calendario en el input type="date" no se vea feo */
+input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; opacity: 0.6; transition: 0.2s; }
+input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
+
+.btn-export { 
+    height: 40px !important; 
+    border-radius: 8px !important; 
+    border: 1.5px solid var(--border-color) !important; 
+    background: white !important; 
+    color: var(--text-main) !important; 
+}
+.btn-clear { position: absolute; right: 8px; background: none; border: none; cursor: pointer; color: var(--text-sub); display: flex; align-items: center; justify-content: center;}
+
 
 /* TABLA CARD */
 .table-card { background: var(--white); border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden; }
-.ventas-table { width: 100%; }
-th.mat-header-cell { background: #f1f5f9; color: var(--text-sub); font-weight: 700; font-size: 12px; text-transform: uppercase; padding: 16px !important; }
+table { width: 100%; }
+th.mat-header-cell { background: #f8fafc; color: var(--text-sub); font-weight: 700; font-size: 12px; text-transform: uppercase; padding: 16px !important; }
 td.mat-cell { padding: 16px !important; border-bottom: 1px solid var(--border-color); }
-.row-hover:hover { background-color: #f8fafc; }
+.row-hover:hover { background-color: #f1f5f9; }
 
 /* CELDAS */
 .ticket-code { font-family: 'Courier New', monospace; font-weight: 700; color: var(--primary); background: #eff6ff; padding: 4px 8px; border-radius: 6px; }
@@ -62,43 +90,28 @@ td.mat-cell { padding: 16px !important; border-bottom: 1px solid var(--border-co
 .estado-cancelada { background: #fee2e2; color: #991b1b; }
 .estado-pendiente { background: #ffedd5; color: #c2410c; }
 
-/* FOOTER STATS ORIGINAL */
-.footer-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-top: 24px; }
+/* FOOTER STATS */
+.footer-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-top: 24px; margin-bottom: 24px;}
 .stat-card { background: white; padding: 20px; border-radius: 16px; border: 1px solid var(--border-color); display: flex; align-items: center; gap: 16px; }
 .stat-icon { padding: 12px; border-radius: 12px; display: flex; }
 .stat-icon.blue { background: #eff6ff; color: #2563eb; }
 .stat-icon.green { background: #ecfdf5; color: #059669; }
-.stat-label { font-size: 12px; color: var(--text-sub); display: block; }
+.stat-label { font-size: 12px; color: var(--text-sub); display: block; font-weight: 600; text-transform: uppercase;}
 .stat-value { font-size: 20px; font-weight: 800; color: var(--text-main); }
 
-/* ESTADOS CARGA */
+/* ESTADOS CARGA Y VACÍO */
 .state-container { padding: 80px 24px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.state-container.empty mat-icon { font-size: 48px; width: 48px; height: 48px; color: #94a3b8; opacity: 0.5; }
+.state-container.empty h3 { color: var(--text-main); margin: 0; font-size: 18px;}
+.state-container.empty p { color: var(--text-sub); margin: 0; font-size: 14px;}
 .delete-item { color: #dc2626 !important; }
 
-/* =========================================================================
-   NUEVOS ESTILOS PARA TABS Y DEUDAS
-   ========================================================================= */
+/* TABS Y DEUDAS */
+::ng-deep .custom-tabs .mat-mdc-tab-header { margin-bottom: 20px; border-bottom: 1px solid var(--border-color); }
+.tab-content { animation: fadeIn 0.3s ease-out; }
 
-/* Estilo Tabs */
-::ng-deep .custom-tabs .mat-mdc-tab-header {
-    margin-bottom: 20px;
-    border-bottom: 1px solid var(--border-color);
-}
-.tab-content {
-    animation: fadeIn 0.3s ease-out;
-}
-
-/* Stats específicos Deudas */
-.stats-row-deudas {
-    display: flex;
-    gap: 20px;
-    margin-bottom: 24px;
-}
-.stat-card-debt {
-    background: white; padding: 16px 24px; border-radius: 12px;
-    border: 1px solid var(--border-color);
-    min-width: 200px;
-}
+.stats-row-deudas { display: flex; gap: 20px; margin-bottom: 24px; }
+.stat-card-debt { background: white; padding: 16px 24px; border-radius: 12px; border: 1px solid var(--border-color); min-width: 200px; }
 .stat-card-debt.total-debt { border-left: 4px solid #ef4444; }
 .stat-value-debt { font-size: 24px; font-weight: 800; margin-top: 4px; color: var(--text-main); }
 .text-danger { color: #ef4444 !important; }
@@ -107,39 +120,31 @@ td.mat-cell { padding: 16px !important; border-bottom: 1px solid var(--border-co
 .client-info { display: flex; flex-direction: column; }
 .client-name { font-weight: 600; color: #1e293b; }
 .client-doc { font-size: 11px; color: #64748b; }
-
-.debt-amount {
-    font-weight: 800; color: #ef4444; background: #fef2f2;
-    padding: 4px 8px; border-radius: 6px; font-size: 14px;
-}
+.debt-amount { font-weight: 800; color: #ef4444; background: #fef2f2; padding: 4px 8px; border-radius: 6px; font-size: 14px; }
 
 /* Barra progreso */
 .progress-container { display: flex; flex-direction: column; gap: 4px; }
 .progress-text { font-size: 10px; color: #64748b; font-weight: 600; text-align: center; }
 
 /* Botón Cobrar */
-.btn-cobrar {
-    height: 32px !important; font-size: 12px !important;
-    background-color: #10b981 !important; color: white !important;
-    border-radius: 8px !important; padding: 0 16px !important;
-}
+.btn-cobrar { height: 32px !important; font-size: 12px !important; background-color: #10b981 !important; color: white !important; border-radius: 8px !important; padding: 0 16px !important; }
 
-/* ✅ CORRECCIÓN 2: FUERZA A MATERIAL DESIGN A ALINEAR MONTOS A LA DERECHA */
-.mat-column-total, .mat-column-saldo {
-    text-align: right !important;
-    padding-right: 24px !important;
-}
-th.mat-column-total, th.mat-column-saldo {
-    justify-content: flex-end;
-    text-align: right !important;
-}
+/* Corrección de alineaciones */
+.mat-column-total, .mat-column-saldo { text-align: right !important; padding-right: 24px !important; }
+th.mat-column-total, th.mat-column-saldo { justify-content: flex-end; text-align: right !important; }
 .text-center { text-align: center !important; }
+
+/* Modificamos el Paginador para que se vea limpio */
+::ng-deep .mat-mdc-paginator { background: transparent !important; border-top: 1px solid var(--border-color); }
 
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(5px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
+@media (max-width: 1024px) {
+    .secondary-filters { flex: 100%; margin-top: 10px;}
+}
 @media (max-width: 768px) {
     .header { flex-direction: column; align-items: flex-start; gap: 16px; }
     .search-bar-section { flex-direction: column; align-items: stretch; }

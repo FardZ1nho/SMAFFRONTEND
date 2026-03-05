@@ -1,19 +1,29 @@
 /* ================= VARIABLES ================= */
 :host {
   --primary: #2563eb;
-  --bg-body: #f1f5f9;
+  --bg-body: #f8f8f8c7;
   --text-main: #1e293b;
   --text-sub: #64748b;
   --border: #e2e8f0;
   --white: #ffffff;
   --danger: #dc2626;
+  
+  /* ✅ CORRECCIÓN 1: Asegura que el componente anfitrión ocupe el 100% y no deje espacios */
+  display: block; 
+  width: 100%;
+  min-height: 100vh;
+  background-color: var(--bg-body); 
 }
 
+/* ✅ CORRECCIÓN 2: Ajuste del contenedor para que abrace los bordes de la pantalla */
 .proveedor-container {
   padding: 24px;
   background-color: var(--bg-body);
   min-height: 100vh;
   box-sizing: border-box;
+  /* Eliminar márgenes residuales */
+  margin: 0; 
+  width: 100%;
 }
 
 /* ================= HEADER & TOOLBAR ================= */

@@ -5,39 +5,38 @@
       <div class="icon-box"><mat-icon>savings</mat-icon></div>
       <div>
         <h1>Caja Chica</h1>
-        <p class="subtitle">Movimientos y flujo de efectivo diario</p>
+        
+        <div style="display: flex; align-items: center; gap: 10px; margin-top: 5px;">
+          <span *ngIf="turnoActivo" style="background: #10b981; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: bold;">
+            CAJA ABIERTA
+          </span>
+          <span *ngIf="!turnoActivo && !cargando" style="background: #ef4444; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: bold;">
+            CAJA CERRADA
+          </span>
+          <span *ngIf="turnoActivo" style="font-size: 13px; color: #64748b;">
+            (Inició con S/ {{ turnoActivo.saldoInicial }})
+          </span>
+        </div>
+
       </div>
     </div>
     
-    <div class="header-actions" style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+    <div class="header-actions" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
       
-      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="dense-datepicker filter-comprobante">
-        <mat-label>Tipo Comprobante</mat-label>
-        <mat-select multiple [(ngModel)]="comprobantesSeleccionados" (selectionChange)="aplicarFiltros()">
-          <mat-option *ngFor="let tipo of tiposComprobanteDisponibles" [value]="tipo">
-            {{ formatearTipoComprobante(tipo) | titlecase }}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
+      <button *ngIf="!turnoActivo" mat-flat-button color="primary" (click)="abrirCaja()" style="height: 40px; background: #10b981;">
+        <mat-icon>lock_open</mat-icon> Abrir Caja
+      </button>
 
-      <div class="date-filter">
-        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="dense-datepicker">
-          <mat-label>Filtrar por día</mat-label>
-          <input matInput [matDatepicker]="picker" [(ngModel)]="filtroFecha" (dateChange)="aplicarFiltros()" readonly>
-          <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
-          <mat-datepicker #picker></mat-datepicker>
-        </mat-form-field>
-        
-        <button mat-icon-button *ngIf="filtroFecha || comprobantesSeleccionados.length > 0" (click)="limpiarFiltro()" matTooltip="Limpiar filtros">
-          <mat-icon>close</mat-icon>
-        </button>
-      </div>
+      <button *ngIf="turnoActivo" mat-stroked-button color="warn" (click)="cerrarCaja()" style="height: 40px;">
+        <mat-icon>lock</mat-icon> Cerrar y Arqueo
+      </button>
+
+    
+
+      <div style="width: 1px; height: 24px; background-color: #cbd5e1; margin: 0 10px;"></div>
 
       <button mat-stroked-button color="warn" (click)="abrirModalGastoMenor()" style="height: 40px; border-color: #f87171;">
         <mat-icon>receipt_long</mat-icon> Registrar Gasto
-      </button>
-      <button mat-flat-button color="primary" (click)="abrirModalAjuste()" style="height: 40px;">
-        <mat-icon>add_circle_outline</mat-icon> Nuevo Ajuste
       </button>
     </div>
   </div>
@@ -66,6 +65,39 @@
         <span class="sub-label danger" *ngIf="saldoEnCaja < 0">Déficit</span>
       </div>
     </div>
+  </div>
+
+  <div style="background: white; padding: 16px 24px; border-radius: 12px; margin-bottom: 24px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+    
+    <div style="position: relative; flex: 1; min-width: 250px; display: flex; align-items: center;">
+      <mat-icon style="position: absolute; left: 12px; color: #94a3b8;">search</mat-icon>
+      <input type="text" placeholder="Buscar concepto o proveedor..." [(ngModel)]="terminoBusqueda" (input)="aplicarFiltros()" 
+             style="width: 100%; padding: 10px 10px 10px 40px; border: 1.5px solid #cbd5e1; border-radius: 8px; outline: none; font-size: 14px; transition: border-color 0.2s;"
+             onfocus="this.style.borderColor='#2563eb'" onblur="this.style.borderColor='#cbd5e1'">
+      <button *ngIf="terminoBusqueda" (click)="terminoBusqueda=''; aplicarFiltros()" style="position: absolute; right: 8px; background: none; border: none; cursor: pointer; color: #94a3b8; display: flex; align-items: center;">
+        <mat-icon style="font-size: 18px;">close</mat-icon>
+      </button>
+    </div>
+
+    <mat-form-field appearance="outline" subscriptSizing="dynamic" style="width: 220px;">
+      <mat-label>Tipo Comprobante</mat-label>
+      <mat-select multiple [(ngModel)]="comprobantesSeleccionados" (selectionChange)="aplicarFiltros()">
+        <mat-option *ngFor="let tipo of tiposComprobanteDisponibles" [value]="tipo">
+          {{ formatearTipoComprobante(tipo) | titlecase }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" subscriptSizing="dynamic" style="width: 180px;">
+      <mat-label>Filtrar por día</mat-label>
+      <input matInput [matDatepicker]="picker" [(ngModel)]="filtroFecha" (dateChange)="aplicarFiltros()" readonly>
+      <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+      <mat-datepicker #picker></mat-datepicker>
+    </mat-form-field>
+    
+    <button mat-icon-button *ngIf="filtroFecha || comprobantesSeleccionados.length > 0 || terminoBusqueda" (click)="limpiarFiltro()" matTooltip="Limpiar filtros" style="color: #ef4444;">
+      <mat-icon>refresh</mat-icon>
+    </button>
   </div>
 
   <div class="table-card tabs-card">
@@ -145,9 +177,12 @@
               <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
               <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="hover-row" [style.background-color]="row.esAjuste ? '#f8fafc' : 'white'"></tr>
             </table>
+
+            <mat-paginator #paginatorGeneral [pageSizeOptions]="[10, 25, 50, 100]" showFirstLastButtons></mat-paginator>
+
             <div *ngIf="dataSource.data.length === 0" class="empty-state">
-              <mat-icon>inbox</mat-icon>
-              <p>No se encontraron movimientos para los filtros seleccionados.</p>
+              <mat-icon>search_off</mat-icon>
+              <p>No se encontraron movimientos para tu búsqueda o filtros.</p>
             </div>
           </div>
         </div>
@@ -203,9 +238,12 @@
               <tr mat-header-row *matHeaderRowDef="displayedColumnsGastos"></tr>
               <tr mat-row *matRowDef="let row; columns: displayedColumnsGastos;" class="hover-row"></tr>
             </table>
+
+            <mat-paginator #paginatorGastos [pageSizeOptions]="[10, 25, 50]" showFirstLastButtons></mat-paginator>
+
             <div *ngIf="dataSourceGastos.data.length === 0" class="empty-state">
-              <mat-icon>receipt_long</mat-icon>
-              <p>No se han registrado compras o gastos para los filtros seleccionados.</p>
+              <mat-icon>search_off</mat-icon>
+              <p>No se han registrado compras o gastos para tu búsqueda.</p>
             </div>
           </div>
         </div>

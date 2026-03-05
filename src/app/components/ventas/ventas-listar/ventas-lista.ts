@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
@@ -15,6 +15,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatDialog } from '@angular/material/dialog';
 import { MatTabsModule } from '@angular/material/tabs'; 
 import { MatProgressBarModule } from '@angular/material/progress-bar'; 
+import { MatPaginatorModule, MatPaginator } from '@angular/material/paginator'; // ✅ Importamos Paginador
 import { Router } from '@angular/router';
 
 import { VentaService } from '../../../services/venta-service';
@@ -31,7 +32,7 @@ import { AmortizarModalComponent } from '../amortizar-modal/amortizar-modal';
         CommonModule, FormsModule, MatTableModule, MatButtonModule, MatIconModule,
         MatInputModule, MatFormFieldModule, MatSelectModule, MatChipsModule,
         MatTooltipModule, MatProgressSpinnerModule, MatSnackBarModule, MatMenuModule,
-        MatTabsModule, MatProgressBarModule 
+        MatTabsModule, MatProgressBarModule, MatPaginatorModule // ✅ Añadido al import
     ],
     templateUrl: './ventas-lista.html',
     styleUrls: ['./ventas-lista.css']
@@ -47,15 +48,18 @@ export class VentasListaComponent implements OnInit {
     totalPorCobrar: number = 0;
     clientesDeudores: number = 0;
     
-    // Filtros
+    // ✅ Filtros Extendidos
     terminoBusqueda: string = '';
     estadoFiltro: string = 'TODAS';
-    
+    metodoPagoFiltro: string = 'TODOS';
+    fechaInicio: string = ''; // Format YYYY-MM-DD
+    fechaFin: string = '';
+
     // Estados de carga
     isLoading: boolean = false;
     errorMessage: string = '';
 
-    // Variables Financieras
+    // Variables Financieras (Dinámicas)
     totalVentas: number = 0;       
     totalNotasCredito: number = 0; 
     ingresoNetoReal: number = 0;    
@@ -72,6 +76,14 @@ export class VentasListaComponent implements OnInit {
         { value: EstadoVenta.CANCELADA, label: 'Canceladas' }
     ];
 
+    // ✅ Paginadores usando Setters (Necesario por el *ngIf de los Tabs)
+    @ViewChild('paginatorVentas') set matPaginatorVentas(mp: MatPaginator) {
+        this.ventasFiltradas.paginator = mp;
+    }
+    @ViewChild('paginatorDeudas') set matPaginatorDeudas(mp: MatPaginator) {
+        this.deudasFiltradas.paginator = mp;
+    }
+
     constructor(
         private ventaService: VentaService,
         private notaCreditoService: NotaCreditoService,
@@ -82,8 +94,17 @@ export class VentasListaComponent implements OnInit {
     ) { }
 
     ngOnInit(): void {
+        // Por defecto cargamos el mes actual
+        this.establecerMesActual();
         this.cargarVentas();
         this.cargarTotalNotasCredito();
+    }
+
+    establecerMesActual(): void {
+        const hoy = new Date();
+        const primerDia = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+        this.fechaInicio = primerDia.toISOString().split('T')[0];
+        this.fechaFin = hoy.toISOString().split('T')[0];
     }
 
     // ========== CARGA DE DATOS ==========
@@ -94,7 +115,6 @@ export class VentasListaComponent implements OnInit {
 
         this.ventaService.listarTodas().subscribe({
             next: (data) => {
-                // Ordenar por fecha descendente
                 this.ventas = data.sort((a, b) => {
                     const fechaA = new Date(a.fechaVenta || 0).getTime();
                     const fechaB = new Date(b.fechaVenta || 0).getTime();
@@ -102,8 +122,6 @@ export class VentasListaComponent implements OnInit {
                 });
                 
                 this.aplicarFiltros();     
-                this.actualizarDeudas();   
-                this.calcularFinanzas(); 
                 
                 this.isLoading = false;
                 this.cdr.detectChanges();
@@ -118,42 +136,99 @@ export class VentasListaComponent implements OnInit {
         });
     }
 
-    actualizarDeudas(): void {
-        const deudas = this.ventas.filter(v => 
-            v.estado === EstadoVenta.PENDIENTE && (v.saldoPendiente || 0) > 0.1
-        );
-        
-        this.deudasFiltradas.data = deudas;
-
-        this.totalPorCobrar = deudas.reduce((acc, v) => acc + (v.saldoPendiente || 0), 0);
-        const uniqueClients = new Set(deudas.map(v => v.nombreCliente));
-        this.clientesDeudores = uniqueClients.size;
-    }
-
-    irANotasCredito(): void {
-        this.router.navigate(['/ventas/notas-credito']);
-    }
-
     cargarTotalNotasCredito(): void {
         this.notaCreditoService.obtenerTotalDevoluciones().subscribe({
             next: (monto) => {
                 this.totalNotasCredito = monto || 0;
-                this.calcularFinanzas();
+                this.aplicarFiltros(); // Recalcula finanzas 
             },
             error: (err) => console.error('Error cargando notas de crédito', err)
         });
     }
 
-    editarVenta(venta: Venta): void {
-        this.router.navigate(['/ventas', venta.id]);
+    // ========== FILTROS Y FINANZAS ==========
+
+    aplicarFiltros(): void {
+        let filtradas = [...this.ventas];
+
+        // 1. Filtro por Estado
+        if (this.estadoFiltro !== 'TODAS') {
+            filtradas = filtradas.filter(v => v.estado === this.estadoFiltro);
+        }
+
+        // 2. Filtro por Método de Pago
+        if (this.metodoPagoFiltro !== 'TODOS') {
+            filtradas = filtradas.filter(v => {
+                if (this.metodoPagoFiltro === 'CREDITO') return v.tipoPago === 'CREDITO';
+                if (!v.pagos || v.pagos.length === 0) return false;
+                return v.pagos.some(p => p.metodoPago === this.metodoPagoFiltro);
+            });
+        }
+
+        // 3. Filtro por Fechas (Desde - Hasta)
+        if (this.fechaInicio && this.fechaFin) {
+            const fInicio = new Date(this.fechaInicio + 'T00:00:00');
+            const fFin = new Date(this.fechaFin + 'T23:59:59');
+            
+            filtradas = filtradas.filter(v => {
+                const fechaVenta = new Date(v.fechaVenta);
+                return fechaVenta >= fInicio && fechaVenta <= fFin;
+            });
+        }
+
+        // 4. Filtro por Texto (Buscador)
+        if (this.terminoBusqueda.trim()) {
+            const termino = this.terminoBusqueda.toLowerCase();
+            filtradas = filtradas.filter(v =>
+                v.codigo.toLowerCase().includes(termino) ||
+                (v.numeroDocumento && v.numeroDocumento.toLowerCase().includes(termino)) ||
+                (v.nombreCliente && v.nombreCliente.toLowerCase().includes(termino))
+            );
+        }
+
+        // Asignamos la data final filtrada
+        this.ventasFiltradas.data = filtradas;
+        
+        // Recalculamos Deudas basándonos en TODAS (no solo las del filtro, las deudas son eternas)
+        this.actualizarDeudas(this.terminoBusqueda); 
+
+        // ✅ Magia: Recalculamos las tarjetas KPI usando SOLO lo filtrado
+        this.calcularFinanzasDinamicas(filtradas);
+
+        // Regresar a la pagina 1 si hay paginador
+        if (this.ventasFiltradas.paginator) {
+            this.ventasFiltradas.paginator.firstPage();
+        }
     }
 
-    calcularFinanzas(): void {
-        let sumaCompletadas = this.ventas
+    actualizarDeudas(termino: string = ''): void {
+        let deudas = this.ventas.filter(v => v.estado === EstadoVenta.PENDIENTE && (v.saldoPendiente || 0) > 0.1);
+        
+        if (termino.trim()) {
+            const t = termino.toLowerCase();
+            deudas = deudas.filter(v => 
+                v.codigo.toLowerCase().includes(t) ||
+                (v.numeroDocumento && v.numeroDocumento.toLowerCase().includes(t)) ||
+                (v.nombreCliente && v.nombreCliente.toLowerCase().includes(t))
+            );
+        }
+
+        this.deudasFiltradas.data = deudas;
+        this.totalPorCobrar = deudas.reduce((acc, v) => acc + (v.saldoPendiente || 0), 0);
+        const uniqueClients = new Set(deudas.map(v => v.nombreCliente));
+        this.clientesDeudores = uniqueClients.size;
+
+        if (this.deudasFiltradas.paginator) {
+            this.deudasFiltradas.paginator.firstPage();
+        }
+    }
+
+    calcularFinanzasDinamicas(ventasFiltradas: Venta[]): void {
+        let sumaCompletadas = ventasFiltradas
             .filter(v => v.estado === EstadoVenta.COMPLETADA)
             .reduce((sum, v) => sum + v.total, 0);
 
-        let sumaParciales = this.ventas
+        let sumaParciales = ventasFiltradas
             .filter(v => v.estado === EstadoVenta.PENDIENTE)
             .reduce((sum, v) => {
                 const inicial = v.montoInicial || 0;
@@ -162,31 +237,9 @@ export class VentasListaComponent implements OnInit {
             }, 0);
 
         this.totalVentas = sumaCompletadas + sumaParciales;
+        
+        // (Nota: El ingreso real total descuenta las NC globales por ahora)
         this.ingresoNetoReal = this.totalVentas - this.totalNotasCredito;
-    }
-
-    // ========== FILTROS ==========
-
-    aplicarFiltros(): void {
-        let filtradas = [...this.ventas];
-
-        if (this.estadoFiltro !== 'TODAS') {
-            filtradas = filtradas.filter(v => v.estado === this.estadoFiltro);
-        }
-
-        if (this.terminoBusqueda.trim()) {
-            const termino = this.terminoBusqueda.toLowerCase();
-            
-            filtradas = filtradas.filter(v =>
-                v.codigo.toLowerCase().includes(termino) ||
-                (v.numeroDocumento && v.numeroDocumento.toLowerCase().includes(termino)) ||
-                (v.nombreCliente && v.nombreCliente.toLowerCase().includes(termino))
-            );
-
-            this.deudasFiltradas.filter = termino;
-        }
-
-        this.ventasFiltradas.data = filtradas;
     }
 
     onEstadoChange(): void { this.aplicarFiltros(); }
@@ -194,46 +247,28 @@ export class VentasListaComponent implements OnInit {
     limpiarBusqueda(): void { this.terminoBusqueda = ''; this.aplicarFiltros(); }
     
     // ========== ACCIONES ==========
-
-    nuevaVenta(): void { this.router.navigate(['/ventas']); }
-
-    editarBorrador(venta: Venta): void {
-        if (venta.estado !== EstadoVenta.BORRADOR) {
-            this.mostrarMensaje('Solo se pueden editar borradores', 'error');
-            return;
-        }
-        this.router.navigate(['/ventas', venta.id]);
-    }
+    irANotasCredito(): void { this.router.navigate(['/ventas/notas-credito']); }
+    nuevaVenta(): void { this.router.navigate(['/ventas/nueva']); }
+    editarBorrador(venta: Venta): void { this.router.navigate(['/ventas', venta.id]); }
+    editarVenta(venta: Venta): void { this.router.navigate(['/ventas', venta.id]); }
 
     completarVenta(venta: Venta): void {
-        if (venta.estado !== EstadoVenta.BORRADOR) return;
         if (confirm(`¿Deseas completar la venta ${venta.numeroDocumento ? venta.numeroDocumento : venta.codigo}?`)) {
             this.ventaService.completarVenta(venta.id).subscribe({
-                next: () => {
-                    this.mostrarMensaje('✅ Venta completada exitosamente', 'success');
-                    this.cargarVentas();
-                },
-                error: () => this.mostrarMensaje('Error al completar la venta', 'error')
+                next: () => { this.mostrarMensaje('✅ Venta completada', 'success'); this.cargarVentas(); },
+                error: () => this.mostrarMensaje('Error al completar', 'error')
             });
         }
     }
 
     amortizarDeuda(venta: Venta): void {
-        const dialogRef = this.dialog.open(AmortizarModalComponent, {
-            width: '500px', 
-            data: { venta: venta }
-        });
-
+        const dialogRef = this.dialog.open(AmortizarModalComponent, { width: '500px', data: { venta: venta } });
         dialogRef.afterClosed().subscribe(result => {
             if (result) {
-                this.ventaService.registrarPago(venta.id, result.monto, result.metodo, result.cuentaId)
-                    .subscribe({
-                        next: () => {
-                            this.mostrarMensaje('✅ Pago registrado exitosamente', 'success');
-                            this.cargarVentas(); 
-                        },
-                        error: () => this.mostrarMensaje('Error al registrar pago', 'error')
-                    });
+                this.ventaService.registrarPago(venta.id, result.monto, result.metodo, result.cuentaId).subscribe({
+                    next: () => { this.mostrarMensaje('✅ Pago registrado', 'success'); this.cargarVentas(); },
+                    error: () => this.mostrarMensaje('Error al registrar pago', 'error')
+                });
             }
         });
     }
@@ -241,11 +276,8 @@ export class VentasListaComponent implements OnInit {
     cancelarVenta(venta: Venta): void {
         if (confirm(`¿Estás seguro de cancelar la venta ${venta.numeroDocumento ? venta.numeroDocumento : venta.codigo}?`)) {
             this.ventaService.cancelarVenta(venta.id).subscribe({
-                next: () => {
-                    this.mostrarMensaje('✅ Venta cancelada exitosamente', 'success');
-                    this.cargarVentas();
-                },
-                error: () => this.mostrarMensaje('Error al cancelar la venta', 'error')
+                next: () => { this.mostrarMensaje('✅ Venta cancelada', 'success'); this.cargarVentas(); },
+                error: () => this.mostrarMensaje('Error al cancelar', 'error')
             });
         }
     }
@@ -253,39 +285,23 @@ export class VentasListaComponent implements OnInit {
     eliminarVenta(venta: Venta): void {
         if (confirm(`¿Estás seguro de eliminar la venta ${venta.numeroDocumento ? venta.numeroDocumento : venta.codigo}?`)) {
             this.ventaService.eliminarVenta(venta.id).subscribe({
-                next: () => {
-                    this.mostrarMensaje('✅ Venta eliminada exitosamente', 'success');
-                    this.ventas = this.ventas.filter(v => v.id !== venta.id);
-                    this.aplicarFiltros();
-                }
+                next: () => { this.mostrarMensaje('✅ Venta eliminada', 'success'); this.cargarVentas(); }
             });
         }
     }
 
     verDetalle(venta: Venta): void {
-        this.dialog.open(VentaDetalleComponent, {
-            width: '800px',
-            maxWidth: '95vw',
-            data: venta
-        });
+        this.dialog.open(VentaDetalleComponent, { width: '800px', maxWidth: '95vw', data: venta });
     }
 
     abrirModalNotaCredito(venta: Venta): void {
-        const dialogRef = this.dialog.open(NotaCreditoModalComponent, {
-            width: '500px',
-            disableClose: true,
-            data: venta
-        });
-
+        const dialogRef = this.dialog.open(NotaCreditoModalComponent, { width: '500px', disableClose: true, data: venta });
         dialogRef.afterClosed().subscribe(seEmitioNota => {
-            if (seEmitioNota === true) {
-                this.cargarVentas();
-                this.cargarTotalNotasCredito();
-            }
+            if (seEmitioNota) { this.cargarVentas(); this.cargarTotalNotasCredito(); }
         });
     }
 
-    // ========== UTILIDADES DE VISTA Y PAGO ==========
+    // ========== UTILIDADES DE VISTA ==========
 
     getPorcentajePagado(venta: Venta): number {
         if (!venta.total || venta.total === 0) return 0;
@@ -315,9 +331,7 @@ export class VentasListaComponent implements OnInit {
     }
 
     getMetodoPagoIcon(venta: any): string {
-        if (venta.tipoPago === 'CREDITO' && (!venta.pagos || venta.pagos.length === 0)) {
-            return 'schedule'; 
-        }
+        if (venta.tipoPago === 'CREDITO' && (!venta.pagos || venta.pagos.length === 0)) return 'schedule'; 
         if (venta.pagos && venta.pagos.length > 0) {
             const metodo = venta.pagos[0].metodoPago;
             switch (metodo) {
@@ -333,9 +347,7 @@ export class VentasListaComponent implements OnInit {
     }
 
     getNombreMetodoPago(venta: any): string {
-        if (venta.tipoPago === 'CREDITO' && (!venta.pagos || venta.pagos.length === 0)) {
-            return 'Por Cobrar';
-        }
+        if (venta.tipoPago === 'CREDITO' && (!venta.pagos || venta.pagos.length === 0)) return 'Por Cobrar';
         if (venta.pagos && venta.pagos.length > 0) {
             if (venta.pagos.length > 1) return 'Pago Mixto';
             return venta.pagos[0].metodoPago;
@@ -370,12 +382,11 @@ export class VentasListaComponent implements OnInit {
         this.snackBar.open(mensaje, 'Cerrar', {
             duration: 3000,
             panelClass: tipo === 'success' ? 'snackbar-success' : 'snackbar-error',
-            horizontalPosition: 'right',
-            verticalPosition: 'top'
+            horizontalPosition: 'right', verticalPosition: 'top'
         });
     }
 
     exportarDatos(): void { 
-        this.mostrarMensaje('Función en desarrollo', 'error'); 
+        this.mostrarMensaje('Función de exportación en desarrollo', 'error'); 
     }
 }

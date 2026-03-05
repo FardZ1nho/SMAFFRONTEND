@@ -103,8 +103,11 @@
             <td class="text-right">{{ f.proOtros1 | number:'1.2-2' }}</td>
             <td class="text-right">{{ f.proOtros2 | number:'1.2-2' }}</td>
 
-            <td class="sticky-end total-col text-right font-bold">
-              $ {{ f.costoTotalImportacion | number:'1.2-2' }}
+            <td class="sticky-end total-col text-right">
+              <div class="font-bold text-green-700">$ {{ f.costoTotalImportacion | number:'1.2-2' }}</div>
+              <div style="color: #ef4444; font-size: 11px; font-weight: 700; margin-top: 2px;" matTooltip="% de incremento total de esta factura respecto a su FOB">
+                +{{ calcularPorcentajeAumento(f.total, f.costoTotalImportacion) | percent:'1.1-2' }}
+              </div>
             </td>
           </tr>
         </tbody>
@@ -223,8 +226,11 @@
               <td class="text-right col-other text-xs">{{ ((item.itemOtros1||0)/item.cantidad) | number:'1.2-2' }}</td>
               <td class="text-right col-other text-xs">{{ ((item.itemOtros2||0)/item.cantidad) | number:'1.2-2' }}</td>
 
-              <td class="text-right col-final font-bold text-green-700">
-                $ {{ item.costoUnitarioLanded | number:'1.2-2' }}
+              <td class="text-right col-final">
+                <div class="font-bold text-green-700">$ {{ item.costoUnitarioLanded | number:'1.2-2' }}</div>
+                <div style="color: #ef4444; font-size: 11px; font-weight: 700; margin-top: 2px;" matTooltip="% de incremento total respecto al costo FOB">
+                  +{{ calcularPorcentajeAumento(item.precioUnitarioFob, item.costoUnitarioLanded) | percent:'1.1-2' }}
+                </div>
               </td>
               <td class="text-right col-final font-bold text-green-700">
                 $ {{ item.costoTotalLanded | number:'1.2-2' }}

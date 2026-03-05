@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
@@ -14,21 +14,19 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog'; 
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar'; 
 import { MatTabsModule } from '@angular/material/tabs'; 
-import { MatSelectModule } from '@angular/material/select'; // ✅ NUEVO
+import { MatSelectModule } from '@angular/material/select'; 
+import { MatPaginatorModule, MatPaginator } from '@angular/material/paginator';
 import { forkJoin } from 'rxjs';
 import { Router, RouterLink } from '@angular/router'; 
 
-// Servicios
 import { VentaService } from '../../services/venta-service';
 import { CompraService } from '../../services/compra-service';
 import { MovimientoCajaService } from '../../services/movimiento-caja-service';  
 
-// Modelos
 import { Venta, EstadoVenta } from '../../models/venta';
 import { CompraResponse } from '../../models/compra';
-import { MovimientoCajaResponse } from '../../models/movimiento-caja'; 
+import { MovimientoCajaResponse, TurnoCaja } from '../../models/movimiento-caja'; 
 
-// Componentes Modal
 import { NuevoMovimientoModalComponent } from './nuevo-movimiento-modal/nuevo-movimiento-modal'; 
 import { GastoMenorModalComponent } from './gasto-menor-modal/gasto-menor-modal'; 
 import { GastoMenorDetalleModalComponent } from './gasto-menor-detalle-modal/gasto-menor-detalle-modal';
@@ -56,7 +54,7 @@ export interface MovimientoCaja {
     MatIconModule, MatCardModule, MatProgressBarModule,
     MatDatepickerModule, MatNativeDateModule, MatFormFieldModule, MatInputModule,
     MatTooltipModule, MatDialogModule, MatSnackBarModule, MatTabsModule,
-    MatSelectModule, // ✅ NUEVO
+    MatSelectModule, MatPaginatorModule,
     NuevoMovimientoModalComponent,
     RouterLink
   ],
@@ -75,14 +73,23 @@ export class CajaChicaComponent implements OnInit {
 
   cargando: boolean = true;
   mostrarModalAjuste: boolean = false;
+  
+  turnoActivo: TurnoCaja | null = null;
 
-  // ✅ VARIABLES PARA FILTROS
   filtroFecha: Date | null = null; 
   comprobantesSeleccionados: string[] = [];
   tiposComprobanteDisponibles: string[] = [];
+  terminoBusqueda: string = '';
 
   displayedColumns: string[] = ['fecha', 'tipo', 'comprobante', 'descripcion', 'entidad', 'monto', 'acciones'];
   displayedColumnsGastos: string[] = ['fecha', 'comprobante', 'entidad', 'monto', 'acciones'];
+
+  @ViewChild('paginatorGeneral') set matPaginatorGeneral(mp: MatPaginator) {
+    this.dataSource.paginator = mp;
+  }
+  @ViewChild('paginatorGastos') set matPaginatorGastos(mp: MatPaginator) {
+    this.dataSourceGastos.paginator = mp;
+  }
 
   constructor(
     private ventaService: VentaService,
@@ -95,7 +102,89 @@ export class CajaChicaComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.verificarTurno();
     this.cargarFlujoCaja();
+  }
+
+  verificarTurno(): void {
+    this.movimientoManualService.obtenerTurnoActivo().subscribe({
+      next: (turno) => {
+        this.turnoActivo = turno;
+        this.cdr.detectChanges(); 
+      },
+      error: () => {
+        this.turnoActivo = null;
+        this.cdr.detectChanges(); 
+      }
+    });
+  }
+
+  abrirCaja(): void {
+    const saldoSugerido = this.saldoEnCaja.toFixed(2);
+    
+    const input = prompt(
+      `APERTURA DE CAJA\nEl sistema detecta un saldo acumulado de S/ ${saldoSugerido}.\n\nConfirme el dinero físico exacto con el que inicia el turno:`, 
+      saldoSugerido
+    );
+    
+    if (input !== null && !isNaN(Number(input))) {
+      this.movimientoManualService.abrirCaja(Number(input), 'Usuario Actual').subscribe({
+        next: () => {
+          this.snackBar.open('Turno de Caja Abierto correctamente', 'OK', { duration: 3000, panelClass: 'snackbar-success' });
+          this.verificarTurno();
+        },
+        error: (err) => this.snackBar.open('Error al abrir caja', 'Cerrar', { duration: 3000 })
+      });
+    }
+  }
+
+  cerrarCaja(): void {
+    const saldoEsperado = this.saldoEnCaja.toFixed(2);
+    
+    const input = prompt(
+      `ARQUEO DE CAJA\nEl sistema espera que en tu cajón haya: S/ ${saldoEsperado}\n\nCuente sus billetes y monedas, e ingrese el monto físico REAL:`, 
+      saldoEsperado
+    );
+    
+    if (input !== null && !isNaN(Number(input))) {
+      this.movimientoManualService.cerrarCaja(Number(input)).subscribe({
+        
+        // ✅ CORREGIDO: Un solo bloque "next", sin código duplicado.
+        next: (turnoCerrado) => {
+          
+          const descuadre = turnoCerrado.descuadre ?? 0; 
+          const diferenciaStr = Math.abs(descuadre).toFixed(2);
+
+          if (descuadre === 0) {
+            alert(`✅ CIERRE PERFECTO\nLa caja cuadró exactamente en S/ ${saldoEsperado}. Buen trabajo.`);
+          } else if (descuadre > 0) {
+            alert(`⚠️ SOBRANTE DE CAJA\nTe sobran S/ ${diferenciaStr} físicos respecto a lo que dice el sistema.`);
+          } else {
+            alert(`🚨 FALTANTE DE CAJA\nTe faltan S/ ${diferenciaStr} para que la caja cuadre.`);
+          }
+
+          this.turnoActivo = null;
+          this.cdr.detectChanges(); 
+        },
+        error: (err) => this.snackBar.open('Error al cerrar caja', 'Cerrar', { duration: 3000 })
+      });
+    }
+  }
+
+  transferirBanco(): void {
+    if (!this.turnoActivo) {
+      this.snackBar.open('Debe abrir la caja primero', 'OK', { duration: 3000 });
+      return;
+    }
+    const input = prompt(`SALDO DISPONIBLE: S/ ${this.saldoEnCaja}\n\nIngrese el monto a depositar al banco:`);
+    if (input !== null && Number(input) > 0) {
+      this.movimientoManualService.depositarABanco(Number(input), 1, 'Usuario Actual').subscribe({
+        next: () => {
+          this.snackBar.open('Depósito registrado', 'OK', { duration: 3000, panelClass: 'snackbar-success' });
+          this.cargarFlujoCaja();
+        }
+      });
+    }
   }
 
   cargarFlujoCaja(): void {
@@ -193,11 +282,9 @@ export class CajaChicaComponent implements OnInit {
         });
 
         this.movimientos = [...ingresos, ...egresos].sort((a, b) => b.fecha.getTime() - a.fecha.getTime());
-        
-        // ✅ Extraer tipos de comprobantes únicos para el filtro
         this.tiposComprobanteDisponibles = [...new Set(this.movimientos.map(m => m.tipoComprobante))].sort();
 
-        this.aplicarFiltros(); // Esto cargará las tablas y los totales inicialmente
+        this.aplicarFiltros(); 
         this.cargando = false;
         this.cdr.detectChanges();
       },
@@ -208,33 +295,42 @@ export class CajaChicaComponent implements OnInit {
     });
   }
 
-  // ✅ NUEVA LÓGICA DE FILTROS COMBINADOS (Fecha + Comprobante)
   aplicarFiltros(): void {
     let filtrados = this.movimientos;
 
-    // 1. Filtrar por fecha
     if (this.filtroFecha) {
       const fechaSel = this.filtroFecha.toDateString();
       filtrados = filtrados.filter(m => m.fecha.toDateString() === fechaSel);
     }
 
-    // 2. Filtrar por comprobantes seleccionados
     if (this.comprobantesSeleccionados && this.comprobantesSeleccionados.length > 0) {
       filtrados = filtrados.filter(m => this.comprobantesSeleccionados.includes(m.tipoComprobante));
+    }
+
+    if (this.terminoBusqueda && this.terminoBusqueda.trim() !== '') {
+      const term = this.terminoBusqueda.toLowerCase();
+      filtrados = filtrados.filter(m => 
+        (m.descripcion && m.descripcion.toLowerCase().includes(term)) ||
+        (m.entidad && m.entidad.toLowerCase().includes(term)) ||
+        (m.referencia && m.referencia.toLowerCase().includes(term))
+      );
     }
 
     this.dataSource.data = filtrados;
     this.dataSourceGastos.data = filtrados.filter(m => m.esAjuste && m.tipo === 'EGRESO');
     this.calcularTotales();
+
+    if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
+    if (this.dataSourceGastos.paginator) this.dataSourceGastos.paginator.firstPage();
   }
 
   limpiarFiltro(): void {
     this.filtroFecha = null;
     this.comprobantesSeleccionados = [];
+    this.terminoBusqueda = '';
     this.aplicarFiltros();
   }
 
-  // Utilidad para mostrar "FACTURA_ELECTRONICA" como "Factura Electronica"
   formatearTipoComprobante(tipo: string): string {
     if (!tipo) return '';
     return tipo.replace(/_/g, ' ');
@@ -284,6 +380,11 @@ export class CajaChicaComponent implements OnInit {
   }
 
   abrirModalGastoMenor(rowAEditar?: MovimientoCaja): void {
+    if (!this.turnoActivo) {
+      this.snackBar.open('¡Caja Cerrada! Debe abrir la caja para registrar gastos.', 'Entendido', { duration: 4000 });
+      return;
+    }
+
     const dialogRef = this.dialog.open(GastoMenorModalComponent, {
       width: '1200px', maxWidth: '95vw', height: '85vh', disableClose: true, data: rowAEditar || null 
     });
@@ -302,7 +403,12 @@ export class CajaChicaComponent implements OnInit {
           const fechaPerfectaParaJava = new Date(fechaObj.getTime() - tzOffset).toISOString().split('.')[0]; 
 
           const request: any = {
-            tipo: 'EGRESO', monto: Number(resultado.total), motivo: motivoCompleto, responsable: resultado.proveedor.trim(), fechaHora: fechaPerfectaParaJava 
+            tipo: 'EGRESO', 
+            monto: Number(resultado.total), 
+            motivo: motivoCompleto, 
+            responsable: resultado.proveedor.trim(), 
+            fechaHora: fechaPerfectaParaJava,
+            categoria: resultado.categoria
           };
 
           if (rowAEditar && rowAEditar.idRegistro) {

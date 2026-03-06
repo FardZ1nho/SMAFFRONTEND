@@ -31,20 +31,20 @@ export interface MetricaCard {
   icono: string;
   colorIcono: string;
   colorFondo: string;
-  tendencia?: 'sube' | 'baja' | 'neutro'; // Útil para poner flechitas
-  subtitulo?: string; // Ej: "vs mes anterior"
+  tendencia?: 'sube' | 'baja' | 'neutro';
+  subtitulo?: string;
 }
 
 export interface GraficoVentasDTO {
-  label: string;    // Ej: "LUNES", "S1", "ENE"
+  label: string;
   total: number;
   cantidad: number;
 }
 
 export interface ProductoVendidoDTO {
-  nombreProducto: string; // ✅ Coincide con backend
-  cantidad: number;       // ✅ Coincide con backend
-  total: number;          // ✅ Coincide con backend
+  nombreProducto: string;
+  cantidad: number;
+  total: number;
 }
 
 export interface ReporteMetodoPagoDTO {
@@ -53,11 +53,15 @@ export interface ReporteMetodoPagoDTO {
   cantidad: number;
 }
 
-// ✅ CORREGIDO: Mapeo exacto a DashboardAlertaDTO.java
 export interface DashboardAlerta {
   idImportacion: number;
-  codigoImportacion: string; 
-  fechaLlegada: string; 
-  estado: string;       
-  proveedores: string; 
+  codigoImportacion: string;
+  fechaLlegada: string;
+  estado: string;
+  proveedores: string;
+
+  // ✅ Propiedades calculadas en frontend (usadas en el template)
+  diasRestantes: number;
+  fechaEta: string;
+  proveedor: string;
 }

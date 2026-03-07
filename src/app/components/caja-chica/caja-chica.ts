@@ -30,6 +30,8 @@ import { MovimientoCajaResponse, TurnoCaja } from '../../models/movimiento-caja'
 import { NuevoMovimientoModalComponent } from './nuevo-movimiento-modal/nuevo-movimiento-modal'; 
 import { GastoMenorModalComponent } from './gasto-menor-modal/gasto-menor-modal'; 
 import { GastoMenorDetalleModalComponent } from './gasto-menor-detalle-modal/gasto-menor-detalle-modal';
+// ✅ NUEVO: Importamos el modal de detalles de venta
+import { VentaDetalleComponent } from '../ventas/venta-detalle/venta-detalle'; 
 
 export interface MovimientoCaja {
   idRegistro?: number; 
@@ -149,7 +151,6 @@ export class CajaChicaComponent implements OnInit {
     if (input !== null && !isNaN(Number(input))) {
       this.movimientoManualService.cerrarCaja(Number(input)).subscribe({
         
-        // ✅ CORREGIDO: Un solo bloque "next", sin código duplicado.
         next: (turnoCerrado) => {
           
           const descuadre = turnoCerrado.descuadre ?? 0; 
@@ -346,8 +347,22 @@ export class CajaChicaComponent implements OnInit {
   abrirModalAjuste(): void { this.mostrarModalAjuste = true; }
   onAjusteCreado(): void { this.mostrarModalAjuste = false; this.cargarFlujoCaja(); }
 
-  verDetalleGasto(gasto: MovimientoCaja): void {
-    this.dialog.open(GastoMenorDetalleModalComponent, { width: '600px', data: gasto.rawData });
+  // ✅ FUNCIÓN CORREGIDA: Navegación inteligente según el origen
+  verDetalleGasto(row: MovimientoCaja): void {
+    if (row.origen === 'COMPRA') {
+      this.router.navigate(['/compras/detalle', row.idRegistro]);
+    } else if (row.origen === 'VENTA') {
+      this.dialog.open(VentaDetalleComponent, {
+        width: '800px',
+        maxWidth: '95vw',
+        data: row.rawData 
+      });
+    } else {
+      this.dialog.open(GastoMenorDetalleModalComponent, { 
+        width: '600px', 
+        data: row.rawData 
+      });
+    }
   }
 
   editarMovimiento(row: MovimientoCaja): void {

@@ -4,7 +4,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Router, RouterModule } from '@angular/router';
-import { DashboardService } from '../../services/dashboard-service'; // Ajusta la ruta si es necesario
+import { DashboardService } from '../../services/dashboard-service'; 
 import { DashboardAlerta } from '../../models/dashboard'; 
 
 @Component({
@@ -22,7 +22,7 @@ export class LlegadasWidgetComponent implements OnInit {
   constructor(
     private dashboardService: DashboardService,
     private router: Router,
-    private cdr: ChangeDetectorRef // ✅ 1. Inyección de dependencia
+    private cdr: ChangeDetectorRef 
   ) {}
 
   ngOnInit(): void {
@@ -31,19 +31,21 @@ export class LlegadasWidgetComponent implements OnInit {
 
   cargarAlertas() {
     this.isLoading = true;
-    // Forzamos detección al iniciar carga para mostrar spinner si es necesario
     this.cdr.detectChanges(); 
 
     this.dashboardService.obtenerProximasLlegadas().subscribe({
       next: (data) => {
-        this.alertas = data;
+        // ✅ EL FILTRO MÁGICO: Solo guardamos las que NO estén cerradas.
+        // Usamos '(alerta as any)' para evitar el error de TypeScript si 'estado' no está en tu interface DashboardAlerta
+        this.alertas = data.filter((alerta: any) => alerta.estado !== 'CERRADO' && alerta.estado !== 'RECIBIDO');
+        
         this.isLoading = false;
-        this.cdr.detectChanges(); // ✅ 2. Actualizar la vista al recibir datos
+        this.cdr.detectChanges(); 
       },
       error: (err) => {
         console.error('Error cargando alertas', err);
         this.isLoading = false;
-        this.cdr.detectChanges(); // ✅ 3. Actualizar la vista incluso si hay error
+        this.cdr.detectChanges(); 
       }
     });
   }

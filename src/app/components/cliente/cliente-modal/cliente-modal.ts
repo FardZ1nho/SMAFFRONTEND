@@ -10,9 +10,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatDividerModule } from '@angular/material/divider';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar'; // ✅ AGREGADO
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar'; 
 
 import { ClienteService } from '../../../services/cliente-service';
+import { ConsultaService } from '../../../services/consulta-service'; 
 import { ClienteRequest } from '../../../models/cliente';
 
 @Component({
@@ -30,7 +31,7 @@ import { ClienteRequest } from '../../../models/cliente';
     MatProgressSpinnerModule,
     MatRadioModule,
     MatDividerModule,
-    MatSnackBarModule // ✅ AGREGADO AL MÓDULO
+    MatSnackBarModule 
   ],
   templateUrl: './cliente-modal.html',
   styleUrls: ['./cliente-modal.css']
@@ -38,6 +39,7 @@ import { ClienteRequest } from '../../../models/cliente';
 export class ClienteModalComponent implements OnInit {
   clienteForm!: FormGroup;
   isLoading = false;
+  isSearchingApi = false; 
   modoEdicion = false;
 
   tiposDocumentoPersona = [
@@ -58,7 +60,8 @@ export class ClienteModalComponent implements OnInit {
     private fb: FormBuilder,
     private clienteService: ClienteService,
     private cdr: ChangeDetectorRef, 
-    private snackBar: MatSnackBar, // ✅ INYECTADO PARA EL MENSAJE FLOTANTE
+    private snackBar: MatSnackBar,
+    private consultaService: ConsultaService, 
     public dialogRef: MatDialogRef<ClienteModalComponent>,
     @Inject(MAT_DIALOG_DATA) public data: any
   ) {}
@@ -71,13 +74,12 @@ export class ClienteModalComponent implements OnInit {
       this.cargarDatosCliente(this.data.cliente);
     }
 
-    // Configuración inicial
     this.configurarValidacionesDinamicas();
   }
 
   inicializarFormulario(): void {
     this.clienteForm = this.fb.group({
-      tipoCliente: ['EMPRESA', Validators.required], // ✅ AHORA "EMPRESA" ES EL DEFAULT
+      tipoCliente: ['EMPRESA', Validators.required],
       nombreCompleto: [''],
       razonSocial: ['', Validators.required],
       nombreContacto: [''],
@@ -102,7 +104,6 @@ export class ClienteModalComponent implements OnInit {
       this.actualizarValidacionesPorDocumento(tipoDoc);
     });
 
-    // Ejecutar validación inicial
     this.actualizarValidacionesPorTipo(this.clienteForm.get('tipoCliente')?.value);
   }
 
@@ -110,25 +111,21 @@ export class ClienteModalComponent implements OnInit {
     const nombreCompleto = this.clienteForm.get('nombreCompleto');
     const razonSocial = this.clienteForm.get('razonSocial');
     const tipoDocumento = this.clienteForm.get('tipoDocumento');
-    const numeroDocumento = this.clienteForm.get('numeroDocumento');
 
-    // Reseteamos validaciones primero para evitar conflictos
     nombreCompleto?.clearValidators();
     razonSocial?.clearValidators();
 
     if (tipo === 'PERSONA') {
       nombreCompleto?.setValidators([Validators.required]);
       
-      // Si cambiamos a persona, volvemos a DNI si estaba en RUC
       if (tipoDocumento?.value === 'RUC') {
-        tipoDocumento?.setValue('DNI', { emitEvent: false }); // No emitir para evitar loop
-        this.actualizarValidacionesPorDocumento('DNI'); // Llamada manual
+        tipoDocumento?.setValue('DNI', { emitEvent: false });
+        this.actualizarValidacionesPorDocumento('DNI');
       }
       
     } else { // EMPRESA
       razonSocial?.setValidators([Validators.required]);
       
-      // Forzamos RUC
       tipoDocumento?.setValue('RUC', { emitEvent: false });
       this.actualizarValidacionesPorDocumento('RUC');
     }
@@ -144,15 +141,9 @@ export class ClienteModalComponent implements OnInit {
     numeroDoc?.clearValidators();
 
     if (tipoDoc === 'DNI') {
-      numeroDoc?.setValidators([
-        Validators.required,
-        Validators.pattern(/^\d{8}$/)
-      ]);
+      numeroDoc?.setValidators([Validators.required, Validators.pattern(/^\d{8}$/)]);
     } else if (tipoDoc === 'RUC') {
-      numeroDoc?.setValidators([
-        Validators.required,
-        Validators.pattern(/^(10|15|17|20)\d{9}$/)
-      ]);
+      numeroDoc?.setValidators([Validators.required, Validators.pattern(/^(10|15|17|20)\d{9}$/)]);
     } else {
       numeroDoc?.setValidators([Validators.required]);
     }
@@ -161,46 +152,78 @@ export class ClienteModalComponent implements OnInit {
   }
 
   cargarDatosCliente(cliente: any): void {
-    this.clienteForm.patchValue({
-      tipoCliente: cliente.tipoCliente,
-      nombreCompleto: cliente.nombreCompleto,
-      razonSocial: cliente.razonSocial,
-      nombreContacto: cliente.nombreContacto,
-      tipoDocumento: cliente.tipoDocumento,
-      numeroDocumento: cliente.numeroDocumento,
-      telefono: cliente.telefono,
-      email: cliente.email,
-      direccion: cliente.direccion,
-      distrito: cliente.distrito,
-      provincia: cliente.provincia,
-      departamento: cliente.departamento,
-      notas: cliente.notas
-    });
-    
-    // Forzamos la actualización de la UI
+    this.clienteForm.patchValue(cliente);
     this.cdr.detectChanges();
   }
 
-  esPersona(): boolean {
-    return this.clienteForm.get('tipoCliente')?.value === 'PERSONA';
-  }
-
-  esEmpresa(): boolean {
-    return this.clienteForm.get('tipoCliente')?.value === 'EMPRESA';
-  }
+  esPersona(): boolean { return this.clienteForm.get('tipoCliente')?.value === 'PERSONA'; }
+  esEmpresa(): boolean { return this.clienteForm.get('tipoCliente')?.value === 'EMPRESA'; }
 
   getErrorDocumento(): string {
     const control = this.clienteForm.get('numeroDocumento');
     const tipoDoc = this.clienteForm.get('tipoDocumento')?.value;
 
     if (control?.hasError('required')) return 'Documento obligatorio';
-    
     if (control?.hasError('pattern')) {
       if (tipoDoc === 'DNI') return 'DNI inválido (8 dígitos)';
-      if (tipoDoc === 'RUC') return 'RUC inválido (11 dígitos, inicia con 10, 15, 17 o 20)';
+      if (tipoDoc === 'RUC') return 'RUC inválido (11 dígitos)';
       return 'Formato inválido';
     }
     return '';
+  }
+
+  // ⭐ BÚSQUEDA MÁGICA EN SUNAT / RENIEC ⭐
+  buscarDocumentoApi(): void {
+    const documento = this.clienteForm.get('numeroDocumento')?.value;
+
+    if (!documento || (documento.length !== 8 && documento.length !== 11)) {
+      this.snackBar.open('El documento debe tener 8 (DNI) o 11 (RUC) dígitos', 'Cerrar', { duration: 3000 });
+      return;
+    }
+
+    this.isSearchingApi = true;
+    this.cdr.detectChanges();
+
+    this.consultaService.consultarDocumento(documento).subscribe({
+      next: (data: any) => {
+        // Si es RUC
+        if (documento.length === 11) {
+          this.clienteForm.patchValue({
+            // Leemos razon_social según manual de Decolecta
+            razonSocial: data.razon_social || data.razonSocial || '',
+            direccion: data.direccion || '',
+            departamento: data.departamento ? this.capitalizarPrimeraLetra(data.departamento) : '',
+            provincia: data.provincia ? this.capitalizarPrimeraLetra(data.provincia) : '',
+            distrito: data.distrito ? this.capitalizarPrimeraLetra(data.distrito) : ''
+          });
+        } 
+        // Si es DNI
+        else if (documento.length === 8) {
+          // Prevenimos campos nulos o formatos diferentes
+          const nombres = data.nombres || '';
+          const apPaterno = data.apellido_paterno || data.apellidoPaterno || '';
+          const apMaterno = data.apellido_materno || data.apellidoMaterno || '';
+          
+          this.clienteForm.patchValue({
+            nombreCompleto: `${nombres} ${apPaterno} ${apMaterno}`.trim()
+          });
+        }
+
+        this.snackBar.open('¡Datos encontrados exitosamente!', 'OK', { duration: 2000, panelClass: 'snackbar-success' });
+        this.isSearchingApi = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.snackBar.open('Documento no encontrado o API no disponible', 'Cerrar', { duration: 3000, panelClass: 'error-snackbar' });
+        this.isSearchingApi = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  private capitalizarPrimeraLetra(texto: string): string {
+    if (!texto) return '';
+    return texto.charAt(0).toUpperCase() + texto.slice(1).toLowerCase();
   }
 
   guardar(): void {
@@ -212,7 +235,6 @@ export class ClienteModalComponent implements OnInit {
     this.isLoading = true;
     const formValue = this.clienteForm.value;
 
-    // Preparar el objeto limpio (null en vez de string vacío)
     const clienteData: ClienteRequest = {
       tipoCliente: formValue.tipoCliente,
       nombreCompleto: this.esPersona() ? formValue.nombreCompleto : null,
@@ -239,16 +261,8 @@ export class ClienteModalComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error:', error);
-        const mensajeError = error.error?.mensaje || 'Error al guardar el cliente. Verifica el RUC/DNI.';
-        
-        // ✅ USAMOS SNACKBAR EN LUGAR DE LA VARIABLE DE ERROR
-        this.snackBar.open(mensajeError, 'Cerrar', {
-          duration: 5000,
-          horizontalPosition: 'center',
-          verticalPosition: 'bottom',
-          panelClass: ['error-snackbar'] // Estilo opcional para color rojo
-        });
-        
+        const mensajeError = error.error?.mensaje || 'Error al guardar el cliente.';
+        this.snackBar.open(mensajeError, 'Cerrar', { duration: 5000, panelClass: ['error-snackbar'] });
         this.isLoading = false;
         this.cdr.detectChanges();
       }

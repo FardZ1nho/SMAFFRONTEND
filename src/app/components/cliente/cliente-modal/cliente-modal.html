@@ -21,9 +21,49 @@
           </mat-radio-button>
           <mat-radio-button value="PERSONA">
             <mat-icon>person</mat-icon>
-            Persona con Documento de Identidad
+            Persona
           </mat-radio-button>
         </mat-radio-group>
+      </section>
+
+      <mat-divider></mat-divider>
+
+      <section class="form-section">
+        <h3>Documento de Identidad</h3>
+        <div class="form-row two-columns">
+          
+          <mat-form-field appearance="outline" *ngIf="esPersona()">
+            <mat-label>Tipo de Documento</mat-label>
+            <mat-select formControlName="tipoDocumento">
+              <mat-option *ngFor="let tipo of tiposDocumentoPersona" [value]="tipo.value">
+                {{ tipo.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" *ngIf="esEmpresa()">
+            <mat-label>Tipo de Documento</mat-label>
+            <input matInput value="RUC" readonly disabled>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Número de Documento</mat-label>
+            <mat-icon matPrefix>badge</mat-icon>
+            <input matInput formControlName="numeroDocumento" 
+                   [placeholder]="esPersona() ? 'Ej: 12345678' : 'Ej: 20123456789'"
+                   (keyup.enter)="buscarDocumentoApi()">
+            
+            <button mat-icon-button matSuffix color="primary" 
+                    (click)="buscarDocumentoApi()" 
+                    [disabled]="isSearchingApi || clienteForm.get('numeroDocumento')?.invalid"
+                    matTooltip="Buscar en SUNAT/RENIEC">
+              <mat-icon *ngIf="!isSearchingApi">search</mat-icon>
+              <mat-spinner *ngIf="isSearchingApi" diameter="20"></mat-spinner>
+            </button>
+
+            <mat-error *ngIf="clienteForm.get('numeroDocumento')?.invalid">{{ getErrorDocumento() }}</mat-error>
+          </mat-form-field>
+        </div>
       </section>
 
       <mat-divider></mat-divider>
@@ -59,36 +99,6 @@
             <mat-label>Nombre de Contacto (Opcional)</mat-label>
             <mat-icon matPrefix>contact_page</mat-icon>
             <input matInput formControlName="nombreContacto" placeholder="Persona de contacto">
-          </mat-form-field>
-        </div>
-      </section>
-
-      <mat-divider></mat-divider>
-
-      <section class="form-section">
-        <h3>Documento de Identidad</h3>
-        <div class="form-row two-columns">
-          
-          <mat-form-field appearance="outline" *ngIf="esPersona()">
-            <mat-label>Tipo de Documento</mat-label>
-            <mat-select formControlName="tipoDocumento">
-              <mat-option *ngFor="let tipo of tiposDocumentoPersona" [value]="tipo.value">
-                {{ tipo.label }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" *ngIf="esEmpresa()">
-            <mat-label>Tipo de Documento</mat-label>
-            <input matInput value="RUC" readonly disabled>
-            </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Número de Documento</mat-label>
-            <mat-icon matPrefix>badge</mat-icon>
-            <input matInput formControlName="numeroDocumento" 
-                   [placeholder]="esPersona() ? 'Ej: 12345678' : 'Ej: 20123456789'">
-            <mat-error *ngIf="clienteForm.get('numeroDocumento')?.invalid">{{ getErrorDocumento() }}</mat-error>
           </mat-form-field>
         </div>
       </section>

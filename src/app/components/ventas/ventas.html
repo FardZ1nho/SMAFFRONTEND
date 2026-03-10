@@ -196,7 +196,7 @@
           <label class="section-label-small">Registrar Pagos</label>
           
           <div class="add-pago-form">
-         <div class="pago-row">
+            <div class="pago-row">
               <mat-form-field appearance="outline" class="dense-input" style="flex: 3;">
                 <mat-label>Método</mat-label>
                 <mat-select [(ngModel)]="pagoActual.metodoPago">
@@ -325,7 +325,7 @@
           <strong>{{ moneda === 'PEN' ? 'S/' : '$' }} {{ total | number:'1.2-2' }}</strong>
         </div>
 
-        <div class="status-pago" [class.incompleto]="tipoPago === 'CONTADO' && totalPagadoAcumulado < (total - 0.10)"
+        <div class="status-pago" [class.incompleto]="tipoPago === eTipoPago.CONTADO && totalPagadoAcumulado < (total - 0.10)"
                                  [class.completo]="totalPagadoAcumulado >= (total - 0.10)">
           <span *ngIf="totalPagadoAcumulado >= (total - 0.10)">✅ Cubierto</span>
           <span *ngIf="totalPagadoAcumulado < (total - 0.10)">

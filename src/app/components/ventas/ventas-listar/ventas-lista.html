@@ -42,7 +42,7 @@
                     <div class="stat-card">
                         <div class="stat-icon green"><mat-icon>payments</mat-icon></div>
                         <div class="stat-data">
-                            <span class="stat-label">Ingreso Neto (Filtro Actual)</span>
+                            <span class="stat-label">Ingreso Neto (Expresado en Soles)</span>
                             <span class="stat-value">S/ {{ ingresoNetoReal.toFixed(2) }}</span>
                             <div style="font-size: 10px; color: #64748b; margin-top: 2px;">
                                 Bruto: {{ totalVentas | number:'1.0-0' }} | Devoluciones: -{{ totalNotasCredito | number:'1.0-0' }}
@@ -175,10 +175,10 @@
                                 <th mat-header-cell *matHeaderCellDef>Monto</th>
                                 <td mat-cell *matCellDef="let venta">
                                     <div style="display: flex; flex-direction: column; align-items: flex-end;">
-                                        <span class="amount-val">S/ {{ venta.total.toFixed(2) }}</span>
+                                        <span class="amount-val">{{ venta.moneda === 'USD' ? '$' : 'S/' }} {{ venta.total.toFixed(2) }}</span>
                                         <span *ngIf="venta.estado === 'PENDIENTE'"
                                             style="font-size: 11px; color: #dc2626; font-weight: 600;">
-                                            Debe: S/ {{ venta.saldoPendiente?.toFixed(2) }}
+                                            Debe: {{ venta.moneda === 'USD' ? '$' : 'S/' }} {{ venta.saldoPendiente?.toFixed(2) }}
                                         </span>
                                     </div>
                                 </td>
@@ -260,7 +260,7 @@
 
                 <div class="stats-row-deudas">
                     <div class="stat-card-debt total-debt">
-                        <div class="stat-label">Total por Cobrar</div>
+                        <div class="stat-label">Total por Cobrar (Expresado en Soles)</div>
                         <div class="stat-value-debt text-danger">S/ {{ totalPorCobrar | number:'1.2-2' }}</div>
                     </div>
                     <div class="stat-card-debt">
@@ -306,7 +306,7 @@
 
                             <ng-container matColumnDef="total">
                                 <th mat-header-cell *matHeaderCellDef>Total Orig.</th>
-                                <td mat-cell *matCellDef="let row">S/ {{ row.total | number:'1.2-2' }}</td>
+                                <td mat-cell *matCellDef="let row">{{ row.moneda === 'USD' ? '$' : 'S/' }} {{ row.total | number:'1.2-2' }}</td>
                             </ng-container>
 
                             <ng-container matColumnDef="abonado">
@@ -325,7 +325,7 @@
                             <ng-container matColumnDef="saldo">
                                 <th mat-header-cell *matHeaderCellDef>Deuda Actual</th>
                                 <td mat-cell *matCellDef="let row">
-                                    <span class="debt-amount">S/ {{ row.saldoPendiente | number:'1.2-2' }}</span>
+                                    <span class="debt-amount">{{ row.moneda === 'USD' ? '$' : 'S/' }} {{ row.saldoPendiente | number:'1.2-2' }}</span>
                                 </td>
                             </ng-container>
 

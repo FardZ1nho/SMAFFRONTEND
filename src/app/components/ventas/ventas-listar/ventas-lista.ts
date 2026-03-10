@@ -15,7 +15,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatDialog } from '@angular/material/dialog';
 import { MatTabsModule } from '@angular/material/tabs'; 
 import { MatProgressBarModule } from '@angular/material/progress-bar'; 
-import { MatPaginatorModule, MatPaginator } from '@angular/material/paginator'; // ✅ Importamos Paginador
+import { MatPaginatorModule, MatPaginator } from '@angular/material/paginator';
 import { Router } from '@angular/router';
 
 import { VentaService } from '../../../services/venta-service';
@@ -32,7 +32,7 @@ import { AmortizarModalComponent } from '../amortizar-modal/amortizar-modal';
         CommonModule, FormsModule, MatTableModule, MatButtonModule, MatIconModule,
         MatInputModule, MatFormFieldModule, MatSelectModule, MatChipsModule,
         MatTooltipModule, MatProgressSpinnerModule, MatSnackBarModule, MatMenuModule,
-        MatTabsModule, MatProgressBarModule, MatPaginatorModule // ✅ Añadido al import
+        MatTabsModule, MatProgressBarModule, MatPaginatorModule
     ],
     templateUrl: './ventas-lista.html',
     styleUrls: ['./ventas-lista.css']
@@ -48,11 +48,11 @@ export class VentasListaComponent implements OnInit {
     totalPorCobrar: number = 0;
     clientesDeudores: number = 0;
     
-    // ✅ Filtros Extendidos
+    // Filtros Extendidos
     terminoBusqueda: string = '';
     estadoFiltro: string = 'TODAS';
     metodoPagoFiltro: string = 'TODOS';
-    fechaInicio: string = ''; // Format YYYY-MM-DD
+    fechaInicio: string = ''; 
     fechaFin: string = '';
 
     // Estados de carga
@@ -76,7 +76,6 @@ export class VentasListaComponent implements OnInit {
         { value: EstadoVenta.CANCELADA, label: 'Canceladas' }
     ];
 
-    // ✅ Paginadores usando Setters (Necesario por el *ngIf de los Tabs)
     @ViewChild('paginatorVentas') set matPaginatorVentas(mp: MatPaginator) {
         this.ventasFiltradas.paginator = mp;
     }
@@ -94,7 +93,6 @@ export class VentasListaComponent implements OnInit {
     ) { }
 
     ngOnInit(): void {
-        // Por defecto cargamos el mes actual
         this.establecerMesActual();
         this.cargarVentas();
         this.cargarTotalNotasCredito();
@@ -140,7 +138,7 @@ export class VentasListaComponent implements OnInit {
         this.notaCreditoService.obtenerTotalDevoluciones().subscribe({
             next: (monto) => {
                 this.totalNotasCredito = monto || 0;
-                this.aplicarFiltros(); // Recalcula finanzas 
+                this.aplicarFiltros(); 
             },
             error: (err) => console.error('Error cargando notas de crédito', err)
         });
@@ -151,12 +149,10 @@ export class VentasListaComponent implements OnInit {
     aplicarFiltros(): void {
         let filtradas = [...this.ventas];
 
-        // 1. Filtro por Estado
         if (this.estadoFiltro !== 'TODAS') {
             filtradas = filtradas.filter(v => v.estado === this.estadoFiltro);
         }
 
-        // 2. Filtro por Método de Pago
         if (this.metodoPagoFiltro !== 'TODOS') {
             filtradas = filtradas.filter(v => {
                 if (this.metodoPagoFiltro === 'CREDITO') return v.tipoPago === 'CREDITO';
@@ -165,7 +161,6 @@ export class VentasListaComponent implements OnInit {
             });
         }
 
-        // 3. Filtro por Fechas (Desde - Hasta)
         if (this.fechaInicio && this.fechaFin) {
             const fInicio = new Date(this.fechaInicio + 'T00:00:00');
             const fFin = new Date(this.fechaFin + 'T23:59:59');
@@ -176,7 +171,6 @@ export class VentasListaComponent implements OnInit {
             });
         }
 
-        // 4. Filtro por Texto (Buscador)
         if (this.terminoBusqueda.trim()) {
             const termino = this.terminoBusqueda.toLowerCase();
             filtradas = filtradas.filter(v =>
@@ -186,16 +180,11 @@ export class VentasListaComponent implements OnInit {
             );
         }
 
-        // Asignamos la data final filtrada
         this.ventasFiltradas.data = filtradas;
         
-        // Recalculamos Deudas basándonos en TODAS (no solo las del filtro, las deudas son eternas)
         this.actualizarDeudas(this.terminoBusqueda); 
-
-        // ✅ Magia: Recalculamos las tarjetas KPI usando SOLO lo filtrado
         this.calcularFinanzasDinamicas(filtradas);
 
-        // Regresar a la pagina 1 si hay paginador
         if (this.ventasFiltradas.paginator) {
             this.ventasFiltradas.paginator.firstPage();
         }
@@ -214,7 +203,16 @@ export class VentasListaComponent implements OnInit {
         }
 
         this.deudasFiltradas.data = deudas;
-        this.totalPorCobrar = deudas.reduce((acc, v) => acc + (v.saldoPendiente || 0), 0);
+        
+        // 🔥 CORRECCIÓN: Convierte deudas en USD a PEN para el resumen global
+        this.totalPorCobrar = deudas.reduce((acc, v) => {
+            let saldo = v.saldoPendiente || 0;
+            if (v.moneda === 'USD') {
+                saldo = saldo * (v.tipoCambio || 3.80); // Usa el tipo de cambio de la venta
+            }
+            return acc + saldo;
+        }, 0);
+        
         const uniqueClients = new Set(deudas.map(v => v.nombreCliente));
         this.clientesDeudores = uniqueClients.size;
 
@@ -224,21 +222,31 @@ export class VentasListaComponent implements OnInit {
     }
 
     calcularFinanzasDinamicas(ventasFiltradas: Venta[]): void {
+        // 🔥 CORRECCIÓN: Multiplica las ventas en USD por su tipo de cambio
         let sumaCompletadas = ventasFiltradas
             .filter(v => v.estado === EstadoVenta.COMPLETADA)
-            .reduce((sum, v) => sum + v.total, 0);
+            .reduce((sum, v) => {
+                let total = v.total || 0;
+                if (v.moneda === 'USD') {
+                    total = total * (v.tipoCambio || 3.80);
+                }
+                return sum + total;
+            }, 0);
 
         let sumaParciales = ventasFiltradas
             .filter(v => v.estado === EstadoVenta.PENDIENTE)
             .reduce((sum, v) => {
-                const inicial = v.montoInicial || 0;
-                const abonos = v.pagos ? v.pagos.reduce((acc, p) => acc + p.monto, 0) : 0;
-                return sum + inicial + abonos;
+                let inicial = v.montoInicial || 0;
+                let abonos = v.pagos ? v.pagos.reduce((acc, p) => acc + p.monto, 0) : 0;
+                let pagadoTotal = inicial + abonos;
+                
+                if (v.moneda === 'USD') {
+                    pagadoTotal = pagadoTotal * (v.tipoCambio || 3.80);
+                }
+                return sum + pagadoTotal;
             }, 0);
 
         this.totalVentas = sumaCompletadas + sumaParciales;
-        
-        // (Nota: El ingreso real total descuenta las NC globales por ahora)
         this.ingresoNetoReal = this.totalVentas - this.totalNotasCredito;
     }
 

@@ -9,9 +9,14 @@
     <div style="display: flex; gap: 10px; align-items: center; background: white; padding: 10px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); flex-wrap: wrap;">
       
       <select [(ngModel)]="filtroActual" (change)="aplicarFiltros()" style="padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; background-color: #f8fafc; font-weight: 500; color: #1e293b; outline: none; cursor: pointer;">
-        <option value="TODOS">Todos (General)</option>
+        <option value="TODOS">Todos (Flujos)</option>
         <option value="INGRESO">Solo Ingresos (Ventas)</option>
         <option value="EGRESO">Solo Egresos (Compras)</option>
+      </select>
+
+      <select [(ngModel)]="filtroComprobante" (change)="aplicarFiltros()" style="padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; background-color: #f8fafc; font-weight: 500; color: #1e293b; outline: none; cursor: pointer;">
+        <option value="TODOS">Todos (Comprobantes)</option>
+        <option *ngFor="let tipo of tiposComprobantesDisponibles" [value]="tipo">{{ tipo }}</option>
       </select>
 
       <div style="width: 1px; height: 24px; background-color: #e2e8f0; margin: 0 5px;"></div>
@@ -125,9 +130,9 @@
         <thead style="background-color: #f8fafc; border-bottom: 2px solid #e2e8f0; color: #475569;">
           <tr>
             <th style="padding: 12px 10px;">Fecha</th>
-            <th style="padding: 12px 10px;">Tipo</th>
+            <th style="padding: 12px 10px;">Tipo Flujo</th>
             <th style="padding: 12px 10px;">Comprobante</th>
-            <th style="padding: 12px 10px;">RUC</th>
+            <th style="padding: 12px 10px;">RUC / DNI</th>
             <th style="padding: 12px 10px;">Razón Social</th>
             <th style="padding: 12px 10px; text-align: right;">SubTotal</th>
             <th style="padding: 12px 10px; text-align: right;">IGV</th>
@@ -168,7 +173,7 @@
           </tr>
           <tr *ngIf="transaccionesMostradas.length === 0">
             <td colspan="12" style="padding: 40px; text-align: center; color: #94a3b8; font-size: 15px;">
-              No hay movimientos financieros que coincidan con tu búsqueda.
+              No hay movimientos financieros que coincidan con tus filtros.
             </td>
           </tr>
         </tbody>

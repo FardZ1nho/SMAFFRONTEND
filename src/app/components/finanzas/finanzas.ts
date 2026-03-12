@@ -6,11 +6,9 @@ import { FinanzasDashboard, TransaccionFinanciera } from '../../models/finanzas'
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
-// ✅ NUEVAS LIBRERÍAS (Excel y Gráficos)
 import * as XLSX from 'xlsx';
 import { Chart, registerables } from 'chart.js';
 
-// Registrar componentes de Chart.js
 Chart.register(...registerables);
 
 @Component({
@@ -25,7 +23,6 @@ export class FinanzasComponent implements OnInit {
   dashboardData: FinanzasDashboard | null = null;
   transacciones: TransaccionFinanciera[] = [];
   
-  // ✅ NUEVO: Variables para buscador y tabla
   transaccionesMostradas: TransaccionFinanciera[] = [];
   terminoBusqueda: string = '';
   chartInstance: any;
@@ -35,6 +32,10 @@ export class FinanzasComponent implements OnInit {
   cargando: boolean = true;
   
   filtroActual: 'TODOS' | 'INGRESO' | 'EGRESO' = 'TODOS';
+  
+  // ✅ NUEVAS VARIABLES: Filtro de comprobantes
+  filtroComprobante: string = 'TODOS';
+  tiposComprobantesDisponibles: string[] = [];
 
   constructor(
     private finanzasService: FinanzasService,
@@ -55,7 +56,16 @@ export class FinanzasComponent implements OnInit {
       next: (data) => {
         this.dashboardData = data;
         this.transacciones = data.transacciones || [];
-        this.aplicarFiltros(); // ✅ Aplica filtros apenas llega la data
+        
+        // ✅ Extraer dinámicamente los tipos de comprobantes que existen en la data
+        this.tiposComprobantesDisponibles = [...new Set(this.transacciones
+          .map(t => t.tipoComprobante)
+          .filter(t => !!t))]; // Filtra nulos o vacíos
+
+        // Resetear el filtro de comprobante al cargar nuevas fechas
+        this.filtroComprobante = 'TODOS';
+
+        this.aplicarFiltros(); 
         this.cargando = false;
         this.cdr.detectChanges(); 
       },
@@ -67,16 +77,20 @@ export class FinanzasComponent implements OnInit {
     });
   }
 
-  // ✅ NUEVA LÓGICA: Ahora es una función para poder disparar el gráfico cuando cambie
   aplicarFiltros(): void {
     let filtradas = this.transacciones;
 
-    // 1. Filtro por Tipo (Dropdown)
+    // 1. Filtro por Tipo de Flujo (Ingreso/Egreso)
     if (this.filtroActual !== 'TODOS') {
       filtradas = filtradas.filter(t => t.tipo === this.filtroActual);
     }
 
-    // 2. Filtro por Buscador (Input de texto)
+    // ✅ 2. NUEVO: Filtro por Tipo de Comprobante (Factura, Boleta, etc.)
+    if (this.filtroComprobante !== 'TODOS') {
+      filtradas = filtradas.filter(t => t.tipoComprobante === this.filtroComprobante);
+    }
+
+    // 3. Filtro por Buscador de texto
     if (this.terminoBusqueda.trim()) {
       const term = this.terminoBusqueda.toLowerCase();
       filtradas = filtradas.filter(t => 
@@ -88,23 +102,18 @@ export class FinanzasComponent implements OnInit {
 
     this.transaccionesMostradas = filtradas;
     
-    // Generar el gráfico después de que Angular pinte el HTML
     setTimeout(() => this.generarGrafico(), 50);
   }
 
-  // ✅ NUEVO: Función para generar el Gráfico de Barras
   generarGrafico(): void {
     const canvas = document.getElementById('finanzasChart') as HTMLCanvasElement;
     if (!canvas) return;
 
     if (this.chartInstance) {
-      this.chartInstance.destroy(); // Destruye el anterior si existe
+      this.chartInstance.destroy(); 
     }
 
-    // Agrupar los montos por fecha para el gráfico
     const resumenPorFecha = new Map<string, { ingresos: number, egresos: number }>();
-    
-    // Invertimos para que las fechas más antiguas salgan primero en el gráfico
     const dataOrdenada = [...this.transaccionesMostradas].reverse();
 
     dataOrdenada.forEach(t => {
@@ -140,17 +149,15 @@ export class FinanzasComponent implements OnInit {
     });
   }
 
-  // ✅ NUEVO: Función de Exportar a Excel
   exportarExcel(): void {
     if (this.transaccionesMostradas.length === 0) {
       alert("No hay datos para exportar.");
       return;
     }
 
-    // Mapeamos los datos a columnas de Excel
     const dataParaExcel = this.transaccionesMostradas.map(t => ({
       'Fecha': new Date(t.fechaHora).toLocaleDateString('es-PE'),
-      'Tipo': t.tipo === 'INGRESO' ? 'INGRESO' : 'EGRESO',
+      'Tipo Flujo': t.tipo === 'INGRESO' ? 'INGRESO' : 'EGRESO',
       'Documento': t.tipoComprobante,
       'Número': t.comprobante,
       'RUC / DNI': t.ruc || 'S/D',
@@ -220,7 +227,7 @@ export class FinanzasComponent implements OnInit {
 
     autoTable(doc, {
       startY: 28,
-      head: [['Fecha', 'Tipo', 'Comprobante', 'RUC', 'Razón Social', 'Mon', 'SubTotal', 'IGV', 'Detrac.', 'Reten.', 'Percep.', 'Total', 'TC']],
+      head: [['Fecha', 'Flujo', 'Comprobante', 'RUC', 'Razón Social', 'Mon', 'SubTotal', 'IGV', 'Detrac.', 'Reten.', 'Percep.', 'Total', 'TC']],
       body: bodyData,
       theme: 'striped',
       styles: { fontSize: 7, cellPadding: 2, textColor: [40, 40, 40], lineColor: [215, 220, 225], lineWidth: 0.1 },

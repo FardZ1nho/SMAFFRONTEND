@@ -14,10 +14,31 @@
         <option value="EGRESO">Solo Egresos (Compras)</option>
       </select>
 
-      <select [(ngModel)]="filtroComprobante" (change)="aplicarFiltros()" style="padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; background-color: #f8fafc; font-weight: 500; color: #1e293b; outline: none; cursor: pointer;">
-        <option value="TODOS">Todos (Comprobantes)</option>
-        <option *ngFor="let tipo of tiposComprobantesDisponibles" [value]="tipo">{{ tipo }}</option>
-      </select>
+      <div style="position: relative;">
+        <div *ngIf="dropdownComprobantesAbierto" (click)="dropdownComprobantesAbierto = false" style="position: fixed; inset: 0; z-index: 90;"></div>
+        
+        <button (click)="dropdownComprobantesAbierto = !dropdownComprobantesAbierto" style="position: relative; z-index: 100; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; background-color: #f8fafc; font-weight: 500; color: #1e293b; cursor: pointer; display: flex; align-items: center; gap: 8px; font-family: inherit;">
+          Comprobantes ({{ filtrosComprobantes.length }})
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16"><path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/></svg>
+        </button>
+
+        <div *ngIf="dropdownComprobantesAbierto" style="position: absolute; top: calc(100% + 5px); left: 0; background: white; border: 1px solid #cbd5e1; border-radius: 6px; padding: 12px; z-index: 101; width: 220px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); display: flex; flex-direction: column; gap: 10px;">
+          
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; font-weight: 600; color: #0f172a;">
+            <input type="checkbox" (change)="toggleTodosComprobantes($event)" [checked]="filtrosComprobantes.length === tiposComprobantesDisponibles.length">
+            Seleccionar Todos
+          </label>
+          
+          <hr style="margin: 0; border: 0; border-top: 1px solid #e2e8f0;">
+          
+          <div style="display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto;">
+            <label *ngFor="let tipo of tiposComprobantesDisponibles" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; color: #475569;">
+              <input type="checkbox" [checked]="filtrosComprobantes.includes(tipo)" (change)="toggleComprobante(tipo)">
+              {{ tipo }}
+            </label>
+          </div>
+        </div>
+      </div>
 
       <div style="width: 1px; height: 24px; background-color: #e2e8f0; margin: 0 5px;"></div>
 

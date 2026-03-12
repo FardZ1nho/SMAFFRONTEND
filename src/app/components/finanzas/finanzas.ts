@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, AfterViewInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FinanzasService } from '../../services/finanzas-service';
@@ -33,9 +33,10 @@ export class FinanzasComponent implements OnInit {
   
   filtroActual: 'TODOS' | 'INGRESO' | 'EGRESO' = 'TODOS';
   
-  // ✅ NUEVAS VARIABLES: Filtro de comprobantes
-  filtroComprobante: string = 'TODOS';
+  // ✅ NUEVAS VARIABLES: Filtro Múltiple de Comprobantes
   tiposComprobantesDisponibles: string[] = [];
+  filtrosComprobantes: string[] = []; 
+  dropdownComprobantesAbierto: boolean = false; // Controla si la lista está visible
 
   constructor(
     private finanzasService: FinanzasService,
@@ -57,13 +58,13 @@ export class FinanzasComponent implements OnInit {
         this.dashboardData = data;
         this.transacciones = data.transacciones || [];
         
-        // ✅ Extraer dinámicamente los tipos de comprobantes que existen en la data
+        // 1. Extraemos los comprobantes únicos que existen en esta data
         this.tiposComprobantesDisponibles = [...new Set(this.transacciones
           .map(t => t.tipoComprobante)
-          .filter(t => !!t))]; // Filtra nulos o vacíos
+          .filter(t => !!t))];
 
-        // Resetear el filtro de comprobante al cargar nuevas fechas
-        this.filtroComprobante = 'TODOS';
+        // 2. Por defecto, seleccionamos todos para que la tabla empiece llena
+        this.filtrosComprobantes = [...this.tiposComprobantesDisponibles];
 
         this.aplicarFiltros(); 
         this.cargando = false;
@@ -77,6 +78,26 @@ export class FinanzasComponent implements OnInit {
     });
   }
 
+  // ✅ LOGICA DE SELECCIÓN MÚLTIPLE
+  toggleComprobante(tipo: string): void {
+    const index = this.filtrosComprobantes.indexOf(tipo);
+    if (index > -1) {
+      this.filtrosComprobantes.splice(index, 1); // Lo quita
+    } else {
+      this.filtrosComprobantes.push(tipo); // Lo agrega
+    }
+    this.aplicarFiltros();
+  }
+
+  toggleTodosComprobantes(event: any): void {
+    if (event.target.checked) {
+      this.filtrosComprobantes = [...this.tiposComprobantesDisponibles]; // Selecciona todos
+    } else {
+      this.filtrosComprobantes = []; // Deselecciona todos
+    }
+    this.aplicarFiltros();
+  }
+
   aplicarFiltros(): void {
     let filtradas = this.transacciones;
 
@@ -85,9 +106,11 @@ export class FinanzasComponent implements OnInit {
       filtradas = filtradas.filter(t => t.tipo === this.filtroActual);
     }
 
-    // ✅ 2. NUEVO: Filtro por Tipo de Comprobante (Factura, Boleta, etc.)
-    if (this.filtroComprobante !== 'TODOS') {
-      filtradas = filtradas.filter(t => t.tipoComprobante === this.filtroComprobante);
+    // 2. Filtro por Tipo de Comprobante (Múltiple)
+    if (this.filtrosComprobantes.length === 0) {
+      filtradas = []; // Si no hay nada marcado, la tabla queda vacía
+    } else {
+      filtradas = filtradas.filter(t => this.filtrosComprobantes.includes(t.tipoComprobante));
     }
 
     // 3. Filtro por Buscador de texto
@@ -102,6 +125,7 @@ export class FinanzasComponent implements OnInit {
 
     this.transaccionesMostradas = filtradas;
     
+    // Generar el gráfico con la data ya filtrada
     setTimeout(() => this.generarGrafico(), 50);
   }
 

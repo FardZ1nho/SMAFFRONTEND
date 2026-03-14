@@ -23,6 +23,9 @@ export class FinanzasComponent implements OnInit {
   dashboardData: FinanzasDashboard | null = null;
   transacciones: TransaccionFinanciera[] = [];
   
+  transaccionesAnuales: TransaccionFinanciera[] = []; 
+  anioActual: number = new Date().getFullYear();
+
   transaccionesMostradas: TransaccionFinanciera[] = [];
   terminoBusqueda: string = '';
   chartInstance: any;
@@ -33,10 +36,13 @@ export class FinanzasComponent implements OnInit {
   
   filtroActual: 'TODOS' | 'INGRESO' | 'EGRESO' = 'TODOS';
   
-  // ✅ NUEVAS VARIABLES: Filtro Múltiple de Comprobantes
   tiposComprobantesDisponibles: string[] = [];
   filtrosComprobantes: string[] = []; 
-  dropdownComprobantesAbierto: boolean = false; // Controla si la lista está visible
+  dropdownComprobantesAbierto: boolean = false; 
+
+  totalesDinamicos = { ingresos: 0, egresos: 0, neto: 0, igvVentas: 0, igvCompras: 0, balanceIgv: 0, detracciones: 0, retenciones: 0, percepciones: 0 };
+  
+  totalesAnuales = { ingresos: 0, egresos: 0, neto: 0, igvVentas: 0, igvCompras: 0, balanceIgv: 0, detracciones: 0, retenciones: 0, percepciones: 0 };
 
   constructor(
     private finanzasService: FinanzasService,
@@ -45,27 +51,42 @@ export class FinanzasComponent implements OnInit {
 
   ngOnInit(): void {
     const hoy = new Date();
+    this.anioActual = hoy.getFullYear();
     this.fechaInicio = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString().split('T')[0];
     this.fechaFin = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0).toISOString().split('T')[0];
     
-    this.cargarDatos();
+    this.cargarDatosAnuales(); 
+    this.cargarDatos();        
+  }
+
+  cargarDatosAnuales(): void {
+    const inicioAño = `${this.anioActual}-01-01`;
+    const finAño = `${this.anioActual}-12-31`;
+    
+    this.finanzasService.obtenerDashboard(inicioAño, finAño).subscribe({
+      next: (data) => {
+        this.transaccionesAnuales = data.transacciones || [];
+        this.calcularTotalesAnuales(this.transaccionesAnuales);
+        this.extraerComprobantesUnicos();
+      }
+    });
   }
 
   cargarDatos(): void {
     this.cargando = true;
+
+    const nuevoAnio = new Date(this.fechaInicio).getFullYear();
+    if (nuevoAnio !== this.anioActual) {
+      this.anioActual = nuevoAnio;
+      this.cargarDatosAnuales();
+    }
+
     this.finanzasService.obtenerDashboard(this.fechaInicio, this.fechaFin).subscribe({
       next: (data) => {
         this.dashboardData = data;
         this.transacciones = data.transacciones || [];
+        this.extraerComprobantesUnicos();
         
-        // 1. Extraemos los comprobantes únicos que existen en esta data
-        this.tiposComprobantesDisponibles = [...new Set(this.transacciones
-          .map(t => t.tipoComprobante)
-          .filter(t => !!t))];
-
-        // 2. Por defecto, seleccionamos todos para que la tabla empiece llena
-        this.filtrosComprobantes = [...this.tiposComprobantesDisponibles];
-
         this.aplicarFiltros(); 
         this.cargando = false;
         this.cdr.detectChanges(); 
@@ -78,22 +99,34 @@ export class FinanzasComponent implements OnInit {
     });
   }
 
-  // ✅ LOGICA DE SELECCIÓN MÚLTIPLE
+  extraerComprobantesUnicos(): void {
+    const todosLosComprobantes = [...this.transacciones, ...this.transaccionesAnuales]
+      .map(t => t.tipoComprobante)
+      .filter(t => !!t);
+      
+    const unicos = [...new Set(todosLosComprobantes)];
+    
+    if (this.tiposComprobantesDisponibles.length !== unicos.length) {
+      this.tiposComprobantesDisponibles = unicos;
+      this.filtrosComprobantes = [...this.tiposComprobantesDisponibles];
+    }
+  }
+
   toggleComprobante(tipo: string): void {
     const index = this.filtrosComprobantes.indexOf(tipo);
     if (index > -1) {
-      this.filtrosComprobantes.splice(index, 1); // Lo quita
+      this.filtrosComprobantes.splice(index, 1);
     } else {
-      this.filtrosComprobantes.push(tipo); // Lo agrega
+      this.filtrosComprobantes.push(tipo);
     }
     this.aplicarFiltros();
   }
 
   toggleTodosComprobantes(event: any): void {
     if (event.target.checked) {
-      this.filtrosComprobantes = [...this.tiposComprobantesDisponibles]; // Selecciona todos
+      this.filtrosComprobantes = [...this.tiposComprobantesDisponibles]; 
     } else {
-      this.filtrosComprobantes = []; // Deselecciona todos
+      this.filtrosComprobantes = []; 
     }
     this.aplicarFiltros();
   }
@@ -101,19 +134,14 @@ export class FinanzasComponent implements OnInit {
   aplicarFiltros(): void {
     let filtradas = this.transacciones;
 
-    // 1. Filtro por Tipo de Flujo (Ingreso/Egreso)
     if (this.filtroActual !== 'TODOS') {
       filtradas = filtradas.filter(t => t.tipo === this.filtroActual);
     }
-
-    // 2. Filtro por Tipo de Comprobante (Múltiple)
     if (this.filtrosComprobantes.length === 0) {
-      filtradas = []; // Si no hay nada marcado, la tabla queda vacía
+      filtradas = []; 
     } else {
       filtradas = filtradas.filter(t => this.filtrosComprobantes.includes(t.tipoComprobante));
     }
-
-    // 3. Filtro por Buscador de texto
     if (this.terminoBusqueda.trim()) {
       const term = this.terminoBusqueda.toLowerCase();
       filtradas = filtradas.filter(t => 
@@ -124,9 +152,57 @@ export class FinanzasComponent implements OnInit {
     }
 
     this.transaccionesMostradas = filtradas;
-    
-    // Generar el gráfico con la data ya filtrada
+    this.calcularTotalesDinamicos(filtradas);
+
     setTimeout(() => this.generarGrafico(), 50);
+  }
+
+  calcularTotalesDinamicos(filtradas: TransaccionFinanciera[]): void {
+    let ing = 0, egr = 0, igvV = 0, igvC = 0, det = 0, ret = 0, per = 0;
+
+    filtradas.forEach(t => {
+      const factorCambio = t.moneda === 'USD' ? (t.tipoCambio || 3.80) : 1;
+      const totalVal = Number(t.montoTotal || 0) * factorCambio;
+      const igvVal = Number(t.igv || 0) * factorCambio;
+      const detVal = Number(t.detraccion || 0) * factorCambio;
+      const retVal = Number(t.retencion || 0) * factorCambio;
+      const perVal = Number(t.percepcion || 0) * factorCambio;
+
+      if (t.tipo === 'INGRESO') { ing += totalVal; igvV += igvVal; } 
+      else { egr += totalVal; igvC += igvVal; }
+
+      det += detVal; ret += retVal; per += perVal;
+    });
+
+    this.totalesDinamicos = {
+      ingresos: ing, egresos: egr, neto: ing - egr,
+      igvVentas: igvV, igvCompras: igvC, balanceIgv: igvV - igvC,
+      detracciones: det, retenciones: ret, percepciones: per
+    };
+  }
+
+  calcularTotalesAnuales(transacciones: TransaccionFinanciera[]): void {
+    let ing = 0, egr = 0, igvV = 0, igvC = 0, det = 0, ret = 0, per = 0;
+
+    transacciones.forEach(t => {
+      const factorCambio = t.moneda === 'USD' ? (t.tipoCambio || 3.80) : 1;
+      const totalVal = Number(t.montoTotal || 0) * factorCambio;
+      const igvVal = Number(t.igv || 0) * factorCambio;
+      const detVal = Number(t.detraccion || 0) * factorCambio;
+      const retVal = Number(t.retencion || 0) * factorCambio;
+      const perVal = Number(t.percepcion || 0) * factorCambio;
+
+      if (t.tipo === 'INGRESO') { ing += totalVal; igvV += igvVal; } 
+      else { egr += totalVal; igvC += igvVal; }
+
+      det += detVal; ret += retVal; per += perVal;
+    });
+
+    this.totalesAnuales = {
+      ingresos: ing, egresos: egr, neto: ing - egr,
+      igvVentas: igvV, igvCompras: igvC, balanceIgv: igvV - igvC,
+      detracciones: det, retenciones: ret, percepciones: per
+    };
   }
 
   generarGrafico(): void {
@@ -166,9 +242,7 @@ export class FinanzasComponent implements OnInit {
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: {
-          legend: { position: 'bottom' }
-        }
+        plugins: { legend: { position: 'bottom' } }
       }
     });
   }
@@ -200,8 +274,7 @@ export class FinanzasComponent implements OnInit {
     const workbook: XLSX.WorkBook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Finanzas');
 
-    const nombreArchivo = `Reporte_Contable_${this.fechaInicio}.xlsx`;
-    XLSX.writeFile(workbook, nombreArchivo);
+    XLSX.writeFile(workbook, `Reporte_Contable_${this.fechaInicio}.xlsx`);
   }
 
   exportarPDF() {
@@ -249,13 +322,39 @@ export class FinanzasComponent implements OnInit {
       Number(t.tipoCambio || 1).toFixed(3)
     ]);
 
+    let sumSubTotal = 0, sumIgv = 0, sumDet = 0, sumRet = 0, sumPer = 0, sumTotal = 0;
+
+    datosParaExportar.forEach(t => {
+      const factorCambio = t.moneda === 'USD' ? (t.tipoCambio || 3.80) : 1;
+      sumSubTotal += Number(t.subTotal || 0) * factorCambio;
+      sumIgv += Number(t.igv || 0) * factorCambio;
+      sumDet += Number(t.detraccion || 0) * factorCambio;
+      sumRet += Number(t.retencion || 0) * factorCambio;
+      sumPer += Number(t.percepcion || 0) * factorCambio;
+      sumTotal += Number(t.montoTotal || 0) * factorCambio;
+    });
+
+    // ✅ CORRECCIÓN: Estructuramos cada celda del pie de página para obligarla a alinearse a la derecha
+    const footData: any[] = [[
+      { content: 'TOTALES (Expresado en PEN S/)', colSpan: 6, styles: { halign: 'right', fontStyle: 'bold' } },
+      { content: sumSubTotal.toFixed(2), styles: { halign: 'right' } },
+      { content: sumIgv.toFixed(2), styles: { halign: 'right' } },
+      { content: sumDet.toFixed(2), styles: { halign: 'right' } },
+      { content: sumRet.toFixed(2), styles: { halign: 'right' } },
+      { content: sumPer.toFixed(2), styles: { halign: 'right' } },
+      { content: sumTotal.toFixed(2), styles: { halign: 'right' } },
+      '' // Columna de Tipo de Cambio (TC) vacía en el total
+    ]];
+
     autoTable(doc, {
       startY: 28,
       head: [['Fecha', 'Flujo', 'Comprobante', 'RUC', 'Razón Social', 'Mon', 'SubTotal', 'IGV', 'Detrac.', 'Reten.', 'Percep.', 'Total', 'TC']],
       body: bodyData,
+      foot: footData, 
       theme: 'striped',
       styles: { fontSize: 7, cellPadding: 2, textColor: [40, 40, 40], lineColor: [215, 220, 225], lineWidth: 0.1 },
       headStyles: { fillColor: [30, 58, 138], textColor: [255, 255, 255], fontStyle: 'bold' },
+      footStyles: { fillColor: [226, 232, 240], textColor: [15, 23, 42], fontStyle: 'bold' }, 
       alternateRowStyles: { fillColor: [248, 250, 252] },
       columnStyles: {
         1: { fontStyle: 'bold' }, 

@@ -25,6 +25,9 @@ import { VentaDetalleComponent } from '../venta-detalle/venta-detalle';
 import { NotaCreditoModalComponent } from '../nota-credito-modal/nota-credito-modal'; 
 import { AmortizarModalComponent } from '../amortizar-modal/amortizar-modal'; 
 
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+
 @Component({
     selector: 'app-ventas-lista',
     standalone: true,
@@ -39,32 +42,30 @@ import { AmortizarModalComponent } from '../amortizar-modal/amortizar-modal';
 })
 export class VentasListaComponent implements OnInit {
     
-    // === TAB 1: HISTORIAL ===
     ventas: Venta[] = [];
     ventasFiltradas = new MatTableDataSource<Venta>([]);
-    
-    // === TAB 2: CUENTAS POR COBRAR ===
     deudasFiltradas = new MatTableDataSource<Venta>([]);
-    totalPorCobrar: number = 0;
-    clientesDeudores: number = 0;
     
-    // Filtros Extendidos
     terminoBusqueda: string = '';
     estadoFiltro: string = 'TODAS';
     metodoPagoFiltro: string = 'TODOS';
     fechaInicio: string = ''; 
     fechaFin: string = '';
+    anioActual: number = new Date().getFullYear();
 
-    // Estados de carga
+    tiposComprobantesDisponibles: string[] = [];
+    filtrosComprobantes: string[] = []; 
+    dropdownComprobantesAbierto: boolean = false; 
+
     isLoading: boolean = false;
     errorMessage: string = '';
 
-    // Variables Financieras (Dinámicas)
-    totalVentas: number = 0;       
-    totalNotasCredito: number = 0; 
-    ingresoNetoReal: number = 0;    
+    totalesPeriodo = { emitido: 0, recaudado: 0, porCobrar: 0, cantidad: 0 };
+    totalesAnuales = { emitido: 0, recaudado: 0, porCobrar: 0, cantidad: 0 };
 
-    // Columnas
+    totalPorCobrar: number = 0;
+    clientesDeudores: number = 0;
+
     displayedColumns: string[] = ['codigo', 'fechaVenta', 'cliente', 'metodoPago', 'total', 'estado', 'acciones'];
     displayedColumnsDeudas: string[] = ['cliente', 'codigo', 'fechaVenta', 'total', 'abonado', 'saldo', 'acciones'];
 
@@ -95,17 +96,15 @@ export class VentasListaComponent implements OnInit {
     ngOnInit(): void {
         this.establecerMesActual();
         this.cargarVentas();
-        this.cargarTotalNotasCredito();
     }
 
     establecerMesActual(): void {
         const hoy = new Date();
+        this.anioActual = hoy.getFullYear();
         const primerDia = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
         this.fechaInicio = primerDia.toISOString().split('T')[0];
         this.fechaFin = hoy.toISOString().split('T')[0];
     }
-
-    // ========== CARGA DE DATOS ==========
 
     cargarVentas(): void {
         this.isLoading = true;
@@ -119,13 +118,13 @@ export class VentasListaComponent implements OnInit {
                     return fechaB - fechaA; 
                 });
                 
+                this.extraerComprobantesUnicos();
                 this.aplicarFiltros();     
                 
                 this.isLoading = false;
                 this.cdr.detectChanges();
             },
             error: (error) => {
-                console.error('Error al cargar ventas:', error);
                 this.errorMessage = 'Error al cargar las ventas';
                 this.isLoading = false;
                 this.mostrarMensaje('Error al cargar ventas', 'error');
@@ -134,60 +133,109 @@ export class VentasListaComponent implements OnInit {
         });
     }
 
-    cargarTotalNotasCredito(): void {
-        this.notaCreditoService.obtenerTotalDevoluciones().subscribe({
-            next: (monto) => {
-                this.totalNotasCredito = monto || 0;
-                this.aplicarFiltros(); 
-            },
-            error: (err) => console.error('Error cargando notas de crédito', err)
-        });
+    // ✅ CORRECCIÓN 1: Garantizamos que las opciones base siempre estén presentes en el filtro
+    extraerComprobantesUnicos(): void {
+        const tiposBase = ['FACTURA', 'BOLETA', 'NOTA DE VENTA', 'OTROS'];
+        
+        const unicosBD = this.ventas
+            .map(v => v.tipoDocumento ? v.tipoDocumento.toUpperCase() : 'OTROS')
+            .filter(t => !!t);
+        
+        // Unimos los base con los de la BD y quitamos duplicados
+        const unicos = [...new Set([...tiposBase, ...unicosBD])];
+        
+        this.tiposComprobantesDisponibles = unicos;
+        
+        // Si no hay filtros seleccionados (primera vez), marcamos todos
+        if (this.filtrosComprobantes.length === 0) {
+            this.filtrosComprobantes = [...this.tiposComprobantesDisponibles];
+        }
     }
 
-    // ========== FILTROS Y FINANZAS ==========
+    toggleComprobante(tipo: string): void {
+        const index = this.filtrosComprobantes.indexOf(tipo);
+        if (index > -1) {
+            this.filtrosComprobantes.splice(index, 1);
+        } else {
+            this.filtrosComprobantes.push(tipo);
+        }
+        this.aplicarFiltros();
+    }
+
+    toggleTodosComprobantes(event: any): void {
+        if (event.target.checked) {
+            this.filtrosComprobantes = [...this.tiposComprobantesDisponibles]; 
+        } else {
+            this.filtrosComprobantes = []; 
+        }
+        this.aplicarFiltros();
+    }
 
     aplicarFiltros(): void {
-        let filtradas = [...this.ventas];
+        this.anioActual = new Date(this.fechaInicio).getFullYear() || new Date().getFullYear();
 
-        if (this.estadoFiltro !== 'TODAS') {
-            filtradas = filtradas.filter(v => v.estado === this.estadoFiltro);
-        }
+        let baseFiltradas = this.ventas.filter(v => {
+            if (this.estadoFiltro !== 'TODAS' && v.estado !== this.estadoFiltro) return false;
+            
+            if (this.metodoPagoFiltro !== 'TODOS') {
+                if (this.metodoPagoFiltro === 'CREDITO' && v.tipoPago !== 'CREDITO') return false;
+                if (this.metodoPagoFiltro !== 'CREDITO' && (!v.pagos || !v.pagos.some(p => p.metodoPago === this.metodoPagoFiltro))) return false;
+            }
 
-        if (this.metodoPagoFiltro !== 'TODOS') {
-            filtradas = filtradas.filter(v => {
-                if (this.metodoPagoFiltro === 'CREDITO') return v.tipoPago === 'CREDITO';
-                if (!v.pagos || v.pagos.length === 0) return false;
-                return v.pagos.some(p => p.metodoPago === this.metodoPagoFiltro);
-            });
-        }
+            // ✅ CORRECCIÓN 1.1: Estandarizamos a mayúsculas para que el filtrado sea preciso
+            const tipoDoc = v.tipoDocumento ? v.tipoDocumento.toUpperCase() : 'OTROS';
+            const filtrosMayusculas = this.filtrosComprobantes.map(f => f.toUpperCase());
+            
+            if (filtrosMayusculas.length === 0 || !filtrosMayusculas.includes(tipoDoc)) return false;
 
+            if (this.terminoBusqueda.trim()) {
+                const term = this.terminoBusqueda.toLowerCase();
+                const match = v.codigo.toLowerCase().includes(term) ||
+                              (v.numeroDocumento && v.numeroDocumento.toLowerCase().includes(term)) ||
+                              (v.nombreCliente && v.nombreCliente.toLowerCase().includes(term));
+                if (!match) return false;
+            }
+            return true;
+        });
+
+        const ventasAnuales = baseFiltradas.filter(v => new Date(v.fechaVenta).getFullYear() === this.anioActual);
+        this.totalesAnuales = this.calcularMétricas(ventasAnuales);
+
+        let ventasPeriodo = baseFiltradas;
         if (this.fechaInicio && this.fechaFin) {
             const fInicio = new Date(this.fechaInicio + 'T00:00:00');
             const fFin = new Date(this.fechaFin + 'T23:59:59');
-            
-            filtradas = filtradas.filter(v => {
-                const fechaVenta = new Date(v.fechaVenta);
-                return fechaVenta >= fInicio && fechaVenta <= fFin;
+            ventasPeriodo = ventasPeriodo.filter(v => {
+                const fVenta = new Date(v.fechaVenta);
+                return fVenta >= fInicio && fVenta <= fFin;
             });
         }
-
-        if (this.terminoBusqueda.trim()) {
-            const termino = this.terminoBusqueda.toLowerCase();
-            filtradas = filtradas.filter(v =>
-                v.codigo.toLowerCase().includes(termino) ||
-                (v.numeroDocumento && v.numeroDocumento.toLowerCase().includes(termino)) ||
-                (v.nombreCliente && v.nombreCliente.toLowerCase().includes(termino))
-            );
-        }
-
-        this.ventasFiltradas.data = filtradas;
         
+        this.ventasFiltradas.data = ventasPeriodo;
+        this.totalesPeriodo = this.calcularMétricas(ventasPeriodo);
         this.actualizarDeudas(this.terminoBusqueda); 
-        this.calcularFinanzasDinamicas(filtradas);
 
-        if (this.ventasFiltradas.paginator) {
-            this.ventasFiltradas.paginator.firstPage();
-        }
+        if (this.ventasFiltradas.paginator) this.ventasFiltradas.paginator.firstPage();
+    }
+
+    calcularMétricas(lista: Venta[]) {
+        let emitido = 0, porCobrar = 0, recaudado = 0;
+        let cantidad = 0;
+
+        lista.forEach(v => {
+            if (v.estado !== EstadoVenta.CANCELADA && v.estado !== EstadoVenta.BORRADOR) {
+                const factor = v.moneda === 'USD' ? (v.tipoCambio || 3.80) : 1;
+                const totalSoles = (v.total || 0) * factor;
+                const saldoSoles = (v.saldoPendiente || 0) * factor;
+
+                emitido += totalSoles;
+                porCobrar += saldoSoles;
+                recaudado += (totalSoles - saldoSoles);
+                cantidad++;
+            }
+        });
+
+        return { emitido, recaudado, porCobrar, cantidad };
     }
 
     actualizarDeudas(termino: string = ''): void {
@@ -204,62 +252,26 @@ export class VentasListaComponent implements OnInit {
 
         this.deudasFiltradas.data = deudas;
         
-        // 🔥 CORRECCIÓN: Convierte deudas en USD a PEN para el resumen global
         this.totalPorCobrar = deudas.reduce((acc, v) => {
             let saldo = v.saldoPendiente || 0;
-            if (v.moneda === 'USD') {
-                saldo = saldo * (v.tipoCambio || 3.80); // Usa el tipo de cambio de la venta
-            }
+            if (v.moneda === 'USD') saldo = saldo * (v.tipoCambio || 3.80); 
             return acc + saldo;
         }, 0);
         
         const uniqueClients = new Set(deudas.map(v => v.nombreCliente));
         this.clientesDeudores = uniqueClients.size;
 
-        if (this.deudasFiltradas.paginator) {
-            this.deudasFiltradas.paginator.firstPage();
-        }
-    }
-
-    calcularFinanzasDinamicas(ventasFiltradas: Venta[]): void {
-        // 🔥 CORRECCIÓN: Multiplica las ventas en USD por su tipo de cambio
-        let sumaCompletadas = ventasFiltradas
-            .filter(v => v.estado === EstadoVenta.COMPLETADA)
-            .reduce((sum, v) => {
-                let total = v.total || 0;
-                if (v.moneda === 'USD') {
-                    total = total * (v.tipoCambio || 3.80);
-                }
-                return sum + total;
-            }, 0);
-
-        let sumaParciales = ventasFiltradas
-            .filter(v => v.estado === EstadoVenta.PENDIENTE)
-            .reduce((sum, v) => {
-                let inicial = v.montoInicial || 0;
-                let abonos = v.pagos ? v.pagos.reduce((acc, p) => acc + p.monto, 0) : 0;
-                let pagadoTotal = inicial + abonos;
-                
-                if (v.moneda === 'USD') {
-                    pagadoTotal = pagadoTotal * (v.tipoCambio || 3.80);
-                }
-                return sum + pagadoTotal;
-            }, 0);
-
-        this.totalVentas = sumaCompletadas + sumaParciales;
-        this.ingresoNetoReal = this.totalVentas - this.totalNotasCredito;
+        if (this.deudasFiltradas.paginator) this.deudasFiltradas.paginator.firstPage();
     }
 
     onEstadoChange(): void { this.aplicarFiltros(); }
     buscarVentas(): void { this.aplicarFiltros(); }
     limpiarBusqueda(): void { this.terminoBusqueda = ''; this.aplicarFiltros(); }
     
-    // ========== ACCIONES ==========
     irANotasCredito(): void { this.router.navigate(['/ventas/notas-credito']); }
     nuevaVenta(): void { this.router.navigate(['/ventas/nueva']); }
     editarBorrador(venta: Venta): void { this.router.navigate(['/ventas', venta.id]); }
-    editarVenta(venta: Venta): void { this.router.navigate(['/ventas', venta.id]); }
-
+    
     completarVenta(venta: Venta): void {
         if (confirm(`¿Deseas completar la venta ${venta.numeroDocumento ? venta.numeroDocumento : venta.codigo}?`)) {
             this.ventaService.completarVenta(venta.id).subscribe({
@@ -305,11 +317,9 @@ export class VentasListaComponent implements OnInit {
     abrirModalNotaCredito(venta: Venta): void {
         const dialogRef = this.dialog.open(NotaCreditoModalComponent, { width: '500px', disableClose: true, data: venta });
         dialogRef.afterClosed().subscribe(seEmitioNota => {
-            if (seEmitioNota) { this.cargarVentas(); this.cargarTotalNotasCredito(); }
+            if (seEmitioNota) { this.cargarVentas(); }
         });
     }
-
-    // ========== UTILIDADES DE VISTA ==========
 
     getPorcentajePagado(venta: Venta): number {
         if (!venta.total || venta.total === 0) return 0;
@@ -379,7 +389,9 @@ export class VentasListaComponent implements OnInit {
         return '#64748b';
     }
 
-    formatearFecha(fecha: Date): string {
+    // ✅ CORRECCIÓN 2: Ampliamos el tipo para que reciba Date o string y no lance error de TypeScript
+    formatearFecha(fecha: Date | string): string {
+        if (!fecha) return '';
         return new Date(fecha).toLocaleDateString('es-PE', { 
             day: '2-digit', month: '2-digit', year: 'numeric',
             hour: '2-digit', minute: '2-digit'
@@ -395,6 +407,64 @@ export class VentasListaComponent implements OnInit {
     }
 
     exportarDatos(): void { 
-        this.mostrarMensaje('Función de exportación en desarrollo', 'error'); 
+        const datosParaExportar = this.ventasFiltradas.data;
+
+        if (datosParaExportar.length === 0) {
+            this.mostrarMensaje('No hay datos para exportar con los filtros actuales.', 'error');
+            return;
+        }
+
+        const doc = new jsPDF('landscape');
+        const nombreArchivo = `Reporte_Ventas_${this.fechaInicio}_al_${this.fechaFin}.pdf`;
+
+        doc.setFontSize(16);
+        doc.setTextColor(15, 23, 42);
+        doc.text('Reporte de Ventas - SMAF', 14, 15);
+
+        doc.setFontSize(10);
+        doc.setTextColor(100, 116, 139);
+        doc.text(`Periodo: ${this.fechaInicio} al ${this.fechaFin} | Estado: ${this.estadoFiltro}`, 14, 22);
+
+        let sumTotalPEN = 0;
+
+        const bodyData = datosParaExportar.map(v => {
+            const factorCambio = v.moneda === 'USD' ? (v.tipoCambio || 3.80) : 1;
+            
+            if (v.estado !== EstadoVenta.CANCELADA && v.estado !== EstadoVenta.BORRADOR) {
+                sumTotalPEN += (v.total || 0) * factorCambio;
+            }
+
+            return [
+                this.formatearFecha(v.fechaVenta),
+                (v.numeroDocumento && v.numeroDocumento !== '') ? v.numeroDocumento : '#' + v.codigo,
+                v.nombreCliente || 'Cliente General',
+                this.getNombreMetodoPago(v),
+                this.getEstadoLabel(v.estado),
+                `${v.moneda === 'USD' ? '$' : 'S/'} ${(v.total || 0).toFixed(2)}`
+            ];
+        });
+
+        const footData: any[] = [[
+            { content: 'TOTAL EMITIDO VÁLIDO (Expresado en PEN S/)', colSpan: 5, styles: { halign: 'right', fontStyle: 'bold' } },
+            `S/ ${sumTotalPEN.toFixed(2)}`
+        ]];
+
+        autoTable(doc, {
+            startY: 28,
+            head: [['Fecha', 'Comprobante', 'Cliente', 'Método Pago', 'Estado', 'Total']],
+            body: bodyData,
+            foot: footData,
+            theme: 'striped',
+            styles: { fontSize: 8, cellPadding: 3, textColor: [40, 40, 40], lineColor: [215, 220, 225], lineWidth: 0.1 },
+            headStyles: { fillColor: [37, 99, 235], textColor: [255, 255, 255], fontStyle: 'bold' }, 
+            footStyles: { fillColor: [226, 232, 240], textColor: [15, 23, 42], fontStyle: 'bold' },
+            alternateRowStyles: { fillColor: [248, 250, 252] },
+            columnStyles: {
+                5: { halign: 'right', fontStyle: 'bold' }
+            }
+        });
+
+        doc.save(nombreArchivo);
+        this.mostrarMensaje('✅ PDF Exportado exitosamente', 'success');
     }
 }

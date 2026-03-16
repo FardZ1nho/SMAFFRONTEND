@@ -26,8 +26,17 @@ export class ComprasListComponent implements OnInit {
   filtroTexto: string = '';
   cargando: boolean = true;
   
-  // ✅ NUEVO: Variable para controlar la pestaña activa
   tabActual: 'ACTIVAS' | 'ANULADAS' = 'ACTIVAS';
+  
+  // ✅ NUEVO: Variable para el año actual
+  anioActual: number = new Date().getFullYear();
+
+  totales = {
+    activas: 0,
+    anuladas: 0,
+    cantidadActivas: 0,
+    anual: 0 // ✅ NUEVO: Guardará el total del año en curso
+  };
 
   constructor(
     private compraService: CompraService,
@@ -45,8 +54,6 @@ export class ComprasListComponent implements OnInit {
 
     this.compraService.listarTodas().subscribe({
       next: (data) => {
-        console.log('✅ DATOS RECIBIDOS DEL BACKEND:', data); 
-
         if (!data || data.length === 0) {
             console.warn('⚠️ El backend devolvió una lista vacía.');
         }
@@ -54,7 +61,8 @@ export class ComprasListComponent implements OnInit {
         const dataLimpia = data.filter(item => item && item.id !== null);
         
         this.compras = dataLimpia.sort((a, b) => b.id - a.id);
-        this.filtrar(); // Aplica tab y texto
+        this.calcularTotales(); 
+        this.filtrar(); 
         this.cargando = false;
         this.cdr.detectChanges();
       },
@@ -66,23 +74,50 @@ export class ComprasListComponent implements OnInit {
     });
   }
 
-  // ✅ NUEVO: Función para cambiar de pestaña
+  // ✅ NUEVO: Lógica actualizada para incluir el cálculo anual
+  calcularTotales() {
+    let act = 0;
+    let anu = 0;
+    let cant = 0;
+    let anual = 0;
+
+    this.compras.forEach(c => {
+      const factorCambio = c.moneda === 'USD' ? ((c as any).tipoCambio || 3.80) : 1;
+      const monto = (c.total || 0) * factorCambio;
+
+      if (c.estado === 'ANULADA') {
+        anu += monto;
+      } else {
+        act += monto;
+        cant++;
+
+        // Calculamos el total anual (asegurando que sea del año actual y no esté anulada)
+        if (c.fechaEmision) {
+          const fechaCompra = new Date(c.fechaEmision);
+          if (fechaCompra.getFullYear() === this.anioActual) {
+            anual += monto;
+          }
+        }
+      }
+    });
+
+    this.totales = { activas: act, anuladas: anu, cantidadActivas: cant, anual: anual };
+  }
+
   cambiarTab(tab: 'ACTIVAS' | 'ANULADAS') {
     this.tabActual = tab;
     this.filtrar();
   }
 
   filtrar() {
-    // 1. Primero filtramos por Pestaña (Estado)
     let baseFiltro = this.compras.filter(c => {
       if (this.tabActual === 'ACTIVAS') {
-        return c.estado !== 'ANULADA'; // Muestra REGISTRADA, COMPLETADA, etc.
+        return c.estado !== 'ANULADA'; 
       } else {
-        return c.estado === 'ANULADA'; // Muestra solo ANULADAS
+        return c.estado === 'ANULADA'; 
       }
     });
 
-    // 2. Luego filtramos por Texto (Búsqueda)
     if (!this.filtroTexto.trim()) {
       this.comprasFiltradas = baseFiltro;
       return;
@@ -125,7 +160,7 @@ export class ComprasListComponent implements OnInit {
     if (confirm('¿Está seguro de anular esta compra? Esto revertirá el stock y pasará al historial de Anuladas.')) {
       this.compraService.anular(id).subscribe({
         next: () => {
-          this.cargarCompras(); // Recarga los datos para actualizar las pestañas
+          this.cargarCompras(); 
         },
         error: (e) => alert('Error al anular: ' + e.message)
       });

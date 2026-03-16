@@ -13,6 +13,44 @@
     </button>
   </div>
 
+  <div class="stats-container">
+    <div class="stat-card success">
+      <div class="stat-icon"><mat-icon>insert_chart_outlined</mat-icon></div>
+      <div class="stat-info">
+        <span class="stat-label">Total Anual {{ anioActual }}</span>
+        <span class="stat-value">S/ {{ totales.anual | number:'1.2-2' }}</span>
+        <span class="stat-desc">Compras válidas del año</span>
+      </div>
+    </div>
+    
+    <div class="stat-card primary">
+      <div class="stat-icon"><mat-icon>shopping_cart</mat-icon></div>
+      <div class="stat-info">
+        <span class="stat-label">Total Histórico (Activas)</span>
+        <span class="stat-value">S/ {{ totales.activas | number:'1.2-2' }}</span>
+        <span class="stat-desc">{{ totales.cantidadActivas }} doc. válidos en el sistema</span>
+      </div>
+    </div>
+
+    <div class="stat-card danger">
+      <div class="stat-icon"><mat-icon>remove_shopping_cart</mat-icon></div>
+      <div class="stat-info">
+        <span class="stat-label">Compras Anuladas</span>
+        <span class="stat-value">S/ {{ totales.anuladas | number:'1.2-2' }}</span>
+        <span class="stat-desc">Montos revertidos</span>
+      </div>
+    </div>
+
+    <div class="stat-card info">
+      <div class="stat-icon"><mat-icon>inventory_2</mat-icon></div>
+      <div class="stat-info">
+        <span class="stat-label">Mostrando Ahora</span>
+        <span class="stat-value">{{ comprasFiltradas.length }}</span>
+        <span class="stat-desc">Registros en la tabla</span>
+      </div>
+    </div>
+  </div>
+
   <div class="tabs-container">
     <button class="tab-btn" [class.active]="tabActual === 'ACTIVAS'" (click)="cambiarTab('ACTIVAS')">
       <mat-icon>check_circle</mat-icon> Activas

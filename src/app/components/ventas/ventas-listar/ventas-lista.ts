@@ -133,7 +133,6 @@ export class VentasListaComponent implements OnInit {
         });
     }
 
-    // ✅ CORRECCIÓN 1: Garantizamos que las opciones base siempre estén presentes en el filtro
     extraerComprobantesUnicos(): void {
         const tiposBase = ['FACTURA', 'BOLETA', 'NOTA DE VENTA', 'OTROS'];
         
@@ -141,12 +140,10 @@ export class VentasListaComponent implements OnInit {
             .map(v => v.tipoDocumento ? v.tipoDocumento.toUpperCase() : 'OTROS')
             .filter(t => !!t);
         
-        // Unimos los base con los de la BD y quitamos duplicados
         const unicos = [...new Set([...tiposBase, ...unicosBD])];
         
         this.tiposComprobantesDisponibles = unicos;
         
-        // Si no hay filtros seleccionados (primera vez), marcamos todos
         if (this.filtrosComprobantes.length === 0) {
             this.filtrosComprobantes = [...this.tiposComprobantesDisponibles];
         }
@@ -182,7 +179,6 @@ export class VentasListaComponent implements OnInit {
                 if (this.metodoPagoFiltro !== 'CREDITO' && (!v.pagos || !v.pagos.some(p => p.metodoPago === this.metodoPagoFiltro))) return false;
             }
 
-            // ✅ CORRECCIÓN 1.1: Estandarizamos a mayúsculas para que el filtrado sea preciso
             const tipoDoc = v.tipoDocumento ? v.tipoDocumento.toUpperCase() : 'OTROS';
             const filtrosMayusculas = this.filtrosComprobantes.map(f => f.toUpperCase());
             
@@ -270,7 +266,9 @@ export class VentasListaComponent implements OnInit {
     
     irANotasCredito(): void { this.router.navigate(['/ventas/notas-credito']); }
     nuevaVenta(): void { this.router.navigate(['/ventas/nueva']); }
-    editarBorrador(venta: Venta): void { this.router.navigate(['/ventas', venta.id]); }
+    
+    // ✅ CORRECCIÓN: Función habilitada para editar cualquier venta
+    editarVenta(venta: Venta): void { this.router.navigate(['/ventas', venta.id]); }
     
     completarVenta(venta: Venta): void {
         if (confirm(`¿Deseas completar la venta ${venta.numeroDocumento ? venta.numeroDocumento : venta.codigo}?`)) {
@@ -389,7 +387,6 @@ export class VentasListaComponent implements OnInit {
         return '#64748b';
     }
 
-    // ✅ CORRECCIÓN 2: Ampliamos el tipo para que reciba Date o string y no lance error de TypeScript
     formatearFecha(fecha: Date | string): string {
         if (!fecha) return '';
         return new Date(fecha).toLocaleDateString('es-PE', { 

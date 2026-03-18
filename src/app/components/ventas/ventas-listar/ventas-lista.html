@@ -298,10 +298,10 @@
                                             <span>Emitir Nota de Crédito</span>
                                         </button>
 
-                                        <button mat-menu-item (click)="editarBorrador(venta)"
-                                            *ngIf="venta.estado === 'BORRADOR'">
+                                        <button mat-menu-item (click)="editarVenta(venta)"
+                                            *ngIf="venta.estado !== 'CANCELADA'">
                                             <mat-icon style="color: #f59e0b;">edit</mat-icon>
-                                            <span>Editar Borrador</span>
+                                            <span>Editar Venta</span>
                                         </button>
 
                                         <button mat-menu-item (click)="cancelarVenta(venta)"

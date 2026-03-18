@@ -44,9 +44,9 @@
     <div class="stat-card info">
       <div class="stat-icon"><mat-icon>inventory_2</mat-icon></div>
       <div class="stat-info">
-        <span class="stat-label">Mostrando Ahora</span>
-        <span class="stat-value">{{ comprasFiltradas.length }}</span>
-        <span class="stat-desc">Registros en la tabla</span>
+        <span class="stat-label">Total Filtro (Mostrando)</span>
+        <span class="stat-value">S/ {{ totales.filtroMonto | number:'1.2-2' }}</span>
+        <span class="stat-desc">{{ comprasFiltradas.length }} documentos listados</span>
       </div>
     </div>
   </div>
@@ -65,18 +65,45 @@
       <mat-icon>search</mat-icon>
       <input type="text" placeholder="Buscar por número, serie o RUC..." 
              [(ngModel)]="filtroTexto" (input)="filtrar()">
-      <button *ngIf="filtroTexto" (click)="limpiarFiltro()" class="btn-clear">
+      <button *ngIf="filtroTexto || filtroMes || filtroTipo !== 'TODOS' || filtroMoneda !== 'TODAS'" 
+              (click)="limpiarFiltro()" class="btn-clear" title="Limpiar todos los filtros">
         <mat-icon>close</mat-icon>
       </button>
     </div>
     
     <div class="filter-actions">
-      <button class="btn-outline">
+      <button class="btn-outline" (click)="toggleFiltrosAvanzados()" [class.active-filter]="mostrarFiltrosAvanzados">
         <mat-icon>filter_list</mat-icon> Filtros
       </button>
       <button class="btn-outline">
         <mat-icon>download</mat-icon> Exportar
       </button>
+    </div>
+  </div>
+
+  <div class="advanced-filters" *ngIf="mostrarFiltrosAvanzados">
+    <div class="filter-group">
+      <label>Mes de Emisión</label>
+      <input type="month" [(ngModel)]="filtroMes" (change)="filtrar()">
+    </div>
+    
+    <div class="filter-group">
+      <label>Comprobante</label>
+      <select [(ngModel)]="filtroTipo" (change)="filtrar()">
+        <option value="TODOS">Todos</option>
+        <option *ngFor="let tipo of tiposComprobanteDisponibles" [value]="tipo">
+          {{ formatearTipo(tipo) }}
+        </option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label>Moneda</label>
+      <select [(ngModel)]="filtroMoneda" (change)="filtrar()">
+        <option value="TODAS">Todas</option>
+        <option value="PEN">Soles (PEN)</option>
+        <option value="USD">Dólares (USD)</option>
+      </select>
     </div>
   </div>
 
@@ -153,9 +180,9 @@
         <tr *ngIf="!cargando && comprasFiltradas.length === 0">
           <td colspan="7">
             <div class="empty-state">
-              <mat-icon>receipt</mat-icon>
-              <p>No se encontraron registros en esta sección.</p>
-              <button class="btn-link" (click)="limpiarFiltro()" *ngIf="filtroTexto">Limpiar filtros</button>
+              <mat-icon>search_off</mat-icon>
+              <p>No se encontraron registros con los filtros actuales.</p>
+              <button class="btn-link" (click)="limpiarFiltro()">Limpiar todos los filtros</button>
             </div>
           </td>
         </tr>

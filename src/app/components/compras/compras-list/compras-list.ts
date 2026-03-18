@@ -23,19 +23,27 @@ export class ComprasListComponent implements OnInit {
 
   compras: CompraResponse[] = [];
   comprasFiltradas: CompraResponse[] = [];
-  filtroTexto: string = '';
   cargando: boolean = true;
   
+  // TABS Y BÚSQUEDA RÁPIDA
   tabActual: 'ACTIVAS' | 'ANULADAS' = 'ACTIVAS';
+  filtroTexto: string = '';
+
+  // ✅ NUEVO: VARIABLES PARA FILTROS AVANZADOS
+  mostrarFiltrosAvanzados: boolean = false;
+  filtroMes: string = ''; // Formato: 'YYYY-MM'
+  filtroTipo: string = 'TODOS';
+  filtroMoneda: string = 'TODAS';
+  tiposComprobanteDisponibles: string[] = [];
   
-  // ✅ NUEVO: Variable para el año actual
   anioActual: number = new Date().getFullYear();
 
   totales = {
     activas: 0,
     anuladas: 0,
     cantidadActivas: 0,
-    anual: 0 // ✅ NUEVO: Guardará el total del año en curso
+    anual: 0,
+    filtroMonto: 0 // ✅ NUEVO: Total del dinero que se muestra en la tabla actual
   };
 
   constructor(
@@ -50,8 +58,7 @@ export class ComprasListComponent implements OnInit {
 
   cargarCompras() {
     this.cargando = true;
-    console.log('🔄 Iniciando carga de compras...'); 
-
+    
     this.compraService.listarTodas().subscribe({
       next: (data) => {
         if (!data || data.length === 0) {
@@ -59,10 +66,14 @@ export class ComprasListComponent implements OnInit {
         }
 
         const dataLimpia = data.filter(item => item && item.id !== null);
-        
         this.compras = dataLimpia.sort((a, b) => b.id - a.id);
-        this.calcularTotales(); 
+        
+        // Extraemos los tipos de comprobantes únicos que existen en la BD
+        this.extraerTiposComprobantes();
+        
+        this.calcularTotalesHistoricos(); 
         this.filtrar(); 
+        
         this.cargando = false;
         this.cdr.detectChanges();
       },
@@ -74,12 +85,14 @@ export class ComprasListComponent implements OnInit {
     });
   }
 
-  // ✅ NUEVO: Lógica actualizada para incluir el cálculo anual
-  calcularTotales() {
-    let act = 0;
-    let anu = 0;
-    let cant = 0;
-    let anual = 0;
+  // ✅ Extrae dinámicamente qué tipos de comprobante tienes (Factura, Boleta, etc.)
+  extraerTiposComprobantes() {
+    const tipos = this.compras.map(c => c.tipoComprobante).filter(t => !!t) as string[];
+    this.tiposComprobanteDisponibles = [...new Set(tipos)];
+  }
+
+  calcularTotalesHistoricos() {
+    let act = 0; let anu = 0; let cant = 0; let anual = 0;
 
     this.compras.forEach(c => {
       const factorCambio = c.moneda === 'USD' ? ((c as any).tipoCambio || 3.80) : 1;
@@ -90,8 +103,6 @@ export class ComprasListComponent implements OnInit {
       } else {
         act += monto;
         cant++;
-
-        // Calculamos el total anual (asegurando que sea del año actual y no esté anulada)
         if (c.fechaEmision) {
           const fechaCompra = new Date(c.fechaEmision);
           if (fechaCompra.getFullYear() === this.anioActual) {
@@ -101,7 +112,10 @@ export class ComprasListComponent implements OnInit {
       }
     });
 
-    this.totales = { activas: act, anuladas: anu, cantidadActivas: cant, anual: anual };
+    this.totales.activas = act;
+    this.totales.anuladas = anu;
+    this.totales.cantidadActivas = cant;
+    this.totales.anual = anual;
   }
 
   cambiarTab(tab: 'ACTIVAS' | 'ANULADAS') {
@@ -109,31 +123,66 @@ export class ComprasListComponent implements OnInit {
     this.filtrar();
   }
 
+  toggleFiltrosAvanzados() {
+    this.mostrarFiltrosAvanzados = !this.mostrarFiltrosAvanzados;
+  }
+
+  // ✅ NUEVO: Función de filtrado súper vitaminada
   filtrar() {
     let baseFiltro = this.compras.filter(c => {
-      if (this.tabActual === 'ACTIVAS') {
-        return c.estado !== 'ANULADA'; 
-      } else {
-        return c.estado === 'ANULADA'; 
+      // 1. Filtro por Pestaña (Estado)
+      if (this.tabActual === 'ACTIVAS' && c.estado === 'ANULADA') return false;
+      if (this.tabActual === 'ANULADAS' && c.estado !== 'ANULADA') return false;
+
+      // 2. Filtro Avanzado: Tipo Comprobante
+      if (this.filtroTipo !== 'TODOS' && c.tipoComprobante !== this.filtroTipo) return false;
+
+      // 3. Filtro Avanzado: Moneda
+      if (this.filtroMoneda !== 'TODAS' && c.moneda !== this.filtroMoneda) return false;
+
+      // 4. Filtro Avanzado: Mes
+      if (this.filtroMes && c.fechaEmision) {
+        // Formateamos la fecha de la compra a "YYYY-MM" para compararlo con el input type="month"
+        const fechaObj = new Date(c.fechaEmision);
+        const mesCompra = `${fechaObj.getFullYear()}-${(fechaObj.getMonth() + 1).toString().padStart(2, '0')}`;
+        if (mesCompra !== this.filtroMes) return false;
       }
+
+      return true;
     });
 
-    if (!this.filtroTexto.trim()) {
-      this.comprasFiltradas = baseFiltro;
-      return;
+    // 5. Filtro de Búsqueda de Texto
+    if (this.filtroTexto.trim()) {
+      const texto = this.filtroTexto.toLowerCase();
+      baseFiltro = baseFiltro.filter(c => 
+        (c.nombreProveedor && c.nombreProveedor.toLowerCase().includes(texto)) ||
+        (c.serie && c.serie.toLowerCase().includes(texto)) ||
+        (c.numero && c.numero.toLowerCase().includes(texto)) ||
+        (c.rucProveedor && c.rucProveedor.includes(texto))
+      );
     }
 
-    const texto = this.filtroTexto.toLowerCase();
-    this.comprasFiltradas = baseFiltro.filter(c => 
-      (c.nombreProveedor && c.nombreProveedor.toLowerCase().includes(texto)) ||
-      (c.serie && c.serie.toLowerCase().includes(texto)) ||
-      (c.numero && c.numero.toLowerCase().includes(texto)) ||
-      (c.rucProveedor && c.rucProveedor.includes(texto))
-    );
+    this.comprasFiltradas = baseFiltro;
+    this.calcularTotalesDinamicos();
+  }
+
+  // ✅ NUEVO: Calcula el dinero solo de lo que estás viendo en la tabla
+  calcularTotalesDinamicos() {
+    let montoFiltro = 0;
+    this.comprasFiltradas.forEach(c => {
+      if (c.estado !== 'ANULADA') {
+        const factorCambio = c.moneda === 'USD' ? ((c as any).tipoCambio || 3.80) : 1;
+        montoFiltro += (c.total || 0) * factorCambio;
+      }
+    });
+    this.totales.filtroMonto = montoFiltro;
   }
 
   limpiarFiltro() {
     this.filtroTexto = '';
+    this.filtroMes = '';
+    this.filtroTipo = 'TODOS';
+    this.filtroMoneda = 'TODAS';
     this.filtrar();
   }
 

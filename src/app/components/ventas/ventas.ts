@@ -105,11 +105,10 @@ export class VentasComponent implements OnInit {
   subtotal: number = 0;
   igv: number = 0;
   
-  // ✅ NUEVAS VARIABLES: Retención y Detracción (y Total Bruto)
   retencion: number | null = null;
   detraccion: number | null = null;
   totalVentaBruto: number = 0; 
-  total: number = 0; // Este es el Total Real a Cobrar (Bruto - Retención - Detracción)
+  total: number = 0; 
 
   isSaving: boolean = false;
 
@@ -275,7 +274,6 @@ export class VentasComponent implements OnInit {
         this.tipoPago = venta.tipoPago || TipoPago.CONTADO;
         this.numeroCuotas = venta.numeroCuotas || 1;
         
-        // ✅ Cargar Retención y Detracción si existen en el borrador
         this.retencion = venta.retencion || null;
         this.detraccion = venta.detraccion || null;
 
@@ -386,29 +384,33 @@ export class VentasComponent implements OnInit {
     return precioOriginal;
   }
 
+  // ✅ ACTUALIZADO: Permite agregar múltiples filas del mismo producto
   agregarProducto(producto: Producto): void {
       const esServicio = producto.tipo === 'SERVICIO';
 
-      if (!esServicio && producto.stockActual <= 0) { 
-          this.mostrarNotificacion('Stock Agotado', 'error'); 
-          return; 
+      if (!esServicio && !this.esEdicion) { 
+          // Sumamos cuántas unidades de este producto ya hay en TODAS las líneas del carrito
+          const cantidadEnCarrito = this.productosEnVenta
+              .filter(p => p.producto.id === producto.id)
+              .reduce((sum, p) => sum + p.cantidad, 0);
+
+          if (cantidadEnCarrito >= producto.stockActual) {
+              this.mostrarNotificacion('Stock máximo alcanzado en el carrito para este producto', 'warning'); 
+              return;
+          }
       }
       
-      const existe = this.productosEnVenta.find(p => p.producto.id === producto.id);
+      const precioFinal = this.convertirPrecio(producto);
       
-      if (existe) {
-        if (!esServicio && existe.cantidad >= producto.stockActual) {
-            this.mostrarNotificacion('Stock máximo alcanzado', 'warning'); 
-            return;
-        }
-        existe.cantidad++;
-        this.calcularSubtotalProducto(existe);
-      } else {
-        const precioFinal = this.convertirPrecio(producto);
-        this.productosEnVenta.push({
-          producto: producto, cantidad: 1, precioUnitario: precioFinal, descuento: 0, subtotal: precioFinal
-        });
-      }
+      // Siempre agregamos una nueva línea independiente
+      this.productosEnVenta.push({
+        producto: producto, 
+        cantidad: 1, 
+        precioUnitario: precioFinal, 
+        descuento: 0, 
+        subtotal: precioFinal
+      });
+      
       this.calcularTotales();
       this.terminoBusqueda = '';
   }
@@ -424,11 +426,24 @@ export class VentasComponent implements OnInit {
     item.subtotal = Number(subtotal.toFixed(2));
   }
     
+  // ✅ ACTUALIZADO: Valida que la suma de TODAS las líneas del producto no exceda el stock
   onCantidadChange(item: ProductoEnVenta) { 
       const esServicio = item.producto.tipo === 'SERVICIO';
 
-      if(!esServicio && item.cantidad > item.producto.stockActual && !this.esEdicion) {
-          item.cantidad = item.producto.stockActual;
+      if(!esServicio && !this.esEdicion) {
+          const cantidadTotalEnCarrito = this.productosEnVenta
+              .filter(p => p.producto.id === item.producto.id)
+              .reduce((sum, p) => sum + p.cantidad, 0);
+
+          if (cantidadTotalEnCarrito > item.producto.stockActual) {
+              this.mostrarNotificacion(`Stock insuficiente. Solo tienes ${item.producto.stockActual} en total.`, 'warning');
+              
+              // Ajustamos la cantidad de esta fila específica restándole lo que ya está en otras filas
+              const cantidadOtrasLineas = cantidadTotalEnCarrito - item.cantidad;
+              item.cantidad = item.producto.stockActual - cantidadOtrasLineas;
+              
+              if(item.cantidad < 1) item.cantidad = 1; // Evitamos que quede en 0 o negativo
+          }
       }
       this.calcularSubtotalProducto(item); 
       this.calcularTotales(); 
@@ -500,7 +515,6 @@ export class VentasComponent implements OnInit {
     return Number(total.toFixed(2));
   }
 
-  // ✅ Limpieza de campos numéricos (UX)
   limpiarCero(campo: 'retencion' | 'detraccion') {
     if (this[campo] === 0) {
         this[campo] = null as unknown as number;
@@ -513,7 +527,6 @@ export class VentasComponent implements OnInit {
     }
   }
 
-  // ✅ CÁLCULO ACTUALIZADO
   calcularTotales(): void {
     this.totalVentaBruto = Number(this.productosEnVenta.reduce((sum, p) => sum + p.subtotal, 0).toFixed(2));
     this.subtotal = Number((this.totalVentaBruto / 1.18).toFixed(2));
@@ -522,7 +535,6 @@ export class VentasComponent implements OnInit {
     const ret = this.retencion || 0;
     const det = this.detraccion || 0;
 
-    // Lo que realmente nos tienen que pagar
     this.total = Number((this.totalVentaBruto - ret - det).toFixed(2));
       
     this.totalPagadoAcumulado = this.calcularTotalPagadoAcumulado();
@@ -542,7 +554,6 @@ export class VentasComponent implements OnInit {
     }
   }
 
-  // ✅ Recalcula si cambia la retención
   onRetDetChange() {
     this.calcularTotales();
   }
@@ -569,8 +580,8 @@ export class VentasComponent implements OnInit {
       tipoCambio: this.tipoCambio,
       tipoDocumento: this.tipoDocumento,
       numeroDocumento: this.numeroDocumento,
-      retencion: this.retencion || 0, // ✅ Añadido
-      detraccion: this.detraccion || 0, // ✅ Añadido
+      retencion: this.retencion || 0,
+      detraccion: this.detraccion || 0,
       notas: this.notas,
       detalles: this.productosEnVenta.map(p => ({
         productoId: p.producto.id,

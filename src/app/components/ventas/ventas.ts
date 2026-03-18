@@ -384,7 +384,7 @@ export class VentasComponent implements OnInit {
     return precioOriginal;
   }
 
-  // ✅ ACTUALIZADO: Permite agregar múltiples filas del mismo producto
+  // ✅ ACTUALIZADO: Permite agregar múltiples filas del mismo producto siempre
   agregarProducto(producto: Producto): void {
       const esServicio = producto.tipo === 'SERVICIO';
 
@@ -402,7 +402,7 @@ export class VentasComponent implements OnInit {
       
       const precioFinal = this.convertirPrecio(producto);
       
-      // Siempre agregamos una nueva línea independiente
+      // ✅ LA CLAVE ESTÁ AQUÍ: Ya no verificamos si existe. Siempre hacemos "push" de una fila nueva.
       this.productosEnVenta.push({
         producto: producto, 
         cantidad: 1, 

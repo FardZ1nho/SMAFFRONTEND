@@ -59,13 +59,29 @@ export class FinanzasComponent implements OnInit {
     this.cargarDatos();        
   }
 
+  // ✅ UNIFICACIÓN DE COMPROBANTES
+  normalizarComprobante(tipo: string): string {
+    if (!tipo) return 'OTROS';
+    const t = tipo.toUpperCase().trim();
+    
+    if (t === 'FACTURA_ELECTRONICA' || t === 'FACTURA') return 'FACTURA';
+    if (t === 'NOTA_VENTA' || t === 'NOTA') return 'NOTA DE VENTA';
+    if (t === 'BOLETA_ELECTRONICA' || t === 'BOLETA') return 'BOLETA';
+    
+    return t.replace(/_/g, ' '); 
+  }
+
   cargarDatosAnuales(): void {
     const inicioAño = `${this.anioActual}-01-01`;
     const finAño = `${this.anioActual}-12-31`;
     
     this.finanzasService.obtenerDashboard(inicioAño, finAño).subscribe({
       next: (data) => {
-        this.transaccionesAnuales = data.transacciones || [];
+        const transaccionesCrudas = data.transacciones || [];
+        this.transaccionesAnuales = transaccionesCrudas.map(t => ({
+          ...t,
+          tipoComprobante: this.normalizarComprobante(t.tipoComprobante)
+        }));
         this.calcularTotalesAnuales(this.transaccionesAnuales);
         this.extraerComprobantesUnicos();
       }
@@ -74,7 +90,6 @@ export class FinanzasComponent implements OnInit {
 
   cargarDatos(): void {
     this.cargando = true;
-
     const nuevoAnio = new Date(this.fechaInicio).getFullYear();
     if (nuevoAnio !== this.anioActual) {
       this.anioActual = nuevoAnio;
@@ -84,9 +99,13 @@ export class FinanzasComponent implements OnInit {
     this.finanzasService.obtenerDashboard(this.fechaInicio, this.fechaFin).subscribe({
       next: (data) => {
         this.dashboardData = data;
-        this.transacciones = data.transacciones || [];
+        const transaccionesCrudas = data.transacciones || [];
+        this.transacciones = transaccionesCrudas.map(t => ({
+          ...t,
+          tipoComprobante: this.normalizarComprobante(t.tipoComprobante)
+        }));
+
         this.extraerComprobantesUnicos();
-        
         this.aplicarFiltros(); 
         this.cargando = false;
         this.cdr.detectChanges(); 
@@ -105,9 +124,8 @@ export class FinanzasComponent implements OnInit {
       .filter(t => !!t);
       
     const unicos = [...new Set(todosLosComprobantes)];
-    
     if (this.tiposComprobantesDisponibles.length !== unicos.length) {
-      this.tiposComprobantesDisponibles = unicos;
+      this.tiposComprobantesDisponibles = unicos.sort(); 
       this.filtrosComprobantes = [...this.tiposComprobantesDisponibles];
     }
   }
@@ -153,25 +171,28 @@ export class FinanzasComponent implements OnInit {
 
     this.transaccionesMostradas = filtradas;
     this.calcularTotalesDinamicos(filtradas);
-
     setTimeout(() => this.generarGrafico(), 50);
   }
 
+  // ✅ CÁLCULOS: Solo suman si NO están anuladas/canceladas
   calcularTotalesDinamicos(filtradas: TransaccionFinanciera[]): void {
     let ing = 0, egr = 0, igvV = 0, igvC = 0, det = 0, ret = 0, per = 0;
 
     filtradas.forEach(t => {
-      const factorCambio = t.moneda === 'USD' ? (t.tipoCambio || 3.80) : 1;
-      const totalVal = Number(t.montoTotal || 0) * factorCambio;
-      const igvVal = Number(t.igv || 0) * factorCambio;
-      const detVal = Number(t.detraccion || 0) * factorCambio;
-      const retVal = Number(t.retencion || 0) * factorCambio;
-      const perVal = Number(t.percepcion || 0) * factorCambio;
+      const esValida = t.estado !== 'ANULADA' && t.estado !== 'CANCELADA';
+      if (esValida) {
+        const factorCambio = t.moneda === 'USD' ? (t.tipoCambio || 3.80) : 1;
+        const totalVal = Number(t.montoTotal || 0) * factorCambio;
+        const igvVal = Number(t.igv || 0) * factorCambio;
+        const detVal = Number(t.detraccion || 0) * factorCambio;
+        const retVal = Number(t.retencion || 0) * factorCambio;
+        const perVal = Number(t.percepcion || 0) * factorCambio;
 
-      if (t.tipo === 'INGRESO') { ing += totalVal; igvV += igvVal; } 
-      else { egr += totalVal; igvC += igvVal; }
+        if (t.tipo === 'INGRESO') { ing += totalVal; igvV += igvVal; } 
+        else { egr += totalVal; igvC += igvVal; }
 
-      det += detVal; ret += retVal; per += perVal;
+        det += detVal; ret += retVal; per += perVal;
+      }
     });
 
     this.totalesDinamicos = {
@@ -185,17 +206,20 @@ export class FinanzasComponent implements OnInit {
     let ing = 0, egr = 0, igvV = 0, igvC = 0, det = 0, ret = 0, per = 0;
 
     transacciones.forEach(t => {
-      const factorCambio = t.moneda === 'USD' ? (t.tipoCambio || 3.80) : 1;
-      const totalVal = Number(t.montoTotal || 0) * factorCambio;
-      const igvVal = Number(t.igv || 0) * factorCambio;
-      const detVal = Number(t.detraccion || 0) * factorCambio;
-      const retVal = Number(t.retencion || 0) * factorCambio;
-      const perVal = Number(t.percepcion || 0) * factorCambio;
+      const esValida = t.estado !== 'ANULADA' && t.estado !== 'CANCELADA';
+      if (esValida) {
+        const factorCambio = t.moneda === 'USD' ? (t.tipoCambio || 3.80) : 1;
+        const totalVal = Number(t.montoTotal || 0) * factorCambio;
+        const igvVal = Number(t.igv || 0) * factorCambio;
+        const detVal = Number(t.detraccion || 0) * factorCambio;
+        const retVal = Number(t.retencion || 0) * factorCambio;
+        const perVal = Number(t.percepcion || 0) * factorCambio;
 
-      if (t.tipo === 'INGRESO') { ing += totalVal; igvV += igvVal; } 
-      else { egr += totalVal; igvC += igvVal; }
+        if (t.tipo === 'INGRESO') { ing += totalVal; igvV += igvVal; } 
+        else { egr += totalVal; igvC += igvVal; }
 
-      det += detVal; ret += retVal; per += perVal;
+        det += detVal; ret += retVal; per += perVal;
+      }
     });
 
     this.totalesAnuales = {
@@ -217,13 +241,16 @@ export class FinanzasComponent implements OnInit {
     const dataOrdenada = [...this.transaccionesMostradas].reverse();
 
     dataOrdenada.forEach(t => {
-      const fecha = new Date(t.fechaHora).toLocaleDateString('es-PE', { day: '2-digit', month: 'short' });
-      if (!resumenPorFecha.has(fecha)) {
-        resumenPorFecha.set(fecha, { ingresos: 0, egresos: 0 });
+      const esValida = t.estado !== 'ANULADA' && t.estado !== 'CANCELADA';
+      if (esValida) {
+        const fecha = new Date(t.fechaHora).toLocaleDateString('es-PE', { day: '2-digit', month: 'short' });
+        if (!resumenPorFecha.has(fecha)) {
+          resumenPorFecha.set(fecha, { ingresos: 0, egresos: 0 });
+        }
+        const actual = resumenPorFecha.get(fecha)!;
+        if (t.tipo === 'INGRESO') actual.ingresos += Number(t.montoTotal);
+        else actual.egresos += Number(t.montoTotal);
       }
-      const actual = resumenPorFecha.get(fecha)!;
-      if (t.tipo === 'INGRESO') actual.ingresos += Number(t.montoTotal);
-      else actual.egresos += Number(t.montoTotal);
     });
 
     const labels = Array.from(resumenPorFecha.keys());
@@ -239,11 +266,7 @@ export class FinanzasComponent implements OnInit {
           { label: 'Egresos (S/ o $)', data: dataEgresos, backgroundColor: '#ef4444', borderRadius: 4 }
         ]
       },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { position: 'bottom' } }
-      }
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
     });
   }
 
@@ -253,27 +276,30 @@ export class FinanzasComponent implements OnInit {
       return;
     }
 
-    const dataParaExcel = this.transaccionesMostradas.map(t => ({
-      'Fecha': new Date(t.fechaHora).toLocaleDateString('es-PE'),
-      'Tipo Flujo': t.tipo === 'INGRESO' ? 'INGRESO' : 'EGRESO',
-      'Documento': t.tipoComprobante,
-      'Número': t.comprobante,
-      'RUC / DNI': t.ruc || 'S/D',
-      'Razón Social': t.entidad || 'S/D',
-      'Moneda': t.moneda,
-      'SubTotal': Number(t.subTotal || 0),
-      'IGV': Number(t.igv || 0),
-      'Detracción': Number(t.detraccion || 0),
-      'Retención': Number(t.retencion || 0),
-      'Percepción': Number(t.percepcion || 0),
-      'Monto Total': Number(t.montoTotal || 0),
-      'Tipo Cambio': Number(t.tipoCambio || 1)
-    }));
+    const dataParaExcel = this.transaccionesMostradas.map(t => {
+      const esAnulada = t.estado === 'ANULADA' || t.estado === 'CANCELADA';
+      return {
+        'Fecha': new Date(t.fechaHora).toLocaleDateString('es-PE'),
+        'Tipo Flujo': t.tipo === 'INGRESO' ? 'INGRESO' : 'EGRESO',
+        'Documento': t.tipoComprobante,
+        'Número': t.comprobante,
+        'RUC / DNI': t.ruc || 'S/D',
+        'Razón Social': t.entidad || 'S/D',
+        'Estado': esAnulada ? 'ANULADA' : 'VÁLIDA',
+        'Moneda': t.moneda,
+        'SubTotal': Number(t.subTotal || 0),
+        'IGV': Number(t.igv || 0),
+        'Detracción': Number(t.detraccion || 0),
+        'Retención': Number(t.retencion || 0),
+        'Percepción': Number(t.percepcion || 0),
+        'Monto Total': Number(t.montoTotal || 0),
+        'Tipo Cambio': Number(t.tipoCambio || 1)
+      };
+    });
 
     const worksheet: XLSX.WorkSheet = XLSX.utils.json_to_sheet(dataParaExcel);
     const workbook: XLSX.WorkBook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Finanzas');
-
     XLSX.writeFile(workbook, `Reporte_Contable_${this.fechaInicio}.xlsx`);
   }
 
@@ -286,7 +312,6 @@ export class FinanzasComponent implements OnInit {
     }
 
     const doc = new jsPDF('landscape'); 
-    
     let tituloPDF = 'Reporte Contable General - SMAF';
     let nombreArchivo = `Reporte_General_${this.fechaInicio}.pdf`;
 
@@ -301,40 +326,47 @@ export class FinanzasComponent implements OnInit {
     doc.setFontSize(16);
     doc.setTextColor(15, 23, 42); 
     doc.text(tituloPDF, 14, 15);
-    
     doc.setFontSize(10);
     doc.setTextColor(100, 116, 139); 
     doc.text(`Periodo: ${this.fechaInicio} al ${this.fechaFin}`, 14, 22);
 
-    const bodyData = datosParaExportar.map(t => [
-      new Date(t.fechaHora).toLocaleDateString(),
-      t.tipo === 'INGRESO' ? 'ING' : 'EGR',
-      `${t.tipoComprobante}\n${t.comprobante}`,
-      t.ruc || 'S/D',
-      t.entidad || '',
-      t.moneda,
-      Number(t.subTotal || 0).toFixed(2),
-      Number(t.igv || 0).toFixed(2),
-      Number(t.detraccion || 0).toFixed(2), 
-      Number(t.retencion || 0).toFixed(2),  
-      Number(t.percepcion || 0).toFixed(2), 
-      Number(t.montoTotal || 0).toFixed(2),
-      Number(t.tipoCambio || 1).toFixed(3)
-    ]);
+    // ✅ REPORTE SUNAT: Etiqueta y control de filas en PDF
+    const bodyData = datosParaExportar.map(t => {
+      const esAnulada = t.estado === 'ANULADA' || t.estado === 'CANCELADA';
+      const textoComprobante = esAnulada ? `${t.tipoComprobante}\n${t.comprobante}\n(ANULADA)` : `${t.tipoComprobante}\n${t.comprobante}`;
+
+      return [
+        new Date(t.fechaHora).toLocaleDateString(),
+        t.tipo === 'INGRESO' ? 'ING' : 'EGR',
+        textoComprobante,
+        t.ruc || 'S/D',
+        t.entidad || '',
+        t.moneda,
+        Number(t.subTotal || 0).toFixed(2),
+        Number(t.igv || 0).toFixed(2),
+        Number(t.detraccion || 0).toFixed(2), 
+        Number(t.retencion || 0).toFixed(2),  
+        Number(t.percepcion || 0).toFixed(2), 
+        Number(t.montoTotal || 0).toFixed(2),
+        Number(t.tipoCambio || 1).toFixed(3)
+      ];
+    });
 
     let sumSubTotal = 0, sumIgv = 0, sumDet = 0, sumRet = 0, sumPer = 0, sumTotal = 0;
 
     datosParaExportar.forEach(t => {
-      const factorCambio = t.moneda === 'USD' ? (t.tipoCambio || 3.80) : 1;
-      sumSubTotal += Number(t.subTotal || 0) * factorCambio;
-      sumIgv += Number(t.igv || 0) * factorCambio;
-      sumDet += Number(t.detraccion || 0) * factorCambio;
-      sumRet += Number(t.retencion || 0) * factorCambio;
-      sumPer += Number(t.percepcion || 0) * factorCambio;
-      sumTotal += Number(t.montoTotal || 0) * factorCambio;
+      const esValida = t.estado !== 'ANULADA' && t.estado !== 'CANCELADA';
+      if (esValida) {
+        const factorCambio = t.moneda === 'USD' ? (t.tipoCambio || 3.80) : 1;
+        sumSubTotal += Number(t.subTotal || 0) * factorCambio;
+        sumIgv += Number(t.igv || 0) * factorCambio;
+        sumDet += Number(t.detraccion || 0) * factorCambio;
+        sumRet += Number(t.retencion || 0) * factorCambio;
+        sumPer += Number(t.percepcion || 0) * factorCambio;
+        sumTotal += Number(t.montoTotal || 0) * factorCambio;
+      }
     });
 
-    // ✅ CORRECCIÓN: Estructuramos cada celda del pie de página para obligarla a alinearse a la derecha
     const footData: any[] = [[
       { content: 'TOTALES (Expresado en PEN S/)', colSpan: 6, styles: { halign: 'right', fontStyle: 'bold' } },
       { content: sumSubTotal.toFixed(2), styles: { halign: 'right' } },
@@ -343,7 +375,7 @@ export class FinanzasComponent implements OnInit {
       { content: sumRet.toFixed(2), styles: { halign: 'right' } },
       { content: sumPer.toFixed(2), styles: { halign: 'right' } },
       { content: sumTotal.toFixed(2), styles: { halign: 'right' } },
-      '' // Columna de Tipo de Cambio (TC) vacía en el total
+      '' 
     ]];
 
     autoTable(doc, {
@@ -361,6 +393,13 @@ export class FinanzasComponent implements OnInit {
         6: { halign: 'right' }, 7: { halign: 'right' }, 
         8: { halign: 'right', textColor: [153, 27, 27] }, 9: { halign: 'right', textColor: [153, 27, 27] }, 10: { halign: 'right', textColor: [22, 101, 52] }, 
         11: { halign: 'right', fontStyle: 'bold', textColor: [0, 0, 0] }, 12: { halign: 'center' } 
+      },
+      didParseCell: function(data) {
+        if (data.section === 'body' && data.column.index === 2) {
+           if (data.cell.text.some(t => t.includes('(ANULADA)'))) {
+               data.cell.styles.textColor = [220, 38, 38]; // Pinta texto en rojo en el PDF
+           }
+        }
       }
     });
 

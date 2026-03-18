@@ -17,6 +17,9 @@ export interface TransaccionFinanciera {
   retencion: number;
   detraccion: number;
   percepcion: number;
+
+  // ✅ CAMPO CLAVE PARA SABER SI ESTÁ ANULADA
+  estado?: string; 
 }
 
 export interface FinanzasDashboard {

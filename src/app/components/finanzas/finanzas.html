@@ -215,7 +215,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let t of transaccionesMostradas" style="border-bottom: 1px solid #e2e8f0; transition: background 0.2s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='white'">
+          <tr *ngFor="let t of transaccionesMostradas" [ngStyle]="{'opacity': (t.estado === 'ANULADA' || t.estado === 'CANCELADA') ? '0.6' : '1', 'background-color': (t.estado === 'ANULADA' || t.estado === 'CANCELADA') ? '#fef2f2' : 'transparent'}" style="border-bottom: 1px solid #e2e8f0; transition: background 0.2s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background=''">
             <td style="padding: 12px 10px; white-space: nowrap;">{{ t.fechaHora | date:'dd/MM/yyyy' }}</td>
             <td style="padding: 12px 10px;">
               <span [ngStyle]="{'background': t.tipo === 'INGRESO' ? '#dcfce7' : '#fee2e2', 'color': t.tipo === 'INGRESO' ? '#166534' : '#991b1b', 'padding': '3px 6px', 'border-radius': '4px', 'font-weight': 'bold', 'font-size': '10px'}">
@@ -223,7 +223,10 @@
               </span>
             </td>
             <td style="padding: 12px 10px;">
-              <div style="font-weight: 600; color: #1e293b;">{{ t.tipoComprobante }}</div>
+              <div style="font-weight: 600; color: #1e293b;">
+                {{ t.tipoComprobante }}
+                <span *ngIf="t.estado === 'ANULADA' || t.estado === 'CANCELADA'" style="color: #ef4444; font-size: 10px; font-weight: bold; margin-left: 4px;">(ANULADA)</span>
+              </div>
               <div style="font-size: 10px; color: #64748b;">{{ t.comprobante }}</div>
             </td>
             <td style="padding: 12px 10px; color: #475569;">{{ t.ruc || 'S/D' }}</td>
@@ -239,7 +242,9 @@
             <td style="padding: 12px 10px; text-align: right; color: #ef4444;">{{ t.retencion > 0 ? (t.moneda === 'USD' ? '$ ' : 'S/ ') + (t.retencion | number:'1.2-2') : '-' }}</td>
             <td style="padding: 12px 10px; text-align: right; color: #10b981;">{{ t.percepcion > 0 ? (t.moneda === 'USD' ? '$ ' : 'S/ ') + (t.percepcion | number:'1.2-2') : '-' }}</td>
 
-            <td style="padding: 12px 10px; text-align: right; font-weight: bold; color: #0f172a;">{{ t.moneda === 'USD' ? '$' : 'S/' }} {{ t.montoTotal | number:'1.2-2' }}</td>
+            <td style="padding: 12px 10px; text-align: right; font-weight: bold; color: #0f172a;">
+              {{ t.moneda === 'USD' ? '$' : 'S/' }} {{ t.montoTotal | number:'1.2-2' }}
+            </td>
             <td style="padding: 12px 10px; text-align: center; color: #64748b;">{{ t.tipoCambio | number:'1.3-3' }}</td>
           </tr>
           <tr *ngIf="transaccionesMostradas.length === 0">

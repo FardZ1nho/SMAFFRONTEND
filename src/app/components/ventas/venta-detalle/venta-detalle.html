@@ -90,8 +90,24 @@
         <span>{{ venta.moneda === 'USD' ? '$' : 'S/' }} {{ venta.igv | number:'1.2-2' }}</span>
       </div>
       <div class="total-row main-total">
-        <span>TOTAL:</span>
+        <span>Total Bruto:</span>
         <span>{{ venta.moneda === 'USD' ? '$' : 'S/' }} {{ venta.total | number:'1.2-2' }}</span>
+      </div>
+
+      <div class="total-row" *ngIf="venta.detraccion && venta.detraccion > 0" style="color: #ef4444;">
+        <span>Detracción (-):</span>
+        <span>{{ venta.moneda === 'USD' ? '$' : 'S/' }} {{ venta.detraccion | number:'1.2-2' }}</span>
+      </div>
+      <div class="total-row" *ngIf="venta.retencion && venta.retencion > 0" style="color: #ef4444;">
+        <span>Retención (-):</span>
+        <span>{{ venta.moneda === 'USD' ? '$' : 'S/' }} {{ venta.retencion | number:'1.2-2' }}</span>
+      </div>
+
+      <hr *ngIf="(venta.detraccion && venta.detraccion > 0) || (venta.retencion && venta.retencion > 0)" style="border: 0; border-top: 1px solid #cbd5e1; margin: 8px 0;">
+
+      <div class="total-row final" *ngIf="(venta.detraccion && venta.detraccion > 0) || (venta.retencion && venta.retencion > 0)" style="font-weight: bold; font-size: 18px; color: #0f172a;">
+        <span>Total Neto:</span>
+        <span>{{ venta.moneda === 'USD' ? '$' : 'S/' }} {{ venta.totalNeto | number:'1.2-2' }}</span>
       </div>
     </div>
 

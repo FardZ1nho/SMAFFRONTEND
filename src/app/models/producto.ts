@@ -2,6 +2,8 @@ export interface Producto {
   id: number;
   nombre: string;
   codigo: string;
+  codigoInternacional?: string; // ✅ NUEVO: Agregado para poder leerlo del backend
+  
   // ✅ CAMBIO: Agregado 'KIT'
   tipo: 'PRODUCTO' | 'SERVICIO' | 'KIT' | 'SUMINISTRO'; 
   descripcion?: string;

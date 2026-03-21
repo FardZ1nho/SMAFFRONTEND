@@ -4,7 +4,7 @@ import { MatDialogModule, MAT_DIALOG_DATA, MatDialogRef } from '@angular/materia
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
-import { Venta } from '../../../models/venta'; // Asegúrate que la ruta sea correcta
+import { Venta } from '../../../models/venta'; 
 
 @Component({
   selector: 'app-venta-detalle',

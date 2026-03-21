@@ -39,6 +39,8 @@ export interface Venta {
   subtotal: number;
   igv: number;
   total: number;
+  totalNeto?: number; // ✅ AÑADIDO: El total final restando impuestos (Calculado en Backend)
+
   notas?: string;
 
   detalles: DetalleVenta[];
@@ -69,6 +71,8 @@ export interface DetalleVenta {
   precioUnitario: number;
   descuento: number;
   subtotal: number;
+  valorBase?: number; // ✅ AÑADIDO: Valor de la línea sin IGV (Calculado en Backend para SUNAT)
+  igv?: number;       // ✅ AÑADIDO: IGV específico de esta línea (Calculado en Backend para SUNAT)
 }
 
 // ==========================================
@@ -152,4 +156,4 @@ export enum EstadoVenta {
   PENDIENTE = 'PENDIENTE',
   COMPLETADA = 'COMPLETADA',
   CANCELADA = 'CANCELADA'
-}
+} 

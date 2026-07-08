@@ -113,10 +113,10 @@ export class VentasListaComponent implements OnInit {
         this.ventaService.listarTodas().subscribe({
             next: (data) => {
                 this.ventas = data.sort((a, b) => {
-                    const fechaA = new Date(a.fechaVenta || 0).getTime();
-                    const fechaB = new Date(b.fechaVenta || 0).getTime();
-                    return fechaB - fechaA; 
-                });
+    const numA = this.extraerNumeroCorrelativo(a);
+    const numB = this.extraerNumeroCorrelativo(b);
+    return numB - numA; // descendente: el más nuevo (mayor número) primero
+});
                 
                 this.extraerComprobantesUnicos();
                 this.aplicarFiltros();     
@@ -132,6 +132,18 @@ export class VentasListaComponent implements OnInit {
             }
         });
     }
+
+    private extraerNumeroCorrelativo(venta: Venta): number {
+    const doc = (venta.numeroDocumento && venta.numeroDocumento !== '') 
+        ? venta.numeroDocumento 
+        : venta.codigo;
+    
+    if (!doc) return 0;
+    
+    // Extrae solo los dígitos finales, ej: "F001-00001050" -> "00001050" -> 1050
+    const match = doc.match(/(\d+)$/);
+    return match ? parseInt(match[1], 10) : 0;
+}
 
     extraerComprobantesUnicos(): void {
         const tiposBase = ['FACTURA', 'BOLETA', 'NOTA DE VENTA', 'OTROS'];
